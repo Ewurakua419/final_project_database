@@ -1,5 +1,5 @@
 from datetime import datetime
-from address import Address
+from model.address import Address
 import uuid
 import json
 class Transaction:

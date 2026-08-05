@@ -1,4 +1,4 @@
-from address import Address
+from model.address import Address
 import uuid
 class Vendor:
     def __init__(self, name, address,unique_id):

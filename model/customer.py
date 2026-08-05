@@ -1,6 +1,6 @@
 import uuid
-from cart import Cart
-from address import Address
+from model.cart import Cart
+from model.address import Address
 class Customer:
     def __init__(self, name, password, email, unique_id=None, ids=None):
             self.name=name

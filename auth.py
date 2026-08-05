@@ -1,0 +1,29 @@
+from datetime import datetime, timedelta
+
+import bcrypt
+from typing import Union
+
+import jwt
+from model.customer import Customer
+SECRET_KEY=" MY SECRET KEY"
+def encodere(password:str):
+    # converting password to array of bytes
+    bytes = password.encode('utf-8')
+
+    # generating the salt
+    salt = bcrypt.gensalt()
+
+    # Hashing the password
+    hash = bcrypt.hashpw(bytes, salt)
+    string_hash=hash.decode('utf-8')
+
+    return string_hash
+
+def decodere(password:str, h: Union[str, bytes]):
+    checkByte = password.encode('utf-8')
+    if isinstance(h, str):#if h is a string
+        ogByte = h.encode('utf-8')# change to bytes
+    else:
+        ogByte = h
+    return bcrypt.checkpw(checkByte, ogByte)# returns true if the hashes are the same , else false
+

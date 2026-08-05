@@ -1,7 +1,7 @@
 import uuid
-from customer import Customer
-from transaction import Transaction
-from order import Order
+from model.customer import Customer
+from model.transaction import Transaction
+from model.order import Order
 class Cart:
     def __init__(self,customer:"Customer", ids=None):
         self.balance=0
@@ -19,4 +19,10 @@ class Cart:
             self.user.history.append(Transaction(amount=balance, user=self.user.unique_id, order_id=order_id, product=self.products, address=address.id))
             return order1
 
+    def remove_product(self, product):
+        if product in self.products:
+            self.products.remove(product)
+
+        else:
+            return None
         
