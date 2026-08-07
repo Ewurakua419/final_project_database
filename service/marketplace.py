@@ -1,6 +1,8 @@
 import database
 from model.customer import Customer
 from model.vendor import Vendor
+from model.product import Product
+from model.address import Address
 import auth
 
 class Marketplace:
@@ -25,6 +27,15 @@ class Marketplace:
             return user
 
     ##customer focus
+    # customer can register, *
+    # sign in, *
+    # select product and add to cart, 
+    # remove product from cart , *
+    # buy cart which consists of emptying cart into order,*
+    #  create review, 
+    # delete review, 
+    #update review
+    # update details
     def registerCustomer(self, name, password, email):
         if database.search(name) is not None:
             print("User already exists")
@@ -55,12 +66,6 @@ class Marketplace:
 
         return customer
 
-    def add_to_cart(self,product, username):
-        customer = self.finduser(username)
-        if customer is None:
-            return None
-        customer.cart.products.append(product)
-        return customer.cart.products
 
     def address_pick(self,username,address):
         customer = self.finduser(username)
@@ -71,24 +76,67 @@ class Marketplace:
         else:
             return None
         
-    def empty_cart(self,balance, username, address):
+    def ordercart(self,balance, username, address):
         customer = self.finduser(username)
         if customer is None:
             return None
        
         order=customer.cart.pay(balance=balance,address=address)
         # add order to database when built
+        #make allowance that product quantitu would reduce and if the product has 0 it is removed from cart
 
         return True
 
-    def remove_from_cart(self,product, username):
+    def remove_from_cart(self,productid, username):
         customer = self.finduser(username)
         if customer is None:
             return None
-        customer.cart.products.remove(product)
+
+        product=self.findproduct(productid=productid)
+        if product is None:
+            return None
+        
+        customer.cart.remove_product(product)
         # remove from cart database when built
         return customer.cart.products
 
+    def add_to_cart(self, productid, username):
+        customer = self.finduser(username)
+        if customer is None:
+            return None
+
+        product=self.findproduct(productid=productid)
+        if product is None:
+            return None
+        if customer.cart.check_product(product):
+            return True
+            #let database increment count
+        else: 
+            customer.cart.add_product(product)
+        # remove from cart database when built
+        return customer.cart.products
     
 
     ##vendor focus
+    ##product focus
+    def findproduct(self, productid):
+            productid = productid.strip().lower()
+            rows = database.search(productid)#change to search product
+            if rows == None:
+                print("User not found")
+                return None
+            else:
+                print("User found")
+                product = Product(#edit to match database
+                    name=rows[1],
+                    vendor_id=rows[2],
+                    brand=rows[0],
+                    price=rows[3],
+                    quantity=rows[4],
+                    ids=rows[0]
+                )
+                return product
+
+    def deleteproduct(self,productid, vendorid):
+        #find vendor
+        #delete from database

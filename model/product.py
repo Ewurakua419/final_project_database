@@ -1,10 +1,16 @@
+import uuid
+
 class Product:
-    def __init__(self, name, vendor_id, brand, price, quantity):
+    def __init__(self, name, vendor_id, brand, price, quantity, ids=None):
         self.brand=brand
         self.name=name
         self.vendor_id=vendor_id
         self.price=price
         self.quantity=quantity
+        if ids==None:
+                    self.ids=str(uuid.uuid4())[:20]
+        else:
+            self.ids=ids
 
 class Fashion(Product):
 

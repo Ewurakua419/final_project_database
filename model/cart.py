@@ -25,4 +25,13 @@ class Cart:
 
         else:
             return None
+
+    def add_product(self,product):
+        self.products.append(product)
+
+    def check_product(self,product):
+        if product in self.products:
+             return True
+        else:
+             return False
         
