@@ -1,0 +1,40 @@
+.hero-band {
+  background-color: var(--color-secondary);
+  color: var(--color-canvas);
+  padding: var(--spacing-xxl) var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--spacing-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-band h1,
+.hero-band h2,
+.hero-band h3,
+.hero-band p {
+  color: var(--color-canvas);
+}
+
+.badge-pill {
+  background-color: var(--color-canvas);
+  color: var(--color-primary);
+  font-size: var(--font-size-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  border-radius: var(--rounded-full);
+  padding: 4px var(--spacing-xs);
+  border: 1px solid var(--color-hairline);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer {
+  background-color: var(--color-canvas-soft);
+  color: var(--color-ink-secondary);
+  padding: var(--spacing-xxl) var(--spacing-lg);
+  border-top: 1px solid var(--color-hairline);
+}

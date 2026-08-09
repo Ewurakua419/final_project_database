@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendor Dashboard</title>
+  <link rel="stylesheet" href="vendor-base.css">
+
+</head>
+<body>
+
+  <div id="vendor-nav-container"></div>
+  <main class="container" style="padding-top: var(--spacing-xl); padding-bottom: var(--spacing-xxl);">
+    <div class="flex-row" style="justify-content: space-between; margin-bottom: var(--spacing-xl);">
+      <h1 class="display-2">Overview</h1>
+      <a href="add_product.html" class="button-utility" style="background-color: var(--color-primary); color: white; border: none;">+ Add Product</a>
+    </div>
+
+      <div class="metric-grid" id="dashboard-metrics">
+        <div class="metric-card">
+          <span class="metric-label">Total Sales</span>
+          <h2 class="metric-value" id="stat-sales">Loading...</h2>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Active Products</span>
+          <h2 class="metric-value" id="stat-products">...</h2>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Pending Orders</span>
+          <h2 class="metric-value" id="stat-orders">...</h2>
+        </div>
+      </div>
+
+      <h2 class="heading-2" style="margin-top: var(--spacing-xxl); margin-bottom: var(--spacing-md);">Recent Orders</h2>
+      <table class="recent-orders-table">
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Date</th>
+            <th>Customer</th>
+            <th>Status</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="recent-orders-body">
+          <tr>
+            <td colspan="5" class="loading-state">Loading recent orders...</td>
+          </tr>
+        </tbody>
+      </table>
+    </main>
+
+  <script type="module" src="vendor-navbar.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+      // Fetch stats
+      fetch("http://127.0.0.1:5001/vendor/stats")
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("stat-sales").innerText = "$" + data.total_sales.toFixed(2);
+          document.getElementById("stat-products").innerText = data.active_products;
+          document.getElementById("stat-orders").innerText = data.pending_orders;
+        })
+        .catch(err => {
+          console.error("Failed to load stats", err);
+          document.getElementById("stat-sales").innerText = "Error";
+          document.getElementById("stat-products").innerText = "Error";
+          document.getElementById("stat-orders").innerText = "Error";
+        });
+
+      // Fetch recent orders
+      const tbody = document.getElementById("recent-orders-body");
+      
+      fetch("http://127.0.0.1:5001/vendor/orders")
+        .then(res => res.json())
+        .then(data => {
+          tbody.innerHTML = "";
+          
+          if(data.orders.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--color-ink-muted); padding: 2rem;">No recent orders.</td></tr>';
+            return;
+          }
+          
+          // Only show top 5 recent orders
+          const recentOrders = data.orders.slice(0, 5);
+          
+          recentOrders.forEach(order => {
+            const date = new Date(order.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            const customer = order.shipping_address ? `${order.shipping_address.first_name || ''} ${order.shipping_address.last_name || ''}`.trim() || 'Customer' : 'Customer';
+            const statusClass = order.status === 'pending' ? 'status-pending' : 'status-shipped';
+            const statusText = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+            
+            tbody.innerHTML += `
+              <tr>
+                <td style="font-family: monospace; font-weight: 500;"><a href="orders.html" style="color: var(--color-primary); text-decoration:none;">${order.order_id}</a></td>
+                <td style="color: var(--color-ink-muted);">${date}</td>
+                <td>${customer}</td>
+                <td><span class="status-pill ${statusClass}">${statusText}</span></td>
+                <td style="font-weight: 600;">$${order.pricing_summary.grand_total.toFixed(2)}</td>
+              </tr>
+            `;
+          });
+        })
+        .catch(err => {
+          console.error("Failed to load recent orders", err);
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--color-accent-orange);">Failed to load orders.</td></tr>';
+        });
+    });
+  </script>
+</body>
+</html>
