@@ -137,7 +137,7 @@ class Marketplace:
         else:
             customer.remove_address(address)
 
-    def update_address_postcode(self, username,addressID, postcode):
+    #def update_address_postcode(self, username,addressID, postcode):
 
     #def update_address_country(self, username,addressID, country):
 
