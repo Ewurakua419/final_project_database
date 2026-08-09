@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orders - Vendor Portal</title>
+  <link rel="stylesheet" href="vendor-base.css">
+
+</head>
+<body>
+
+  <div id="vendor-nav-container"></div>
+  <main class="container" style="padding-top: var(--spacing-xl); padding-bottom: var(--spacing-xxl);">
+    <div style="margin-bottom: var(--spacing-xl);">
+      <h1 class="display-2">Manage Orders</h1>
+    </div>
+
+      <div id="orders-container">
+        <div class="loading-state">Loading your orders...</div>
+      </div>
+    </main>
+
+  <script type="module" src="vendor-navbar.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+      const container = document.getElementById("orders-container");
+
+      fetch("http://127.0.0.1:5001/vendor/orders")
+        .then(res => res.json())
+        .then(data => {
+          container.innerHTML = "";
+          
+          if(data.orders.length === 0) {
+            container.innerHTML = `
+              <div class="error-state" style="background: var(--color-canvas); border-color: var(--color-hairline); color: var(--color-ink-muted);">
+                You haven't received any orders yet.
+              </div>`;
+            return;
+          }
+
+          data.orders.forEach(order => {
+            const date = new Date(order.created_at).toLocaleDateString(undefined, {
+              year: 'numeric', month: 'short', day: 'numeric'
+            });
+            const shippingName = order.shipping_address ? `${order.shipping_address.first_name || ''} ${order.shipping_address.last_name || ''}`.trim() || 'Customer' : 'Customer';
+            const address = order.shipping_address ? `${order.shipping_address.street || ''}, ${order.shipping_address.city || ''}, ${order.shipping_address.country || ''}` : 'N/A';
+            const total = order.pricing_summary.grand_total.toFixed(2);
+            
+            // Status styling
+            let statusStyle = '';
+            if (order.status === 'pending') {
+              statusStyle = 'background-color: rgba(221, 91, 0, 0.1); color: var(--color-accent-orange); border-color: transparent;';
+            } else if (order.status === 'shipped') {
+              statusStyle = 'background-color: rgba(42, 157, 153, 0.1); color: var(--color-primary); border-color: transparent;';
+            } else {
+              statusStyle = 'background-color: rgba(26, 174, 57, 0.1); color: var(--color-accent-green); border-color: transparent;';
+            }
+
+            container.innerHTML += `
+              <div class="feature-card" style="margin-bottom: var(--spacing-xl);">
+                <div class="order-header">
+                  <span class="order-id">${order.order_id}</span>
+                  <select class="status-select" data-order-id="${order.order_id}" style="${statusStyle}">
+                    <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                    <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
+                    <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                  </select>
+                </div>
+                <div class="order-details">
+                  <div>
+                    <strong>Customer:</strong> ${shippingName}<br>
+                    <strong>Date:</strong> ${date}<br>
+                    <strong>Shipping:</strong> ${address}
+                  </div>
+                  <div style="text-align: right;">
+                    <strong>Total:</strong> <span style="color: var(--color-primary); font-size: 1.1rem; font-weight: 600;">$${total}</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+          
+          // Re-attach status change listeners
+          document.querySelectorAll('.status-select').forEach(select => {
+            select.addEventListener('change', (e) => {
+              const val = e.target.value;
+              if (val === 'pending') {
+                e.target.style.backgroundColor = 'rgba(221, 91, 0, 0.1)';
+                e.target.style.color = 'var(--color-accent-orange)';
+              } else if (val === 'shipped') {
+                e.target.style.backgroundColor = 'rgba(42, 157, 153, 0.1)';
+                e.target.style.color = 'var(--color-primary)';
+              } else {
+                e.target.style.backgroundColor = 'rgba(26, 174, 57, 0.1)';
+                e.target.style.color = 'var(--color-accent-green)';
+              }
+              
+              const orderId = e.target.getAttribute('data-order-id');
+              fetch(`http://127.0.0.1:5001/vendor/orders/${orderId}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: val })
+              })
+              .then(res => res.json())
+              .then(data => {
+                if (data.error) console.error("Error updating status:", data.error);
+                else console.log("Status updated successfully:", data);
+              })
+              .catch(err => console.error("Network error:", err));
+            });
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          container.innerHTML = '<div class="error-state">Failed to load orders.</div>';
+        });
+    });
+  </script>
+</body>
+</html>

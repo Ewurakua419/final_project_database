@@ -1,0 +1,34 @@
+.display-1 {
+  font-size: var(--font-size-display-1);
+  letter-spacing: var(--tracking-display-1);
+  line-height: 1.0;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.display-2 {
+  font-size: var(--font-size-display-2);
+  letter-spacing: var(--tracking-display-2);
+  line-height: 1.04;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.title {
+  font-size: var(--font-size-title);
+  letter-spacing: var(--tracking-title);
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.body-sm {
+  font-size: var(--font-size-body-sm);
+  line-height: 1.33;
+}
+
+.caption {
+  font-size: var(--font-size-caption);
+  line-height: 1.43;
+  color: var(--color-ink-muted);
+}

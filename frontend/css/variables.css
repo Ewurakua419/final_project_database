@@ -1,0 +1,81 @@
+:root {
+  /* --- Brand & Accents --- */
+  --color-primary: #0075de;
+  --color-primary-active: #005bab;
+  --color-secondary: #213183;
+  --color-on-primary: #ffffff;
+
+  /* --- Decorative Sticker Palette --- */
+  --color-accent-sky: #62aef0;
+  --color-accent-purple: #d6b6f6;
+  --color-accent-purple-deep: #391c57;
+  --color-accent-pink: #ff64c8;
+  --color-accent-orange: #dd5b00;
+  --color-accent-orange-deep: #793400;
+  --color-accent-teal: #2a9d99;
+  --color-accent-green: #1aae39;
+  --color-accent-brown: #523410;
+
+  /* --- Surfaces & Canvas --- */
+  --color-canvas: #ffffff;           /* White surface for cards/panels */
+  --color-canvas-soft: #f6f5f4;      /* Warm Paper: signature page canvas */
+  --color-hairline: #e6e6e6;         /* Subtle hairline borders */
+
+  /* --- Typography Colors --- */
+  --color-ink: rgba(0, 0, 0, 0.95);  /* Soft near-black for headers/body */
+  --color-ink-secondary: #31302e;    /* Warm Charcoal for body/footer copy */
+  --color-ink-muted: #615d59;        /* Stone for supporting copy */
+  --color-ink-faint: #a39e98;        /* Ash for captions/placeholders */
+
+  /* --- Typography Sizes & Tracking --- */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  
+  --font-size-display-1: 64px;
+  --font-size-display-2: 54px;
+  --font-size-heading-1: 40px;
+  --font-size-heading-2: 26px;
+  --font-size-heading-3: 22px;
+  --font-size-title: 20px;
+  --font-size-body-md: 16px;
+  --font-size-body-sm: 15px;
+  --font-size-button: 16px;
+  --font-size-caption: 14px;
+  --font-size-eyebrow: 12px;
+
+  /* Tight negative letter-spacing for headlines */
+  --tracking-display-1: -2.125px;
+  --tracking-display-2: -1.875px;
+  --tracking-heading-1: -1px;
+  --tracking-heading-2: -0.625px;
+  --tracking-heading-3: -0.25px;
+  --tracking-title: -0.125px;
+  --tracking-eyebrow: 0.125px;
+
+  /* --- Spacing --- */
+  --spacing-xxs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 28px;
+  --spacing-xxl: 32px;
+
+  /* --- Shapes & Corner Radii --- */
+  --rounded-xs: 4px;
+  --rounded-sm: 5px;
+  --rounded-md: 8px;
+  --rounded-lg: 12px;
+  --rounded-xl: 16px;
+  --rounded-full: 9999px; 
+
+  /* --- Elevation & Shadows --- */
+  --shadow-level-0: none;
+  --shadow-level-1: 0 0.175px 1.041px rgba(0,0,0,0.01), 
+                    0 0.8px 2.925px rgba(0,0,0,0.02), 
+                    0 2.025px 7.847px rgba(0,0,0,0.027), 
+                    0 4px 18px rgba(0,0,0,0.04);
+  --shadow-level-2: 0 1.5px 3.5px rgba(0,0,0,0.015), 
+                    0 4px 10px rgba(0,0,0,0.025), 
+                    0 10px 24px rgba(0,0,0,0.035), 
+                    0 23px 52px rgba(0,0,0,0.05);
+}

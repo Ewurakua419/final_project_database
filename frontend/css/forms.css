@@ -1,0 +1,16 @@
+.text-input {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: inherit;
+  font-size: var(--font-size-body-sm);
+  border: 1px solid rgb(221, 221, 221);
+  border-radius: var(--rounded-xs);
+  padding: 6px var(--spacing-sm);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.text-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-level-1);
+}

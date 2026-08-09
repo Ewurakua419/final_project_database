@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout - Ecommerce store</title>
+  <link rel="stylesheet" href="../base.css">
+  <link rel="stylesheet" href="checkout.css">
+</head>
+<body>
+
+  <div id="navbar-container"></div>
+
+  <div class="checkout-layout">
+    
+    <!-- Left Column: Form -->
+    <div class="checkout-form-section">
+      <form id="checkout-form">
+        <h2 class="section-title">Contact Information</h2>
+        <div class="form-group">
+          <label for="email">Email address</label>
+          <input type="email" id="email" class="text-input" placeholder="hello@example.com" required>
+        </div>
+        
+        <h2 class="section-title" style="margin-top: 2rem;">Shipping Address</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="first-name">First name</label>
+            <input type="text" id="first-name" class="text-input" required>
+          </div>
+          <div class="form-group">
+            <label for="last-name">Last name</label>
+            <input type="text" id="last-name" class="text-input" required>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="address">Address</label>
+          <input type="text" id="address" class="text-input" placeholder="123 Main St" required>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="city">City</label>
+            <input type="text" id="city" class="text-input" required>
+          </div>
+          <div class="form-group">
+            <label for="country">Country</label>
+            <input type="text" id="country" class="text-input" value="Ghana" required>
+          </div>
+        </div>
+
+        <h2 class="section-title" style="margin-top: 2rem;">Payment</h2>
+        
+        <div class="form-group" style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+          <label style="font-weight: 500; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="radio" name="payment-method" value="card" checked onchange="togglePaymentMethods()"> Credit Card
+          </label>
+          <label style="font-weight: 500; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="radio" name="payment-method" value="momo" onchange="togglePaymentMethods()"> Mobile Money
+          </label>
+          <label style="font-weight: 500; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="radio" name="payment-method" value="bank" onchange="togglePaymentMethods()"> Bank Transfer
+          </label>
+        </div>
+
+        <!-- Credit Card Fields -->
+        <div id="payment-card">
+          <div class="form-group">
+            <label for="card-number">Card number (Mock)</label>
+            <input type="text" id="card-number" class="text-input" placeholder="0000 0000 0000 0000" value="4242 4242 4242 4242" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="expiry">Expiration date (MM/YY)</label>
+              <input type="text" id="expiry" class="text-input" placeholder="12/26" value="12/26" required>
+            </div>
+            <div class="form-group">
+              <label for="cvc">Security code</label>
+              <input type="text" id="cvc" class="text-input" placeholder="123" value="123" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile Money Fields -->
+        <div id="payment-momo" style="display: none;">
+          <div class="form-group">
+            <label for="momo-network">Network</label>
+            <select id="momo-network" class="text-input" style="appearance: auto;">
+              <option value="mtn">MTN Mobile Money</option>
+              <option value="vodafone">Telecel Cash</option>
+              <option value="airteltigo">AT Money</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="momo-number">Mobile Money Number</label>
+            <input type="text" id="momo-number" class="text-input" placeholder="024 000 0000">
+          </div>
+        </div>
+
+        <!-- Bank Transfer Details -->
+        <div id="payment-bank" style="display: none;">
+          <div style="background-color: var(--color-canvas-soft); padding: 1rem; border-radius: var(--rounded-md); border: 1px solid var(--color-hairline); margin-bottom: 1.5rem;">
+            <p style="margin-top: 0; margin-bottom: 0.5rem; font-weight: 500;">Transfer to the following account:</p>
+            <p style="margin: 0; color: var(--color-ink-secondary); font-size: var(--font-size-body-sm); line-height: 1.5;">
+              Bank: EcoBank Ghana<br>
+              Account Name: Notion Styled Store Ltd.<br>
+              Account Number: 1234567890123<br>
+              Branch: Accra Main
+            </p>
+          </div>
+        </div>
+
+        <button type="submit" class="button-primary" id="place-order-btn" style="width: 100%; padding: 1rem; font-size: 1.1rem; margin-top: 2rem;">
+          Place Order
+        </button>
+      </form>
+    </div>
+
+    <!-- Right Column: Summary -->
+    <div class="checkout-summary-section">
+      <h2 class="section-title">Order Summary</h2>
+      
+      <div id="summary-items">
+        <div class="loading-state">Loading your cart...</div>
+      </div>
+
+      <div class="summary-totals">
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span id="summary-subtotal">$0.00</span>
+        </div>
+        <div class="summary-row">
+          <span>Shipping</span>
+          <span id="summary-shipping">$5.00</span>
+        </div>
+        <div class="summary-row">
+          <span>Taxes (Estimated)</span>
+          <span id="summary-tax">$0.00</span>
+        </div>
+        <div class="summary-row total">
+          <span>Total</span>
+          <span id="summary-total">$0.00</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module" src="../navbar.js"></script>
+  <script>
+    function initCheckoutPage() {
+      
+      window.togglePaymentMethods = () => {
+        const method = document.querySelector('input[name="payment-method"]:checked').value;
+        const cardSection = document.getElementById("payment-card");
+        const momoSection = document.getElementById("payment-momo");
+        const bankSection = document.getElementById("payment-bank");
+        
+        cardSection.style.display = "none";
+        momoSection.style.display = "none";
+        bankSection.style.display = "none";
+        
+        // Remove required from card inputs
+        document.getElementById("card-number").required = false;
+        document.getElementById("expiry").required = false;
+        document.getElementById("cvc").required = false;
+        
+        // Remove required from momo inputs
+        document.getElementById("momo-number").required = false;
+
+        if (method === "card") {
+          cardSection.style.display = "block";
+          document.getElementById("card-number").required = true;
+          document.getElementById("expiry").required = true;
+          document.getElementById("cvc").required = true;
+        } else if (method === "momo") {
+          momoSection.style.display = "block";
+          document.getElementById("momo-number").required = true;
+        } else if (method === "bank") {
+          bankSection.style.display = "block";
+        }
+      };
+
+      // Load cart data into summary
+      fetch("http://127.0.0.1:5001/cart")
+        .then(res => res.json())
+        .then(data => {
+          if (data.cart.length === 0) {
+            alert("Your cart is empty!");
+            window.location.href = "../products/products.html"; // Redirect if empty
+            return;
+          }
+
+          const itemsContainer = document.getElementById("summary-items");
+          itemsContainer.innerHTML = "";
+          
+          let subtotal = 0;
+          data.cart.forEach(item => {
+            const product = item.product;
+            const price = product.priceCents / 100;
+            const itemTotal = price * item.quantity;
+            subtotal += itemTotal;
+            
+            itemsContainer.innerHTML += `
+              <div class="summary-item">
+                <img src="${product.image}" class="summary-item-img" alt="${product.name}">
+                <div class="summary-item-details">
+                  <h4 class="summary-item-title">${product.name}</h4>
+                  <div class="summary-item-meta">Qty: ${item.quantity}</div>
+                </div>
+                <div class="summary-item-price">$${itemTotal.toFixed(2)}</div>
+              </div>
+            `;
+          });
+
+          const tax = subtotal * 0.08;
+          const shipping = 5.00;
+          const total = subtotal + tax + shipping;
+
+          document.getElementById("summary-subtotal").innerText = "$" + subtotal.toFixed(2);
+          document.getElementById("summary-tax").innerText = "$" + tax.toFixed(2);
+          document.getElementById("summary-total").innerText = "$" + total.toFixed(2);
+        })
+        .catch(err => console.error("Failed to load summary", err));
+
+
+      // Handle form submission
+      document.getElementById("checkout-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        
+        const btn = document.getElementById("place-order-btn");
+        const originalText = btn.innerText;
+        btn.innerText = "Processing...";
+        btn.disabled = true;
+
+        const shippingAddress = {
+          street: document.getElementById("address").value,
+          city: document.getElementById("city").value,
+          country: document.getElementById("country").value,
+        };
+
+        const paymentMethod = document.querySelector('input[name="payment-method"]:checked').value;
+        const paymentDetails = { method: paymentMethod };
+        
+        if (paymentMethod === "card") {
+          // In a real app, you would tokenize the card here, never send raw PANs
+          paymentDetails.card_last_4 = document.getElementById("card-number").value.slice(-4) || "4242";
+        } else if (paymentMethod === "momo") {
+          paymentDetails.network = document.getElementById("momo-network").value;
+          paymentDetails.phone_number = document.getElementById("momo-number").value;
+        }
+
+        fetch("http://127.0.0.1:5001/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            shipping_address: shippingAddress,
+            payment_details: paymentDetails
+          })
+        })
+        .then(res => {
+          if (!res.ok) throw new Error("Checkout failed");
+          return res.json();
+        })
+        .then(orderData => {
+          // Store order id in session storage to display on next page
+          sessionStorage.setItem("last_order_id", orderData.order_id);
+          window.location.href = "../orders/order_confirmation.html";
+        })
+        .catch(err => {
+          console.error(err);
+          btn.innerText = "Error: Please try again";
+          btn.style.backgroundColor = "var(--color-accent-orange)";
+          setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.backgroundColor = "";
+            btn.disabled = false;
+          }, 2000);
+        });
+      });
+    }
+
+    initCheckoutPage();
+  </script>
+</body>
+</html>

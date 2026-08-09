@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendor Portal - Log in</title>
+  <link rel="stylesheet" href="vendor-base.css">
+</head>
+<body>
+
+  <div class="auth-layout">
+    <a href="#" style="font-weight: 600; text-decoration: none; color: var(--color-ink-secondary);">
+      Simple Ecommerce Store
+    </a>
+    <div class="ex-auth-form-card">
+      <div class="auth-header">
+        <h1>Vendor Sign in</h1>
+        <p>Welcome back! Please enter your details.</p>
+      </div>
+
+      <form id="vendor-login-form" class="flex-col" style="gap: var(--spacing-md);">
+
+        <div class="form-group flex-col" style="gap: var(--spacing-xs);">
+          <label class="eyebrow text-muted" for="email">Email</label>
+          <input type="email" id="email" class="text-input" placeholder="vendor@example.com" required autofocus>
+        </div>
+
+        <div class="form-group flex-col" style="gap: var(--spacing-xs);">
+          <label class="eyebrow text-muted" for="password">Password</label>
+          <input type="password" id="password" class="text-input" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="button-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md);">
+          Log in
+        </button>
+      </form>
+
+      <div style="margin-top: var(--spacing-xl); text-align: center; font-size: var(--type-body-sm-size); color: var(--color-ink-muted);">
+        Don't have a vendor account? 
+        <a href="register.html" style="font-weight: 600; text-decoration: none; color: var(--color-primary);">Apply here</a>
+      </div>
+      <div style="margin-top: var(--spacing-md); text-align: center;">
+        <a href="../login.html" style="font-size: var(--type-caption-size); color: var(--color-ink-faint); text-decoration: none;">Return to Customer Store</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("vendor-login-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      sessionStorage.setItem("vendor_logged_in", "true");
+      window.location.href = "dashboard.html";
+    });
+  </script>
+</body>
+</html>
