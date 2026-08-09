@@ -6,9 +6,9 @@ import mariadb
 def connect():
     return mariadb.connect(
     host="localhost",
-    user="root",
-    password="your_password",
-    database="my_database",
+    user="loisamoah",
+    password=" ",
+    database="ecommerce",
     port=3306
 )
 ##Write data
