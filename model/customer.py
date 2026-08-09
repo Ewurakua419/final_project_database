@@ -18,6 +18,11 @@ class Customer:
     def add_address(self,country,  postcode, city, street, house_num):
         self.address.append(Address(country,  postcode, city, street, house_num))
 
+    def remove_address(self,addresses):
+        if addresses in self.address:
+            self.address.remove(addresses)
+              
+
     def check_history(self):
         return (h.to_dict() for h in self.history)
 

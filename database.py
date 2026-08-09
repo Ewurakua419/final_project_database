@@ -2,14 +2,15 @@ import psycopg
 from datetime import date
 from model.transaction import Transaction
 import uuid
+import mariadb
 def connect():
-    return psycopg.connect(
-        host="localhost",
-        dbname="wallet",
-        user="postgres",
-        password=" ",
-        port=5432
-    )
+    return mariadb.connect(
+    host="localhost",
+    user="root",
+    password="your_password",
+    database="my_database",
+    port=3306
+)
 ##Write data
 #cur.execute("INSERT INTO students (name, age) VALUES (%s, %s)",("Alice", 20))
 #conn.commit()

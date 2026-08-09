@@ -29,13 +29,15 @@ class Marketplace:
     ##customer focus
     # customer can register, *
     # sign in, *
-    # select product and add to cart, 
+    # select product and add to cart, *
     # remove product from cart , *
     # buy cart which consists of emptying cart into order,*
-    #  create review, 
-    # delete review, 
-    #update review
-    # update details
+    #  create review, *
+    # delete review, -check with team if useful
+    #update review -check with team if useful
+    # update address details- check and see if we should only delete instead
+    #update email
+    #delete payment methods
     def registerCustomer(self, name, password, email):
         if database.search(name) is not None:
             print("User already exists")
@@ -116,8 +118,54 @@ class Marketplace:
         # remove from cart database when built
         return customer.cart.products
     
+    def create_review(self, username, message, productid):
+        customer = self.finduser(username)
+        if customer is None:
+            return None
+        product=self.findproduct(productid=productid)
+        if product is None:
+            return None
+        #add to table message, userid and productid
 
+    def delete_address(self, username,addressid):
+        customer = self.finduser(username)
+        if customer is None:
+            return None
+        address=self.findaddress(addressid=addressid)
+        if address is None:
+            return None
+        else:
+            customer.remove_address(address)
+
+    def update_address_postcode(self, username,addressID, postcode):
+
+    #def update_address_country(self, username,addressID, country):
+
+    #def update_address_city(self, username,addressID, city):    
+
+    #def update_address_street(self, username,addressID, street):
+
+    
     ##vendor focus
+    #a vendor can--
+    #add a new product
+    #possibly remove products
+    #restock
+    def findvendor(self, vendorid):
+                vendorid = vendorid.strip().lower()
+                rows = database.search(vendorid)#change to search vendor
+                if rows == None:
+                    print("User not found")
+                    return None
+                else:
+                    print("User found")
+                    vendor = Vendor(#edit to match database
+                        name=rows[1],
+                        unique_id=rows[2],
+                        address=rows[0],
+                    )
+                    return vendor
+                
     ##product focus
     def findproduct(self, productid):
             productid = productid.strip().lower()
@@ -138,5 +186,14 @@ class Marketplace:
                 return product
 
     def deleteproduct(self,productid, vendorid):
-        #find vendor
+        vendor = self.findvendor(vendorid)
+        if vendor is None:
+            return None
+
+        product=self.findproduct(productid=productid)
+        if product is None:
+            return None
+        
         #delete from database
+
+    #address focus
