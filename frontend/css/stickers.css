@@ -1,0 +1,24 @@
+.sticker-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--rounded-full);
+  display: inline-block;
+}
+
+.bg-sticker-sky { background-color: var(--color-accent-sky); }
+.bg-sticker-purple { background-color: var(--color-accent-purple); }
+.bg-sticker-pink { background-color: var(--color-accent-pink); }
+.bg-sticker-orange { background-color: var(--color-accent-orange); }
+.bg-sticker-teal { background-color: var(--color-accent-teal); }
+.bg-sticker-green { background-color: var(--color-accent-green); }
+.bg-sticker-brown { background-color: var(--color-accent-brown); }
+
+/* Color-blocked illustration tile header for feature cards */
+.card-sticker-header {
+  height: 8px;
+  margin-top: calc(-1 * var(--spacing-lg));
+  margin-left: calc(-1 * var(--spacing-lg));
+  margin-right: calc(-1 * var(--spacing-lg));
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+}

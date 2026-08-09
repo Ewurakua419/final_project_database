@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - Simple Ecommerce Store</title>
+  <link rel="stylesheet" href="base.css">
+</head>
+<body>
+
+  <div class="auth-layout">
+    <a href="#" style="font-weight: 600; text-decoration: none; color: var(--color-ink-secondary);">
+      Simple Ecommerce Store
+    </a>
+    <div class="ex-auth-form-card">
+      <div class="auth-header">
+        <h1>Create an account</h1>
+        <p>Join us to start shopping.</p>
+      </div>
+
+      <form id="customer-register-form" class="flex-col" style="gap: var(--spacing-md);" onsubmit="event.preventDefault(); window.location.href = 'products/products.html';">
+        <div class="form-group flex-col" style="gap: var(--spacing-xs);">
+          <label class="eyebrow text-muted" for="email">Email</label>
+          <input type="email" id="email" class="text-input" placeholder="email@example.com" required autofocus>
+        </div>
+
+        <div class="form-group flex-col" style="gap: var(--spacing-xs);">
+          <label class="eyebrow text-muted" for="password">Password</label>
+          <input type="password" id="password" class="text-input" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="button-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md);">
+          Sign Up
+        </button>
+      </form>
+
+      <div style="margin-top: var(--spacing-xl); text-align: center; font-size: var(--type-body-sm-size); color: var(--color-ink-muted);">
+        Already have an account? 
+        <a href="login.html" style="font-weight: 600; text-decoration: none; color: var(--color-primary);">Log in here</a>
+      </div>
+      <div style="margin-top: var(--spacing-md); text-align: center;">
+        <a href="vendor/register.html" style="font-size: var(--type-caption-size); color: var(--color-ink-faint); text-decoration: none;">Want to become a vendor? Apply here</a>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

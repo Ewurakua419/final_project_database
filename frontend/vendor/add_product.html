@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Product - Vendor Portal</title>
+  <link rel="stylesheet" href="vendor-base.css">
+
+</head>
+<body>
+
+  <div id="vendor-nav-container"></div>
+  <main class="container" style="padding-top: var(--spacing-xl); padding-bottom: var(--spacing-xxl);">
+    <div style="margin-bottom: var(--spacing-xl); text-align: center;">
+      <h1 class="display-2">Add New Product</h1>
+    </div>
+
+      <form class="feature-card" style="max-width: 600px; margin: 0 auto;" id="add-product-form">
+        <div class="form-grid">
+          <div class="flex-col full-width" style="gap: var(--spacing-xs);">
+            <label class="eyebrow text-muted">Product Name</label>
+            <input type="text" class="text-input" id="prod-name" placeholder="e.g. Wireless Noise-Cancelling Headphones" required>
+          </div>
+
+          <div class="flex-col" style="gap: var(--spacing-xs);">
+            <label class="eyebrow text-muted">Brand</label>
+            <input type="text" class="text-input" id="prod-brand" placeholder="e.g. Sony" required>
+          </div>
+
+          <div class="flex-col" style="gap: var(--spacing-xs);">
+            <label class="eyebrow text-muted">Category</label>
+            <select class="text-input" id="prod-category" required>
+              <option value="tech">Tech</option>
+              <option value="fashion">Fashion</option>
+              <option value="beauty">Beauty</option>
+              <option value="food">Food</option>
+            </select>
+          </div>
+
+          <div class="flex-col" style="gap: var(--spacing-xs);">
+            <label class="eyebrow text-muted">Price ($)</label>
+            <input type="number" step="0.01" class="text-input" id="prod-price" placeholder="299.99" required>
+          </div>
+
+          <div class="flex-col" style="gap: var(--spacing-xs);">
+            <label class="eyebrow text-muted">Initial Stock</label>
+            <input type="number" class="text-input" id="prod-stock" placeholder="50" required>
+          </div>
+
+          <div class="flex-col full-width" style="gap: var(--spacing-xs);">
+            <label class="eyebrow text-muted">Image URL</label>
+            <input type="url" class="text-input" id="prod-image" placeholder="https://example.com/image.jpg" required>
+          </div>
+
+          <div class="flex-col full-width" style="gap: var(--spacing-xs);">
+            <label class="eyebrow text-muted">Description</label>
+            <textarea class="text-input" id="prod-description" rows="3" placeholder="Enter product details..." required></textarea>
+          </div>
+        </div>
+
+        <div style="margin-top: var(--spacing-xl); display: flex; gap: var(--spacing-md); justify-content: flex-end;">
+          <a href="products.html" class="button-utility" style="text-decoration: none;">Cancel</a>
+          <button type="submit" id="save-btn" class="button-utility" style="background-color: var(--color-primary); color: white; border: none;">Create Product</button>
+        </div>
+      </form>
+    </main>
+
+  <script type="module" src="vendor-navbar.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+
+      document.getElementById("add-product-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        
+        const btn = document.getElementById("save-btn");
+        const originalText = btn.innerText;
+        btn.innerText = "Saving...";
+        btn.disabled = true;
+
+        const productData = {
+          name: document.getElementById("prod-name").value,
+          brand: document.getElementById("prod-brand").value,
+          type: document.getElementById("prod-category").value,
+          priceCents: Math.round(parseFloat(document.getElementById("prod-price").value) * 100),
+          stock: parseInt(document.getElementById("prod-stock").value),
+          image: document.getElementById("prod-image").value,
+          description: document.getElementById("prod-description").value,
+        };
+
+        fetch("http://127.0.0.1:5001/vendor/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(productData)
+        })
+        .then(res => {
+          if (!res.ok) throw new Error("Failed to save product");
+          return res.json();
+        })
+        .then(data => {
+          alert("Product saved successfully!");
+          window.location.href = "products.html";
+        })
+        .catch(err => {
+          console.error(err);
+          btn.innerText = "Error: Please try again";
+          btn.style.backgroundColor = "var(--color-accent-orange)";
+          setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.backgroundColor = "";
+            btn.disabled = false;
+          }, 2000);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

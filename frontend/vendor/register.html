@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendor Portal - Register</title>
+  <link rel="stylesheet" href="vendor-base.css">
+
+</head>
+<body>
+
+  <div class="auth-layout">
+    <a href="#" style="font-weight: 600; text-decoration: none; color: var(--color-ink-secondary);">
+      Simple Ecommerce Store
+    </a>
+    <div class="ex-auth-form-card">
+      <div class="auth-header">
+        <h1>Become a Seller</h1>
+        <p>Apply for a vendor account to start selling.</p>
+      </div>
+
+      <form id="vendor-register-form" class="flex-col" style="gap: var(--spacing-md);">
+
+        <div class="form-group flex-col" style="gap: var(--spacing-xs);">
+          <label class="eyebrow text-muted" for="email">Email</label>
+          <input type="email" id="email" class="text-input" placeholder="vendor@example.com" required>
+        </div>
+
+        <div class="form-group flex-col" style="gap: var(--spacing-xs);">
+          <label class="eyebrow text-muted" for="password">Password</label>
+          <input type="password" id="password" class="text-input" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="button-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md);">
+          Submit Application
+        </button>
+      </form>
+
+      <div style="margin-top: var(--spacing-xl); text-align: center; font-size: var(--type-body-sm-size); color: var(--color-ink-muted);">
+        Already have a vendor account? 
+        <a href="login.html" style="font-weight: 600; text-decoration: none; color: var(--color-primary);">Log in</a>
+      </div>
+      <div style="margin-top: var(--spacing-md); text-align: center;">
+        <a href="../login.html" style="font-size: var(--type-caption-size); color: var(--color-ink-faint); text-decoration: none;">Return to Customer Store</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("vendor-register-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      // Mock register
+      sessionStorage.setItem("vendor_logged_in", "true");
+      window.location.href = "dashboard.html";
+    });
+  </script>
+</body>
+</html>

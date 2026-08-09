@@ -1,0 +1,134 @@
+/* checkout.css */
+.checkout-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 1000px;
+  margin: 3rem auto;
+  padding: 0 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .checkout-layout {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+.checkout-form-section {
+  flex: 1.5;
+  background-color: var(--color-canvas);
+  padding: 2rem;
+  border-radius: var(--rounded-lg);
+  border: 1px solid var(--color-hairline);
+}
+
+.checkout-summary-section {
+  flex: 1;
+  background-color: var(--color-canvas);
+  padding: 2rem;
+  border-radius: var(--rounded-lg);
+  border: 1px solid var(--color-hairline);
+  position: sticky;
+  top: 2rem;
+}
+
+/* Header */
+.checkout-header {
+  text-align: center;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid var(--color-hairline);
+  background-color: var(--color-canvas);
+  margin-bottom: 2rem;
+}
+.checkout-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+/* Form Styles */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+.form-group .text-input {
+  width: 100%;
+  padding: 0.75rem 1rem; /* Slightly larger padding for checkout feel */
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+}
+.form-row .form-group {
+  flex: 1;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-hairline);
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+/* Order Summary */
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-hairline);
+}
+.summary-item-img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: var(--rounded-lg);
+  background-color: var(--color-canvas);
+  border: 1px solid var(--color-hairline);
+}
+.summary-item-details {
+  flex: 1;
+  padding: 0 1rem;
+}
+.summary-item-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+.summary-item-meta {
+  font-size: 0.85rem;
+  color: var(--color-ink-secondary);
+  margin-top: 0.25rem;
+}
+.summary-item-price {
+  font-weight: 500;
+}
+
+.summary-totals {
+  margin-top: 1.5rem;
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  color: var(--color-ink-secondary);
+}
+.summary-row.total {
+  color: var(--color-ink);
+  font-weight: 600;
+  font-size: 1.15rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-hairline);
+}

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmed - Notion Styled Store</title>
+  <link rel="stylesheet" href="../base.css">
+  <style>
+    .confirmation-container {
+      max-width: 600px;
+      margin: 5rem auto;
+      text-align: center;
+      background-color: var(--color-surface);
+      padding: 3rem 2rem;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-border);
+    }
+    .success-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+    .confirmation-title {
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--color-ink);
+      margin-bottom: 1rem;
+    }
+    .order-id-display {
+      background-color: var(--color-surface-hover);
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-md);
+      font-family: monospace;
+      font-size: 1.1rem;
+      margin: 1.5rem 0;
+      border: 1px solid var(--color-border);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="navbar-container"></div>
+
+  <div class="confirmation-container">
+    <div class="success-icon">🎉</div>
+    <h2 class="confirmation-title">Thank you for your order!</h2>
+    <p style="color: var(--color-ink-secondary); line-height: 1.6;">
+      Your order has been successfully placed and is now being processed. We'll send you an email confirmation shortly.
+    </p>
+    
+    <div>
+      <span style="font-weight: 500; display: block; margin-top: 1rem;">Order Reference:</span>
+      <div class="order-id-display" id="display-order-id">Loading...</div>
+    </div>
+
+    <div style="margin-top: 2.5rem; display: flex; gap: 1rem; justify-content: center;">
+      <a href="orders.html" class="button-secondary" style="text-decoration: none; padding: 0.75rem 2rem; display: inline-block;">
+        View Orders
+      </a>
+      <a href="../products/products.html" class="button-primary" style="text-decoration: none; padding: 0.75rem 2rem; display: inline-block;">
+        Continue Shopping
+      </a>
+    </div>
+  </div>
+
+  <script type="module" src="../navbar.js"></script>
+  <script>
+    function initOrderConfirmation() {
+      const orderId = sessionStorage.getItem("last_order_id");
+      if (orderId) {
+        document.getElementById("display-order-id").innerText = orderId;
+      } else {
+        document.getElementById("display-order-id").innerText = "Unknown";
+      }
+    }
+
+    initOrderConfirmation();
+  </script>
+</body>
+</html>

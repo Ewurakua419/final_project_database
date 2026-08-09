@@ -1,0 +1,59 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--color-canvas-soft);
+  color: var(--color-ink-secondary);
+  font-size: var(--font-size-body-md);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography Voice */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-ink);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+h1 {
+  font-size: var(--font-size-heading-1);
+  letter-spacing: var(--tracking-heading-1);
+}
+
+h2 {
+  font-size: var(--font-size-heading-2);
+  letter-spacing: var(--tracking-heading-2);
+  line-height: 1.23;
+}
+
+h3 {
+  font-size: var(--font-size-heading-3);
+  letter-spacing: var(--tracking-heading-3);
+  line-height: 1.27;
+}
+
+p {
+  color: var(--color-ink-secondary);
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+a:hover {
+  color: var(--color-primary-active);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
