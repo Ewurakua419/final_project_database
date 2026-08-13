@@ -1,14 +1,6 @@
 show databases;
 use ecommerce;
 
-create table order_items 
-( product_id varchar(6)  not null, 
-order_id varchar(6)  not null, 
-quantity int(10) not null, 
-added_date date not null, 
-primary key (product_id, order_id), 
-foreign key (order_id) references orders(order_id) ON DELETE CASCADE,
-foreign key (product_id) references product(product_id) );
 
 Alter table order_items ADD CONSTRAINT chk_orderitems_quantity CHECK (quantity > 0);
 
