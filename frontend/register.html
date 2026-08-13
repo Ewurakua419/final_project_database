@@ -18,7 +18,7 @@
         <p>Join us to start shopping.</p>
       </div>
 
-      <form id="customer-register-form" class="flex-col" style="gap: var(--spacing-md);" onsubmit="event.preventDefault(); window.location.href = 'products/products.html';">
+      <form id="customer-register-form" class="flex-col" style="gap: var(--spacing-md);">
         <div class="form-group flex-col" style="gap: var(--spacing-xs);">
           <label class="eyebrow text-muted" for="email">Email</label>
           <input type="email" id="email" class="text-input" placeholder="email@example.com" required autofocus>
@@ -28,6 +28,8 @@
           <label class="eyebrow text-muted" for="password">Password</label>
           <input type="password" id="password" class="text-input" placeholder="••••••••" required>
         </div>
+        
+        <div id="error-message" style="color: red; font-size: 14px; display: none;"></div>
 
         <button type="submit" class="button-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md);">
           Sign Up
@@ -43,6 +45,39 @@
       </div>
     </div>
   </div>
-
+  
+  <script>
+    document.getElementById('customer-register-form').addEventListener('submit', async function(e) {
+      e.preventDefault(); // Prevent default form submission
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const errorDiv = document.getElementById('error-message');
+      
+      try {
+        const response = await fetch('http://127.0.0.1:5001/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email: email, password: password })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          // Success! Redirect to login page
+          window.location.href = 'login.html';
+        } else {
+          // Show error message from backend
+          errorDiv.style.display = 'block';
+          errorDiv.textContent = data.error || 'An error occurred during registration.';
+        }
+      } catch (error) {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = 'Could not connect to the server.';
+      }
+    });
+  </script>
 </body>
 </html>
