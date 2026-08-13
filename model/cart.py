@@ -1,5 +1,5 @@
 import uuid
-from model.customer import Customer
+# from model.customer import Customer # Commented out to prevent circular import with model.customer
 from model.transaction import Transaction
 from model.order import Order
 class Cart:

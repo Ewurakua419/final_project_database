@@ -9,9 +9,12 @@ class Marketplace:
     def __init__(self, name):
         self.name=name
 
-    def finduser(self, name,password):
-        name = name.strip().lower()
-        rows = database.searchcustomer(name,password)
+    # def finduser(self, name,password):
+    def finduser(self, email):
+        # name = name.strip().lower()
+        # rows = database.searchcustomer(name,password)
+        email = email.strip().lower()
+        rows = database.searchcustomer(email)
         if rows == None:
             print("User not found")
             return None
@@ -38,24 +41,37 @@ class Marketplace:
     #update email
     #delete payment methods
     def registerCustomer(self, name, password, email):
-        if database.search(name) is not None:
+        # if database.search(name) is not None:
+        if database.searchcustomer(email) is not None:
             print("User already exists")
             return None
         passworde = auth.encodere(password)
-        user = Customer(name=name, email=email,password=passworde)
+        # user = Customer(name=name, email=email,password=passworde)
+        user = Customer(password=passworde, email=email)
+        
+        # database.register(
+        #     name,
+        #     userid=user.unique_id,
+        #     cart_ids=user.cart.ids,
+        #     balance=user.wallet.check_bal(),
+        #     password=passworde,
+        # )
         database.register(
-            name,
+            name=name,
             userid=user.unique_id,
             cart_ids=user.cart.ids,
-            balance=user.wallet.check_bal(),
+            balance=0,
             password=passworde,
+            email=email
         )
 
         print("Successful")
         return user
 
-    def login(self, name, password):
-        customer = self.finduser(name,password)
+    # def login(self, name, password):
+    def login(self, email, password):
+        # customer = self.finduser(name,password)
+        customer = self.finduser(email)
 
         if customer is None:
             print("Login unsuccessful: Username not found")

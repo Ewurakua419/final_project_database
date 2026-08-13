@@ -31,6 +31,8 @@
           <input type="password" id="password" class="text-input" placeholder="••••••••" required>
         </div>
 
+        <div id="error-message" style="color: red; font-size: 14px; display: none;"></div>
+
         <button type="submit" class="button-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md);">
           Submit Application
         </button>
@@ -47,11 +49,35 @@
   </div>
 
   <script>
-    document.getElementById("vendor-register-form").addEventListener("submit", (e) => {
+    document.getElementById("vendor-register-form").addEventListener("submit", async (e) => {
       e.preventDefault();
-      // Mock register
-      sessionStorage.setItem("vendor_logged_in", "true");
-      window.location.href = "dashboard.html";
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const errorDiv = document.getElementById('error-message');
+      
+      try {
+        const response = await fetch('http://127.0.0.1:5001/vendor/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email: email, password: password })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          // Success! Redirect to vendor login page
+          window.location.href = 'login.html';
+        } else {
+          errorDiv.style.display = 'block';
+          errorDiv.textContent = data.error || 'An error occurred during registration.';
+        }
+      } catch (error) {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = 'Could not connect to the server.';
+      }
     });
   </script>
 </body>
