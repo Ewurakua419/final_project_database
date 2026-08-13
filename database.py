@@ -7,7 +7,7 @@ def connect():
     return mariadb.connect(
     host="localhost",
     user="loisamoah",
-    password=" ",
+    password="9002",
     database="ecommerce",
     port=3306
 )
