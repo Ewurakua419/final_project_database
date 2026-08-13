@@ -1,6 +1,6 @@
-Create database ecommercetest;
+Create database ecommerce;
 
-Use ecommercetest;
+Use ecommerce;
 
 
 Create table customer 
@@ -104,7 +104,7 @@ payment_type varchar(50) not null,
 foreign key (order_id) references orders(order_id),
 foreign key (customer_id) references customer(customer_id));
 
-Alter table payment ADD constraint chk_product_type CHECK (payment_type in ('card','bank transfer', 'mobile money'));
+Alter table payment ADD constraint chk_payment_type CHECK (payment_type in ('card','bank transfer', 'mobile money'));
 
 Alter table payment ADD CONSTRAINT chk_payment_amount CHECK (amount >= 0.00);
 
