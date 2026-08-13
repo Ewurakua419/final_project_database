@@ -90,11 +90,11 @@ CREATE VIEW Shipping_Delivery_Address AS
 SELECT
     address_id,
     city , 
-	Landmark, street_address,
+	Landmark, street_address
 
 FROM Address;
 
-
+GRANT SELECT
 ON Shipping_Delivery_Address
 TO marketplace_shipping_company;
 
@@ -190,7 +190,7 @@ SELECT
     pc.category,
     SUM(oi.quantity) AS units_sold
 FROM ProductCategories pc
-JOIN Order_Item oi
+JOIN Order_Items oi
     ON pc.product_id = oi.product_id
 GROUP BY pc.category
 ORDER BY units_sold DESC;

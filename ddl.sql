@@ -97,9 +97,10 @@ Alter table orders ADD CONSTRAINT chk_order_shipping CHECK (shipping_fee >= 0.00
 create table payment 
 ( payment_id  varchar(6) primary key, 
 customer_id  varchar(6) not null, 
-amount decimal(10,2) not null, payment_date date not null, 
+amount decimal(10,2) not null, 
+payment_date date not null, 
 payment_type varchar(50) not null,
- order_id  varchar(36) not null, 
+ order_id  varchar(6) not null, 
 foreign key (order_id) references orders(order_id),
 foreign key (customer_id) references customer(customer_id));
 

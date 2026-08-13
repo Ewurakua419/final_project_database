@@ -14,7 +14,7 @@ ON Product, Fashion,  Beauty
 TO marketplace_vendor;
 
 GRANT SELECT
-ON "orders", Order_Item
+ON Orders, Order_Item
 TO marketplace_vendor;
 
 GRANT USAGE ON ecommerce.*
