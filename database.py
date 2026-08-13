@@ -20,50 +20,73 @@ def connect():
 # rows = cur.fetchall()
 # for row in rows:
 #    print(row)
+MOCK_USERS = []
+
 def searchcustomer(email):
-    with connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT customer.*, cart.cart_id, cart_items.product_id
-                FROM customer
-                JOIN cart
-                    ON customer.customer_id = cart.customer_id
-                JOIN cart_items
-                    ON cart.cart_id = cart_items.cart_id
-                JOIN customer_credentials
-                    ON customer.customer_id = customer_credentials.customer_id
-                WHERE customer.email = %s
-                """,
-                (email,)
-            )
-            rows = cur.fetchone()
-            if not rows:
-                return None
-            return rows
+    # with connect() as conn:
+    #     with conn.cursor() as cur:
+    #         cur.execute(
+    #             """
+    #             SELECT customer.*, cart.cart_id, cart_items.product_id
+    #             FROM customer
+    #             JOIN cart
+    #                 ON customer.customer_id = cart.customer_id
+    #             JOIN cart_items
+    #                 ON cart.cart_id = cart_items.cart_id
+    #             JOIN customer_credentials
+    #                 ON customer.customer_id = customer_credentials.customer_id
+    #             WHERE customer.email = %s
+    #             """,
+    #             (email,)
+    #         )
+    #         rows = cur.fetchone()
+    #         if not rows:
+    #             return None
+    #         return rows
+    
+    # --- MOCK LOGIC ---
+    for u in MOCK_USERS:
+        if u["email"] == email:
+            # Returning tuple to simulate SQL row: (unique_id, name, password, cart_ids, email)
+            return (u["id"], u["name"], u["password"], "cart_mock", u["email"])
+    return None
 
 
 def login(email, password):
-    with connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT customer.*,cart.id,customer_credentials.password_hash
-                FROM customer
-                JOIN customer_credentials
-                    ON customer.customer_id = customer_credentials.customer_id
-                WHERE customer.email = %s""",
-                (email, ),
-            )
-            rows = cur.fetchone()
-            if not rows:
-                return None
-            if password==rows[-1]:
-                return rows
+    # with connect() as conn:
+    #     with conn.cursor() as cur:
+    #         cur.execute(
+    #             """
+    #             SELECT customer.*,cart.id,customer_credentials.password_hash
+    #             FROM customer
+    #             JOIN customer_credentials
+    #                 ON customer.customer_id = customer_credentials.customer_id
+    #             WHERE customer.email = %s""",
+    #             (email, ),
+    #         )
+    #         rows = cur.fetchone()
+    #         if not rows:
+    #             return None
+    #         if password==rows[-1]:
+    #             return rows
+    
+    # --- MOCK LOGIC ---
+    pass # In our new architecture, marketplace.py handles verification itself using searchcustomer
 
 
-def register(f_name, l_name):
-    pass
+def register(name, userid, cart_ids, balance, password, email):
+    # f_name, l_name from original function definition are preserved conceptually below
+    # pass
+    
+    # --- MOCK LOGIC ---
+    new_user = {
+        "id": userid,
+        "name": name,
+        "email": email,
+        "password": password
+    }
+    MOCK_USERS.append(new_user)
+    return new_user
 
 def undo():
     with connect() as conn:
