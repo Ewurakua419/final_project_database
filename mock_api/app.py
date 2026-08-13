@@ -9,6 +9,11 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import uuid
 from datetime import datetime, timezone
+import sys
+import os
+# Add the parent directory to sys.path so we can import auth.py
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from auth import encodere
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -18,10 +23,12 @@ CORS(app, resources={
     r"/checkout.*": {"origins": "http://127.0.0.1:5500"},
     r"/orders.*": {"origins": "http://127.0.0.1:5500"},
     r"/vendor/.*": {"origins": "http://127.0.0.1:5500"},
+    r"/register": {"origins": "http://127.0.0.1:5500"},
+    r"/login": {"origins": "http://127.0.0.1:5500"},
 })
 
 vendor_id = "vendor_001"
-
+users = [] # Temporary mock storage for users
 def find_product(product_id):
     for p in products:
         if p["id"] == product_id:
@@ -34,7 +41,38 @@ def get_image_url(image_path):
     base_url = request.host_url
     return f"{base_url}static/{image_path}"
 
-
+# --- AUTHENTICATION ---
+@app.route("/register", methods=["POST"])
+def register_customer():
+    if not request.is_json:
+        return jsonify({"error": "Missing JSON body"}), 400
+        
+    data = request.get_json()
+    email = data.get("email")
+    password = data.get("password")
+    
+    if not email or not password:
+        return jsonify({"error": "Email and password are required"}), 400
+        
+    # Check if user exists
+    for u in users:
+        if u["email"] == email:
+            return jsonify({"error": "User already exists"}), 409
+            
+    # Hash password using auth.py
+    hashed_password = encodere(password)
+    
+    new_user = {
+        "id": "user_" + uuid.uuid4().hex[:10],
+        "email": email,
+        "password": hashed_password
+    }
+    users.append(new_user)
+    
+    return jsonify({
+        "message": "User registered successfully", 
+        "user_id": new_user["id"]
+    }), 201
 
 @app.route("/product-items", methods = ["GET"])
 def get_products():

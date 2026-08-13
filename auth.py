@@ -4,7 +4,6 @@ import bcrypt
 from typing import Union
 
 import jwt
-from model.customer import Customer
 SECRET_KEY=" MY SECRET KEY"
 def encodere(password:str):
     # converting password to array of bytes
