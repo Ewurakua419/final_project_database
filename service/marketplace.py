@@ -32,6 +32,23 @@ class Marketplace:
             )
             return user
 
+    def finduser_by_id(self, customer_id):
+        rows = database.searchcustomer_by_id(customer_id)
+        if rows == None:
+            print("User not found by ID")
+            return None
+        else:
+            return Customer(
+                name=rows[1],
+                password=rows[2],
+                unique_id=rows[0],
+                ids=rows[3],
+                email=rows[4],
+                first_name=rows[5] if len(rows) > 5 else None,
+                last_name=rows[6] if len(rows) > 6 else None,
+                phone_number=rows[7] if len(rows) > 7 else None,
+            )
+
     ##customer focus
     # customer can register, *
     # sign in, *
@@ -248,13 +265,16 @@ class Marketplace:
         reviews_data = database.get_reviews_by_product(product_id)
         reviews = []
         for r in reviews_data:
+            customer = self.finduser_by_id(r["customer_id"])
+            customer_name = customer.name if customer else "Anonymous"
             reviews.append(Review(
                 product_id=r["product_id"],
                 customer_id=r["customer_id"],
                 comment=r["comment"],
                 rating=r["rating"],
                 review_id=r["review_id"],
-                review_date=r["review_date"]
+                review_date=r["review_date"],
+                customer_name=customer_name
             ))
         return reviews
         

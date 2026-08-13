@@ -2,11 +2,12 @@ import uuid
 from datetime import datetime, timezone
 
 class Review:
-    def __init__(self, product_id, customer_id, comment, rating, review_id=None, review_date=None):
+    def __init__(self, product_id, customer_id, comment, rating, review_id=None, review_date=None, customer_name=None):
         self.product_id = product_id
         self.customer_id = customer_id
         self.comment = comment
         self.rating = int(rating)
+        self.customer_name = customer_name
         
         if review_id is None:
             self.review_id = str(uuid.uuid4())
@@ -14,7 +15,7 @@ class Review:
             self.review_id = review_id
             
         if review_date is None:
-            self.review_date = datetime.now(timezone.utc).isoformat() + "Z"
+            self.review_date = datetime.now(timezone.utc).replace(tzinfo=None).isoformat() + "Z"
         else:
             self.review_date = review_date
 
@@ -24,7 +25,7 @@ class Review:
         return {
             "id": self.review_id,
             "product_id": self.product_id,
-            "name": self.customer_id, # Frontend shows the name, but we use ID here for now
+            "name": self.customer_name or "Anonymous",
             "rating": self.rating,
             "text": self.comment,
             "created_at": self.review_date

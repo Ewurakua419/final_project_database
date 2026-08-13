@@ -12,7 +12,7 @@ import os
 from functools import wraps
 # Add the parent directory to sys.path so we can import auth.py
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from auth import encodere, decodere, SECRET_KEY
+from auth import SECRET_KEY
 import jwt
 from datetime import timedelta
 from service.marketplace import Marketplace

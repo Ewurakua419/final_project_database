@@ -85,6 +85,19 @@ def searchcustomer(email):
             return (u["unique_id"], u["name"], u["password"], "cart_mock", u["email"], u.get("first_name", ""), u.get("last_name", ""), u.get("phone_number", ""))
     return None
 
+def searchcustomer_by_id(customer_id):
+    # with connect() as conn:
+    #     with conn.cursor() as cur:
+    #         cur.execute("SELECT ... WHERE customer_id = %s", (customer_id,))
+    #         # ...
+    
+    # --- MOCK LOGIC ---
+    for u in MOCK_USERS:
+        if u["unique_id"] == customer_id:
+            # Returning tuple to simulate SQL row: (unique_id, name, password, cart_ids, email, first_name, last_name, phone_number)
+            return (u["unique_id"], u["name"], u["password"], "cart_mock", u["email"], u.get("first_name", ""), u.get("last_name", ""), u.get("phone_number", ""))
+    return None
+
 
 def login(email, password):
     # with connect() as conn:
