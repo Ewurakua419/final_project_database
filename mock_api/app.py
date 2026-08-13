@@ -1,6 +1,7 @@
 from products import products
 from cart import cart
-from vendors import vendors
+# from vendors import vendors # Using marketplace instead
+
 from reviews import reviews
 import uuid
 from datetime import datetime
@@ -107,26 +108,19 @@ def register_vendor():
     data = request.get_json()
     email = data.get("email")
     password = data.get("password")
+    name = data.get("name", "New Vendor")
+    address = data.get("address", "123 Vendor St")
     
     if not email or not password:
         return jsonify({"error": "Email and password are required"}), 400
         
-    for v in vendors:
-        if v["email"] == email:
-            return jsonify({"error": "Vendor already exists"}), 409
-            
-    hashed_password = encodere(password)
-    
-    new_vendor = {
-        "id": "vendor_" + uuid.uuid4().hex[:10],
-        "email": email,
-        "password": hashed_password
-    }
-    vendors.append(new_vendor)
-    
+    vendor = marketplace.registerVendor(name, password, email, address)
+    if not vendor:
+        return jsonify({"error": "Vendor already exists or registration failed"}), 409
+        
     return jsonify({
         "message": "Vendor registered successfully", 
-        "vendor_id": new_vendor["id"]
+        "vendor_id": vendor.unique_id
     }), 201
 
 @app.route("/vendor/login", methods=["POST"])
@@ -141,20 +135,14 @@ def login_vendor():
     if not email or not password:
         return jsonify({"error": "Email and password are required"}), 400
         
-    vendor = None
-    for v in vendors:
-        if v["email"] == email:
-            vendor = v
-            break
-            
+    vendor = marketplace.loginVendor(email, password)
+    
     if not vendor:
         return jsonify({"error": "Invalid email or password"}), 401
         
-    if not decodere(password, vendor["password"]):
-        return jsonify({"error": "Invalid email or password"}), 401
-        
+    # Generate JWT Token
     payload = {
-        "vendor_id": vendor["id"],
+        "vendor_id": vendor.unique_id,
         "exp": datetime.now(timezone.utc) + timedelta(hours=24)
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
@@ -164,37 +152,44 @@ def login_vendor():
         "token": token
     }), 200
 
+DUMMY_VENDOR_EMAIL = "dummy_vendor@example.com"
+
 @app.route("/product-items", methods = ["GET"])
 def get_products():
+    all_products = marketplace.get_all_products()
     processed_products = []
 
-    for product in products:
-        product_copy = product.copy()
-        product_copy['image'] = get_image_url(product_copy['image'])
-        processed_products.append(product_copy)
+    for product in all_products:
+        p_dict = product.to_dict()
+        p_dict['image'] = get_image_url(p_dict['image'])
+        processed_products.append(p_dict)
         
     return jsonify({"products": processed_products}), 200
 
 @app.route("/product-items/<product_id>", methods=["GET"])
 def get_product(product_id):
-    product = find_product(product_id)
+    product = marketplace.findproduct(product_id)
     if product:
-        product_copy = product.copy()
-        product_copy['image'] = get_image_url(product_copy['image'])
-        return jsonify(product_copy), 200
+        p_dict = product.to_dict()
+        p_dict['image'] = get_image_url(p_dict['image'])
+        return jsonify(p_dict), 200
     return jsonify({"error": "Product not found"}), 404
 
 
 @app.route("/vendor/products", methods=["GET"])
 def get_vendor_products():
-     # Hardcoded active vendor
+    vendor = marketplace.findvendor(DUMMY_VENDOR_EMAIL)
+    if not vendor:
+        return jsonify({"error": "Vendor not found"}), 404
+
+    all_products = marketplace.get_all_products()
     vendor_products = []
     
-    for product in products:
-        if product.get("vendor_id") == vendor_id:
-            product_copy = product.copy()
-            product_copy['image'] = get_image_url(product_copy['image'])
-            vendor_products.append(product_copy)
+    for product in all_products:
+        if product.vendor_id == vendor.unique_id:
+            p_dict = product.to_dict()
+            p_dict['image'] = get_image_url(p_dict['image'])
+            vendor_products.append(p_dict)
             
     return jsonify({"products": vendor_products}), 200
 
@@ -204,26 +199,14 @@ def add_vendor_product():
         return jsonify({"error": "Missing JSON body"}), 400
         
     data = request.get_json()
-    
     if not data.get("name") or not data.get("priceCents") or not data.get("image"):
         return jsonify({"error": "Missing required fields"}), 400
         
-    new_product = {
-        "id": str(uuid.uuid4()),
-        "name": data.get("name"),
-        "image": data.get("image"),
-        "priceCents": int(data.get("priceCents")),
-        "type": data.get("type", "General"),
-        "vendor_id": vendor_id,
-        "rating": {"stars": 0, "count": 0},
-        "description": data.get("description", ""),
-        "keywords": [],
-        "brand": data.get("brand", ""),
-        "stock": int(data.get("stock", 0))
-    }
-    
-    products.insert(0, new_product) # Add to the top of the list
-    return jsonify({"message": "Product created successfully", "product": new_product}), 201
+    new_product = marketplace.add_product(DUMMY_VENDOR_EMAIL, data)
+    if not new_product:
+        return jsonify({"error": "Vendor not found"}), 404
+        
+    return jsonify({"message": "Product created successfully", "product": new_product.to_dict()}), 201
 
 @app.route("/vendor/products/<product_id>", methods=["PUT"])
 def update_vendor_product(product_id):
@@ -231,38 +214,30 @@ def update_vendor_product(product_id):
         return jsonify({"error": "Missing JSON body"}), 400
         
     data = request.get_json()
-    product = find_product(product_id)
     
-    if not product:
-        return jsonify({"error": "Product not found"}), 404
-        
-    if product.get("vendor_id") != vendor_id:
-        return jsonify({"error": "Unauthorized"}), 403
-        
-    # Update fields dynamically
+    updates = {}
     allowed_string_fields = ["name", "image", "type", "description", "brand"]
     for field in allowed_string_fields:
         if field in data:
-            product[field] = data[field]
+            updates[field] = data[field]
             
     if "priceCents" in data:
-        product["priceCents"] = int(data["priceCents"])
+        updates["priceCents"] = int(data["priceCents"])
     if "stock" in data:
-        product["stock"] = int(data["stock"])
+        updates["stock"] = int(data["stock"])
         
-    return jsonify({"message": "Product updated successfully", "product": product}), 200
+    updated_product = marketplace.update_product(DUMMY_VENDOR_EMAIL, product_id, updates)
+    if not updated_product:
+        return jsonify({"error": "Product not found or unauthorized"}), 404
+        
+    return jsonify({"message": "Product updated successfully", "product": updated_product.to_dict()}), 200
 
 @app.route("/vendor/products/<product_id>", methods=["DELETE"])
 def delete_vendor_product(product_id):
-    product = find_product(product_id)
-    
-    if not product:
-        return jsonify({"error": "Product not found"}), 404
+    success = marketplace.deleteproduct(product_id, DUMMY_VENDOR_EMAIL)
+    if not success:
+        return jsonify({"error": "Product not found or unauthorized"}), 404
         
-    if product.get("vendor_id") != vendor_id:
-        return jsonify({"error": "Unauthorized"}), 403
-        
-    products.remove(product)
     return jsonify({"message": "Product deleted successfully"}), 200
 
 @app.route("/vendor/orders", methods=["GET"])
@@ -343,71 +318,41 @@ def get_vendor_stats():
 
 
 
+DUMMY_CUSTOMER_EMAIL = "dummy@example.com"
+
 @app.route("/cart", methods=["GET"])
 def get_cart():
-    cart_items = []
-    total_price = 0
-    for item in cart:
-        item_id = item["prodID"]
-        quantity = item["quantity"]
-        product = find_product(item_id)
+    result = marketplace.get_cart(DUMMY_CUSTOMER_EMAIL)
+    if result is None:
+        return jsonify({"error": "User not found"}), 404
         
-        if product:
-            product_copy = product.copy()
-            product_copy['image'] = get_image_url(product_copy['image'])
-            
-            item_total = product_copy.get("priceCents", 0) * quantity
-            total_price += item_total
-            
-            cart_items.append({
-                "product": product_copy,
-                "quantity": quantity,
-                "item_total": round(item_total, 2)
-            })
-
-    return jsonify({
-        "cart": cart_items,
-        "total_items": sum(item["quantity"] for item in cart),
-        "total_price": round(total_price, 2)
-    }), 200
+    return jsonify(result), 200
 
 
 @app.route("/cart", methods=["POST"])
 def add_to_cart():
-    #ensure the request is in JSON format
     if not request.is_json:
         return jsonify({"error": "Missing JSON body"}), 400
 
     data = request.get_json()
-
     prod_id = data.get("prodID")
     quantity = data.get("quantity")
 
-    #validate prod ID and quantity
     if not prod_id or not isinstance(quantity, int) or quantity < 1:
         return jsonify({"error": "Invalid prodID or quantity"}), 400
 
-    # Validate product exists
-    if not find_product(prod_id):
-        return jsonify({"error": "Product not found"}), 404
+    success = marketplace.add_to_cart(prod_id, DUMMY_CUSTOMER_EMAIL, quantity)
+    if not success:
+        return jsonify({"error": "Product or user not found"}), 404
 
-    # Check if item already exists in cart
-    for item in cart:
-        if item["prodID"] == prod_id:
-            item["quantity"] += quantity
-            return jsonify({"message": "Item updated in cart"}), 200
-
-    cart.append({"prodID": prod_id, "quantity": quantity})
     return jsonify({"message": "Item added to cart successfully"}), 201
 
 
 @app.route("/cart/<product_id>", methods=["DELETE"])
 def remove_item_completely(product_id):
-  # loop through cart and remove the item
-    for item in cart:
-        if item["prodID"] == product_id:
-            cart.remove(item)
-            return jsonify({"message": "Item removed from cart successfully"}), 200
+    success = marketplace.remove_from_cart(product_id, DUMMY_CUSTOMER_EMAIL)
+    if success:
+        return jsonify({"message": "Item removed from cart successfully"}), 200
     return jsonify({"error": "Item not found in cart"}), 404
 
 @app.route("/cart/<product_id>/quantity", methods=["PUT"])
@@ -421,20 +366,16 @@ def update_item(product_id):
     if quantity is None or not isinstance(quantity, int) or quantity < 0:
         return jsonify({"error": "Invalid quantity"}), 400
 
-    target_item = None
-    for item in cart:
-        if item["prodID"] == product_id:
-            target_item = item
-            break
-
     if quantity == 0:
-        cart.remove(target_item)
+        marketplace.remove_from_cart(product_id, DUMMY_CUSTOMER_EMAIL)
         return jsonify({"message": "Item quantity reached 0 and was removed"}), 200
         
-    if target_item:
-      target_item["quantity"] = quantity
-      return jsonify({"message": "Item updated in cart"}), 200
+    # To update quantity: remove it completely and add it back with the absolute quantity
+    marketplace.remove_from_cart(product_id, DUMMY_CUSTOMER_EMAIL)
+    success = marketplace.add_to_cart(product_id, DUMMY_CUSTOMER_EMAIL, quantity)
     
+    if success:
+        return jsonify({"message": "Item updated in cart"}), 200
     return jsonify({"error": "Item not found in cart"}), 404
 
 TAX_RATE = 0.08
@@ -449,28 +390,14 @@ def to_checkout():
     shipping_address = data.get("shipping_address", {})
     payment_details = data.get("payment_details", {})
     
-    if len(cart) == 0:
+    cart_data = marketplace.get_cart(DUMMY_CUSTOMER_EMAIL)
+    if not cart_data or cart_data["total_items"] == 0:
         return jsonify({"error": "Cart is empty"}), 400
         
-    subtotal = 0
-    order_items = []
-    
-    for item in cart:
-        prod = find_product(item["prodID"])
-        if prod:
-            price_dollars = prod.get("priceCents", 0) / 100
-            item_total = price_dollars * item["quantity"]
-            subtotal += item_total
-            order_items.append({
-                "product_id": prod["id"],
-                "name": prod["name"],
-                "image": get_image_url(prod["image"]),
-                "price_at_purchase": price_dollars,
-                "quantity": item["quantity"],
-                "item_total": round(item_total, 2)
-            })
+    subtotal = cart_data["total_price"]
+    order_items = cart_data["cart"] # Already formatted
             
-    tax = round(subtotal * TAX_RATE, 2) # 8% tax
+    tax = round(subtotal * TAX_RATE, 2)
     shipping = SHIPPING_FEE
     grand_total = round(subtotal + tax + shipping, 2)
     
@@ -478,7 +405,7 @@ def to_checkout():
     
     order = {
         "order_id": order_id,
-        "user_id": "user_12345",
+        "user_id": DUMMY_CUSTOMER_EMAIL,
         "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "status": "pending",
         "pricing_summary": {
@@ -489,13 +416,20 @@ def to_checkout():
         },
         "items": order_items,
         "shipping_address": shipping_address,
-        "payment_details": payment_details
+        "payment_details": {
+            "last_four": payment_details.get("card_number", "")[-4:],
+            "brand": "Visa"
+        }
     }
     
+    # Store order and empty cart
     orders.append(order)
-    cart.clear() # Empty the cart after successful checkout
+    marketplace.ordercart(grand_total, DUMMY_CUSTOMER_EMAIL)
     
-    return jsonify(order), 200
+    return jsonify({
+        "message": "Order placed successfully",
+        "order": order
+    }), 201
 
 
 

@@ -18,9 +18,27 @@ def connect():
 ##read data
 # cur.execute("SELECT * FROM students")
 # rows = cur.fetchall()
-# for row in rows:
-#    print(row)
-MOCK_USERS = []
+MOCK_USERS = [
+    {
+        "unique_id": "dummy_cust_001",
+        "name": "Dummy User",
+        "password": "hashed_password", # doesn't matter for cart
+        "cart_ids": "cart_001",
+        "email": "dummy@example.com"
+    }
+]
+MOCK_VENDORS = [
+    {
+        "unique_id": "vendor_001",
+        "name": "Dummy Vendor",
+        "email": "dummy_vendor@example.com",
+        "password": "hashed_password",
+        "address": "123 Vendor St"
+    }
+]
+MOCK_CARTS = {} # Maps customer_id to a list of items: [{"product": product, "quantity": quantity}]
+
+from mock_api.products import products as MOCK_PRODUCTS
 
 def searchcustomer(email):
     # with connect() as conn:
@@ -48,7 +66,7 @@ def searchcustomer(email):
     for u in MOCK_USERS:
         if u["email"] == email:
             # Returning tuple to simulate SQL row: (unique_id, name, password, cart_ids, email)
-            return (u["id"], u["name"], u["password"], "cart_mock", u["email"])
+            return (u["unique_id"], u["name"], u["password"], "cart_mock", u["email"])
     return None
 
 
@@ -80,7 +98,7 @@ def register(name, userid, cart_ids, balance, password, email):
     
     # --- MOCK LOGIC ---
     new_user = {
-        "id": userid,
+        "unique_id": userid,
         "name": name,
         "email": email,
         "password": password
@@ -88,47 +106,89 @@ def register(name, userid, cart_ids, balance, password, email):
     MOCK_USERS.append(new_user)
     return new_user
 
+def searchvendor(email):
+    # with connect() as conn:
+    #     with conn.cursor() as cur:
+    #         cur.execute(
+    #             """
+    #             SELECT vendor.*, vendor_credentials.password_hash
+    #             FROM vendor
+    #             JOIN vendor_credentials
+    #                 ON vendor.vendor_id = vendor_credentials.vendor_id
+    #             WHERE vendor.email = %s
+    #             """,
+    #             (email,)
+    #         )
+    #         rows = cur.fetchone()
+    #         if not rows:
+    #             return None
+    #         return rows
+    
+    # --- MOCK LOGIC ---
+    for v in MOCK_VENDORS:
+        if v["email"] == email:
+            # Return tuple to simulate SQL row: (address, name, unique_id, email, password)
+            return (v.get("address", ""), v["name"], v["unique_id"], v["email"], v["password"])
+    return None
+
+def registervendor(name, email, password, vendorid, address):
+    # with connect() as conn:
+    #     with conn.cursor() as cur:
+    #         cur.execute("INSERT INTO vendor ...")
+    #         conn.commit()
+    
+    # --- MOCK LOGIC ---
+    new_vendor = {
+        "unique_id": vendorid,
+        "name": name,
+        "email": email,
+        "password": password,
+        "address": address
+    }
+    MOCK_VENDORS.append(new_vendor)
+    return new_vendor
+
 def undo():
     with connect() as conn:
         conn.rollback()
 
 
+def get_all_products():
+    return MOCK_PRODUCTS
+
 def findproduct(productid):
-    with connect() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """select product.* from product where product_id=%s""",(productid,))
-                rows = cur.fetchone()
-                if not rows:
-                    return None
-                return rows
+    for p in MOCK_PRODUCTS:
+        if p["id"] == productid:
+            # Return tuple: (product_id, vendor_id, product_name, price, image_url, product_type, description)
+            return (
+                p["id"],
+                p["vendor_id"],
+                p["name"],
+                p.get("priceCents", 0),
+                p.get("image", ""),
+                p.get("type", ""),
+                p.get("description", "")
+            )
+    return None
 
-
-def addproduct(product, ):
+def addproduct(product_dict):
+    # product_dict should match the frontend format
+    MOCK_PRODUCTS.insert(0, product_dict)
     
-    with connect() as conn:
-            with conn.cursor() as cur:
-                if findproduct(productid=product.id)==None:
-                    cur.execute("insert into product values(%s,%s,%s,%s,%s,%s,%s)",(product.id,
-                            product.name,
-                            product.vendor_id,
-                            product.price,
-                            product.quantity,
-                            product.description,
-                            product.type,))
-                else:
-                    cur.execute("select quantity from product where product_id= %s",(product.id))
-                    rows = cur.fetchone()
-                    quantity=rows[0]
-                    quantity+=product.quantity
-                    cur.execute("update product set quantity = %s where product_id = %s",(quantity,product.id))
-                conn.commit()
+def updateproduct(productid, updates_dict):
+    for p in MOCK_PRODUCTS:
+        if p["id"] == productid:
+            for k, v in updates_dict.items():
+                p[k] = v
+            return True
+    return False
 
 def deleteproduct(productid):
-    if findproduct(productid)!=None:
-        with connect() as conn:
-            with conn.cursor() as cur:
-                cur.execute(" delete from product where product_id=%s",(productid))
+    for i, p in enumerate(MOCK_PRODUCTS):
+        if p["id"] == productid:
+            del MOCK_PRODUCTS[i]
+            return True
+    return False
 
 def viewtopproducs():
     with connect() as conn:
@@ -217,33 +277,51 @@ def top_popular_products_categories():
             rows = cur.fetchall()
             return rows
 
-
-def addtocart(product, customer,quantity):#check spellling for cart_item
-    dates=date.today()
-    if searchcustomer(customer.email)!=None:
+def addtocart(product, customer_id, quantity):
+    # dates=date.today()
+    # if searchcustomer(customer.email)!=None:
+    #     with connect() as conn:
+    #             with conn.cursor() as cur:
+    #                 cur.execute(
+    #                     """
+    #                     SELECT cart_id
+    #                     FROM  cart
+    #                     WHERE where cart.customer_id = %s """,
+    #                     (customer.customer_id,),
+    #                 )
+    #                 ... (SQL commented out)
+    
+    # --- MOCK LOGIC ---
+    if customer_id not in MOCK_CARTS:
+        MOCK_CARTS[customer_id] = []
         
-        with connect() as conn:
-                with conn.cursor() as cur:
-                    cur.execute(
-                        """
-                        SELECT cart_id
-                        FROM  cart
-                        WHERE where cart.customer_id = %s """,
-                        (customer.customer_id,),
-                    )
-                    rows = cur.fetchone()
-                    ids=rows[0]
-                    cur.execute(
-                                """
-                                SELECT quantity
-                                FROM  product
-                                WHERE  product_id = %s """,
-                                (product.id),
-                            )
-                    rows = cur.fetchone()
-                    quant=rows[0]
-                    if quant-quantity>=0:
-                        cur.execute("insert into cart_items values (%s, %s,%s,%s)",(product.id, ids,quantity,dates))
+    # Check if item already exists in cart, update quantity if it does
+    for item in MOCK_CARTS[customer_id]:
+        if item["product"].id == product.id:
+            item["quantity"] += quantity
+            return True
+            
+    MOCK_CARTS[customer_id].append({"product": product, "quantity": quantity})
+    return True
 
-                    else:
-                        print("too few items available")
+def getcart(customer_id):
+    return MOCK_CARTS.get(customer_id, [])
+
+def removefromcart(product_id, customer_id):
+    if customer_id not in MOCK_CARTS:
+        return False
+        
+    for i, item in enumerate(MOCK_CARTS[customer_id]):
+        if item["product"].id == product_id:
+            MOCK_CARTS[customer_id].pop(i)
+            return True
+    return False
+
+def checkout(customer_id):
+    if customer_id not in MOCK_CARTS or not MOCK_CARTS[customer_id]:
+        return False
+    
+    # In a real DB, you would move items from Cart to Order tables here.
+    # For now, we just clear the mock cart.
+    MOCK_CARTS[customer_id] = []
+    return True

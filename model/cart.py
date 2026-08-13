@@ -20,18 +20,23 @@ class Cart:
             return order1
 
     def remove_product(self, product):
-        if product in self.products:
-            self.products.remove(product)
+        for i, item in enumerate(self.products):
+            if item["product"].id == product.id:
+                self.products.pop(i)
+                return True
+        return None
 
-        else:
-            return None
+    def add_product(self, product, quantity):
+        for item in self.products:
+            if item["product"].id == product.id:
+                item["quantity"] += quantity
+                return True
+        self.products.append({"product": product, "quantity": quantity})
+        return True
 
-    def add_product(self,product):
-        self.products.append(product)
-
-    def check_product(self,product):
-        if product in self.products:
-             return True
-        else:
-             return False
+    def check_product(self, product):
+        for item in self.products:
+            if item["product"].id == product.id:
+                 return True
+        return False
         
