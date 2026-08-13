@@ -1,8 +1,5 @@
 from products import products
 from cart import cart
-# from vendors import vendors # Using marketplace instead
-
-from reviews import reviews
 import uuid
 from datetime import datetime
 from orders import orders
@@ -245,8 +242,8 @@ def get_vendor_orders():
         
     for order in vendor_orders:
         for item in order.get("items", []):
-            if "product" in item and "image" in item["product"]:
-                item["product"]["image"] = get_image_url(item["product"]["image"])
+            if "image" in item:
+                item["image"] = get_image_url(item["image"])
         
     sorted_orders = sorted(vendor_orders, key=get_order_date, reverse=True)
     return jsonify({"orders": sorted_orders}), 200
@@ -377,10 +374,7 @@ def to_checkout():
     if not order:
         return jsonify({"error": "Cart is empty or user not found"}), 400
     
-    return jsonify({
-        "message": "Order placed successfully",
-        "order": order.to_dict()
-    }), 201
+    return jsonify(order.to_dict()), 201
 
 
 
@@ -394,12 +388,12 @@ def get_orders():
     if customer_orders is None:
         return jsonify({"error": "Customer not found"}), 404
         
-    formatted_orders = [o.to_dict() for o in customer_orders]
+    formatted_orders = customer_orders
     
     for order in formatted_orders:
         for item in order.get("items", []):
-            if "product" in item and "image" in item["product"]:
-                item["product"]["image"] = get_image_url(item["product"]["image"])
+            if "image" in item:
+                item["image"] = get_image_url(item["image"])
     
     # Re-use our get_order_date function
     sorted_orders = sorted(formatted_orders, key=get_order_date, reverse=True)
@@ -413,8 +407,8 @@ def get_orders():
 
 @app.route("/product-items/<product_id>/reviews", methods=["GET"])
 def get_reviews(product_id):
-    product_reviews = [r for r in reviews if r["product_id"] == product_id]
-    return jsonify({"reviews": product_reviews}), 200
+    product_reviews = marketplace.get_product_reviews(product_id)
+    return jsonify({"reviews": [r.to_dict() for r in product_reviews]}), 200
 
 @app.route("/product-items/<product_id>/reviews", methods=["POST"])
 def add_review(product_id):
@@ -422,16 +416,16 @@ def add_review(product_id):
         return jsonify({"error": "Missing JSON body"}), 400
 
     data = request.get_json()
-    new_review = {
-        "id": str(uuid.uuid4()),
-        "product_id": product_id,
-        "name": data.get("name", "Anonymous"),
-        "rating": int(data.get("rating", 5)),
-        "text": data.get("text", ""),
-        "created_at": datetime.now().isoformat() + "Z"
-    }
-    reviews.append(new_review)
-    return jsonify({"message": "Review added", "review": new_review}), 201
+    rating = int(data.get("rating", 5))
+    text = data.get("text", "")
+    
+    # Normally we would use the authenticated user, but we'll use a dummy for now
+    review = marketplace.add_product_review(product_id, DUMMY_CUSTOMER_EMAIL, text, rating)
+    
+    if review is None:
+        return jsonify({"error": "Failed to add review"}), 400
+        
+    return jsonify({"message": "Review added successfully", "review": review.to_dict()}), 201
 
 if __name__ == "__main__":
     app.run(port=5001,debug=True)

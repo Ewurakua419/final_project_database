@@ -101,8 +101,25 @@ class Marketplace:
         if not cart_data or cart_data["total_items"] == 0:
             return None
             
-        subtotal = cart_data["total_price"]
-        items = cart_data["cart"]
+        order_items = []
+        subtotal_dollars = 0
+        for item in cart_data["cart"]:
+            prod = item["product"]
+            price_dollars = prod.get("priceCents", 0) / 100
+            item_total = price_dollars * item["quantity"]
+            subtotal_dollars += item_total
+            
+            order_items.append({
+                "product_id": prod.get("id"),
+                "name": prod.get("name"),
+                "image": prod.get("image"),
+                "price_at_purchase": price_dollars,
+                "quantity": item["quantity"],
+                "item_total": round(item_total, 2)
+            })
+            
+        subtotal = round(subtotal_dollars, 2)
+        items = order_items
         
         # We assume cart_id is the customer's unique_id for now since MOCK_CARTS maps by unique_id
         from model.order import Order
@@ -199,7 +216,7 @@ class Marketplace:
             vendor_subtotal = 0
             
             for item in order.get("items", []):
-                product_id = item.get("product", {}).get("id")
+                product_id = item.get("product_id")
                 if not product_id:
                     continue
                 product = self.findproduct(product_id)
@@ -222,6 +239,46 @@ class Marketplace:
 
     def update_order_status(self, order_id, new_status):
         return database.update_order(order_id, {"status": new_status})
+        
+    def get_product_reviews(self, product_id):
+        from model.review import Review
+        reviews_data = database.get_reviews_by_product(product_id)
+        reviews = []
+        for r in reviews_data:
+            reviews.append(Review(
+                product_id=r["product_id"],
+                customer_id=r["customer_id"],
+                comment=r["comment"],
+                rating=r["rating"],
+                review_id=r["review_id"],
+                review_date=r["review_date"]
+            ))
+        return reviews
+        
+    def add_product_review(self, product_id, customer_email, comment, rating):
+        from model.review import Review
+        customer = self.finduser(customer_email)
+        if customer is None:
+            return None
+            
+        review = Review(
+            product_id=product_id,
+            customer_id=customer.unique_id, # Can be dummy ID
+            comment=comment,
+            rating=rating
+        )
+        
+        # Save matching the DB schema instead of frontend format
+        db_review = {
+            "review_id": review.review_id,
+            "product_id": review.product_id,
+            "customer_id": review.customer_id,
+            "comment": review.comment,
+            "rating": review.rating,
+            "review_date": review.review_date
+        }
+        database.add_review(db_review)
+        return review
 
     ##vendor focus
     #a vendor can--
@@ -293,10 +350,21 @@ class Marketplace:
         return vendor
                 
     ##product focus
+    def _calculate_product_rating(self, product_id):
+        reviews = database.get_reviews_by_product(product_id)
+        count = len(reviews)
+        if count == 0:
+            return {"stars": 0, "count": 0}
+        avg_stars = sum(r["rating"] for r in reviews) / count
+        # Round to nearest half star
+        avg_stars = round(avg_stars * 2) / 2
+        return {"stars": avg_stars, "count": count}
+
     def get_all_products(self):
         raw_products = database.get_all_products()
         products = []
         for p_dict in raw_products:
+            rating = self._calculate_product_rating(p_dict["id"])
             # Reconstruct Product object to return to frontend
             p = Product(
                 product_name=p_dict["name"],
@@ -305,7 +373,8 @@ class Marketplace:
                 image_url=p_dict.get("image", ""),
                 product_type=p_dict.get("type", ""),
                 product_id=p_dict["id"],
-                description=p_dict.get("description", "")
+                description=p_dict.get("description", ""),
+                rating=rating
             )
             products.append(p)
         return products
@@ -316,6 +385,7 @@ class Marketplace:
         if rows is None:
             return None
         else:
+            rating = self._calculate_product_rating(rows[0])
             # (product_id, vendor_id, product_name, price, image_url, product_type, description)
             product = Product(
                 product_id=rows[0],
@@ -324,7 +394,8 @@ class Marketplace:
                 price=rows[3],
                 image_url=rows[4],
                 product_type=rows[5],
-                description=rows[6]
+                description=rows[6],
+                rating=rating
             )
             return product
 

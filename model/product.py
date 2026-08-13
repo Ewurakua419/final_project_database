@@ -1,13 +1,18 @@
 import uuid
 
 class Product:
-    def __init__(self, product_name, vendor_id, price, image_url, product_type, product_id=None, description=""):
+    def __init__(self, product_name, vendor_id, price, image_url, product_type, product_id=None, description="", rating=None):
         self.product_name = product_name
         self.vendor_id = vendor_id
         self.price = price
         self.image_url = image_url
         self.product_type = product_type
         self.description = description
+        
+        if rating is None:
+            self.rating = {"stars": 0, "count": 0}
+        else:
+            self.rating = rating
         
         if product_id is None:
             self.product_id = str(uuid.uuid4())
@@ -23,7 +28,7 @@ class Product:
             "type": self.product_type,
             "description": self.description,
             "vendor_id": self.vendor_id,
-            "rating": {"stars": 0, "count": 0}, # Default for now
+            "rating": self.rating,
             "keywords": [], # Default for now
             "stock": 10 # Default for now
         }

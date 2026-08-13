@@ -36,10 +36,25 @@ MOCK_VENDORS = [
         "address": "123 Vendor St"
     }
 ]
-MOCK_CARTS = {} # Maps customer_id to a list of items: [{"product": product, "quantity": quantity}]
-MOCK_ORDERS = []
-
 from mock_api.products import products as MOCK_PRODUCTS
+from mock_api.orders import orders
+from mock_api.reviews import reviews as mock_api_reviews
+
+# --- MOCK DATA ---
+MOCK_CARTS = {} # Maps customer_id to a list of items: [{"product": product, "quantity": quantity}]
+MOCK_ORDERS = orders
+
+# Map the old mock review format to the new DB format
+MOCK_REVIEWS = []
+for r in mock_api_reviews:
+    MOCK_REVIEWS.append({
+        "review_id": r["id"],
+        "product_id": r["product_id"],
+        "customer_id": "dummy@example.com", # Mock mapping
+        "comment": r["text"],
+        "rating": r["rating"],
+        "review_date": r["created_at"]
+    })
 
 def searchcustomer(email):
     # with connect() as conn:
@@ -170,6 +185,12 @@ def update_order(order_id, updates_dict):
                 o[k] = v
             return True
     return False
+
+def get_reviews_by_product(product_id):
+    return [r for r in MOCK_REVIEWS if r["product_id"] == product_id]
+
+def add_review(review_dict):
+    MOCK_REVIEWS.append(review_dict)
 
 def findproduct(productid):
     for p in MOCK_PRODUCTS:
