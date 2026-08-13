@@ -20,8 +20,23 @@
 
       <form id="customer-register-form" class="flex-col" style="gap: var(--spacing-md);">
         <div class="form-group flex-col" style="gap: var(--spacing-xs);">
+          <label class="eyebrow text-muted" for="first_name">First Name</label>
+          <input type="text" id="first_name" class="text-input" placeholder="John" required autofocus>
+        </div>
+
+        <div class="form-group flex-col" style="gap: var(--spacing-xs);">
+          <label class="eyebrow text-muted" for="last_name">Last Name</label>
+          <input type="text" id="last_name" class="text-input" placeholder="Doe" required>
+        </div>
+
+        <div class="form-group flex-col" style="gap: var(--spacing-xs);">
+          <label class="eyebrow text-muted" for="phone_number">Phone Number</label>
+          <input type="tel" id="phone_number" class="text-input" placeholder="0241234567" required>
+        </div>
+
+        <div class="form-group flex-col" style="gap: var(--spacing-xs);">
           <label class="eyebrow text-muted" for="email">Email</label>
-          <input type="email" id="email" class="text-input" placeholder="email@example.com" required autofocus>
+          <input type="email" id="email" class="text-input" placeholder="email@example.com" required>
         </div>
 
         <div class="form-group flex-col" style="gap: var(--spacing-xs);">
@@ -29,6 +44,8 @@
           <input type="password" id="password" class="text-input" placeholder="••••••••" required>
         </div>
         
+        <div id="error-message" style="color: red; font-size: 14px; display: none;"></div>
+
         <div id="error-message" style="color: red; font-size: 14px; display: none;"></div>
 
         <button type="submit" class="button-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md);">
@@ -45,11 +62,14 @@
       </div>
     </div>
   </div>
-  
+
   <script>
     document.getElementById('customer-register-form').addEventListener('submit', async function(e) {
-      e.preventDefault(); // Prevent default form submission
+      e.preventDefault();
       
+      const first_name = document.getElementById('first_name').value;
+      const last_name = document.getElementById('last_name').value;
+      const phone_number = document.getElementById('phone_number').value;
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
       const errorDiv = document.getElementById('error-message');
@@ -60,16 +80,54 @@
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ email: email, password: password })
+          body: JSON.stringify({
+            first_name,
+            last_name,
+            phone_number,
+            email,
+            password
+          })
         });
         
         const data = await response.json();
         
         if (response.ok) {
-          // Success! Redirect to login page
-          window.location.href = 'login.html';
+          // Success! Save the token for auto-login
+          localStorage.setItem('authToken', data.token);
+
+          // Merge guest cart if present
+          const guestCartStr = localStorage.getItem("guestCart");
+          if (guestCartStr) {
+            try {
+              const guestCart = JSON.parse(guestCartStr) || [];
+              for (const item of guestCart) {
+                await fetch('http://127.0.0.1:5001/cart', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + data.token
+                  },
+                  body: JSON.stringify({ product_id: item.product_id, quantity: item.quantity })
+                });
+              }
+              localStorage.removeItem("guestCart");
+            } catch (err) {
+              console.error("Error merging guest cart", err);
+            }
+          }
+
+          // Handle redirects
+          const urlParams = new URLSearchParams(window.location.search);
+          const redirect = urlParams.get('redirect');
+          if (redirect === 'checkout') {
+            window.location.href = 'g-checkout/checkout.html';
+          } else if (redirect === 'product_detail') {
+            const prodId = urlParams.get('id');
+            window.location.href = `products/product_detail.html?id=${prodId}`;
+          } else {
+            window.location.href = 'products/products.html';
+          }
         } else {
-          // Show error message from backend
           errorDiv.style.display = 'block';
           errorDiv.textContent = data.error || 'An error occurred during registration.';
         }

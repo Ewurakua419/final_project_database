@@ -8,6 +8,11 @@ export function initVendorSidebar() {
   const isProducts = path.includes("products.html") || path.includes("add_product.html");
   const isOrders = path.includes("orders.html");
 
+  const isLoggedIn = !!localStorage.getItem("vendorAuthToken");
+  const authLink = isLoggedIn 
+    ? `<a href="login.html" class="button-utility" onclick="localStorage.removeItem('vendorAuthToken')">Log out</a>` 
+    : `<a href="login.html" class="button-utility">Log in</a>`;
+
   container.innerHTML = `
     <nav class="nav-bar">
       <a href="dashboard.html" class="logo" style="font-weight: 700; text-decoration: none; color: var(--color-ink); font-size: 1.25rem; letter-spacing: -0.5px;">
@@ -18,7 +23,7 @@ export function initVendorSidebar() {
         <a href="dashboard.html" style="text-decoration: none; color: ${isDashboard ? 'var(--color-primary)' : 'var(--color-ink-secondary)'}; font-weight: ${isDashboard ? '600' : '400'};">Overview</a>
         <a href="products.html" style="text-decoration: none; color: ${isProducts ? 'var(--color-primary)' : 'var(--color-ink-secondary)'}; font-weight: ${isProducts ? '600' : '400'};">Inventory</a>
         <a href="orders.html" style="text-decoration: none; color: ${isOrders ? 'var(--color-primary)' : 'var(--color-ink-secondary)'}; font-weight: ${isOrders ? '600' : '400'};">Orders</a>
-        <a href="login.html" class="button-utility" onclick="sessionStorage.removeItem('vendor_logged_in')">Log out</a>
+        ${authLink}
       </div>
     </nav>
   `;

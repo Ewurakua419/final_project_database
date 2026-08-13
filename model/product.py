@@ -1,57 +1,77 @@
 import uuid
 
 class Product:
-    def __init__(self, name, vendor_id,price, quantity, description, types,ids=None):
+    def __init__(self, product_name, vendor_id, price, image_url, product_type, product_id=None, description="", rating=None):
+        self.product_name = product_name
+        self.vendor_id = vendor_id
+        self.price = price
+        self.image_url = image_url
+        self.product_type = product_type
+        self.description = description
         
-        self.name=name
-        self.vendor_id=vendor_id
-        self.price=price
-        self.quantity=quantity
-        self.description=description
-        self.type=types
-        if ids==None:
-                    self.ids=str(uuid.uuid4())[:20]
+        if rating is None:
+            self.rating = {"stars": 0, "count": 0}
         else:
-            self.ids=ids
+            self.rating = rating
+        
+        if product_id is None:
+            self.product_id = str(uuid.uuid4())
+        else:
+            self.product_id = product_id
+
+    def to_dict(self):
+        return {
+            "id": self.product_id,
+            "name": self.product_name,
+            "image": self.image_url,
+            "priceCents": self.price,
+            "type": self.product_type,
+            "description": self.description,
+            "vendor_id": self.vendor_id,
+            "rating": self.rating,
+            "keywords": [], # Default for now
+            "stock": 10 # Default for now
+        }
 
 class Fashion(Product):
 
     def __init__(
         self,
-        name,
+        product_name,
         vendor_id,
         size,
-        types,
+        product_type,
         color,
         material,
         gender_category,
         price,
-        quantity,
-        description,
+        image_url,
+        description="",
     ):
         super().__init__(
-            name, vendor_id, price, quantity, types=types, description=description
+            product_name, vendor_id, price, image_url, product_type, description=description
         )
         self.size=size
-        self.type=types #eg trousers shirt pants
-        self.gender_category=gender_category#eg male or female or kids
+        self.color=color
+        self.material=material
+        self.gender_category=gender_category
 
 
 class Beauty(Product):
 
     def __init__(
         self,
-        name,
+        product_name,
         vendor_id,
         category,
         expiry_date,
         price,
-        quantity,
-        types,
-        description,
+        image_url,
+        product_type,
+        description="",
     ):
         super().__init__(
-            name, vendor_id, price, quantity, types=types, description=description
+            product_name, vendor_id, price, image_url, product_type, description=description
         )
         self.category=category
         self.expiry=expiry_date

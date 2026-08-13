@@ -183,7 +183,11 @@
       };
 
       // Load cart data into summary
-      fetch("http://127.0.0.1:5001/cart")
+      fetch("http://127.0.0.1:5001/cart", {
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("authToken")
+        }
+      })
         .then(res => res.json())
         .then(data => {
           if (data.cart.length === 0) {
@@ -222,7 +226,19 @@
           document.getElementById("summary-tax").innerText = "$" + tax.toFixed(2);
           document.getElementById("summary-total").innerText = "$" + total.toFixed(2);
         })
-        .catch(err => console.error("Failed to load summary", err));
+      // Fetch customer profile details to autofill
+      fetch("http://127.0.0.1:5001/customer/profile", {
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("authToken")
+        }
+      })
+        .then(res => res.json())
+        .then(profile => {
+          if (profile.email) document.getElementById("email").value = profile.email;
+          if (profile.first_name) document.getElementById("first-name").value = profile.first_name;
+          if (profile.last_name) document.getElementById("last-name").value = profile.last_name;
+        })
+        .catch(err => console.error("Failed to load customer profile details", err));
 
 
       // Handle form submission
@@ -253,7 +269,10 @@
 
         fetch("http://127.0.0.1:5001/checkout", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + localStorage.getItem("authToken")
+          },
           body: JSON.stringify({ 
             shipping_address: shippingAddress,
             payment_details: paymentDetails

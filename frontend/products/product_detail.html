@@ -30,7 +30,6 @@
         <div class="feature-card write-review-container" style="margin-bottom: var(--spacing-xl);">
           <h3 class="title" style="margin-top: 0;">Write a Review</h3>
           <form id="review-form" style="display: flex; flex-direction: column; gap: var(--spacing-md);">
-            <input type="text" id="review-name" class="text-input" placeholder="Your Name" required>
             <select id="review-rating" class="text-input" required>
               <option value="5">★★★★★ (5/5)</option>
               <option value="4">★★★★☆ (4/5)</option>
@@ -200,8 +199,13 @@
               return;
             }
 
-            // sort reviews by newest first
-            const sortedReviews = data.reviews.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            // sort reviews by newest first (descending)
+            const sortedReviews = data.reviews.sort((a, b) => {
+              const timeA = new Date(a.created_at).getTime();
+              const timeB = new Date(b.created_at).getTime();
+              if (isNaN(timeA) || isNaN(timeB)) return 0;
+              return timeB - timeA;
+            });
 
             sortedReviews.forEach(review => {
               const initial = review.name.charAt(0).toUpperCase();
@@ -232,19 +236,28 @@
       // Handle Review Submission
       document.getElementById("review-form").addEventListener("submit", (e) => {
         e.preventDefault();
+
+        if (!localStorage.getItem("authToken")) {
+          alert("You must log in to submit a review.");
+          window.location.href = `../login.html?redirect=product_detail&id=${currentProductId}`;
+          return;
+        }
+
         const btn = e.target.querySelector("button[type='submit']");
         btn.innerText = "Submitting...";
         btn.disabled = true;
 
         const payload = {
-          name: document.getElementById("review-name").value,
           rating: parseInt(document.getElementById("review-rating").value),
           text: document.getElementById("review-text").value
         };
 
         fetch(`http://127.0.0.1:5001/product-items/${currentProductId}/reviews`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + localStorage.getItem("authToken")
+          },
           body: JSON.stringify(payload)
         })
         .then(res => res.json())

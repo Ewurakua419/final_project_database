@@ -20,6 +20,15 @@
       </div>
 
       <form id="vendor-register-form" class="flex-col" style="gap: var(--spacing-md);">
+        <div class="form-group flex-col" style="gap: var(--spacing-xs);">
+          <label class="eyebrow text-muted" for="vendor_name">Vendor Name</label>
+          <input type="text" id="vendor_name" class="text-input" placeholder="My Shop Name" required autofocus>
+        </div>
+
+        <div class="form-group flex-col" style="gap: var(--spacing-xs);">
+          <label class="eyebrow text-muted" for="phone_number">Phone Number</label>
+          <input type="tel" id="phone_number" class="text-input" placeholder="0241234567" required>
+        </div>
 
         <div class="form-group flex-col" style="gap: var(--spacing-xs);">
           <label class="eyebrow text-muted" for="email">Email</label>
@@ -52,6 +61,8 @@
     document.getElementById("vendor-register-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       
+      const vendor_name = document.getElementById('vendor_name').value;
+      const phone_number = document.getElementById('phone_number').value;
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
       const errorDiv = document.getElementById('error-message');
@@ -62,14 +73,19 @@
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ email: email, password: password })
+          body: JSON.stringify({ 
+            vendor_name: vendor_name,
+            phone_number: phone_number,
+            email: email, 
+            password: password 
+          })
         });
         
         const data = await response.json();
         
         if (response.ok) {
-          // Success! Redirect to vendor login page
-          window.location.href = 'login.html';
+          localStorage.setItem('vendorAuthToken', data.token);
+          window.location.href = 'dashboard.html';
         } else {
           errorDiv.style.display = 'block';
           errorDiv.textContent = data.error || 'An error occurred during registration.';

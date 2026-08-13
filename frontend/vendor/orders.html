@@ -22,11 +22,18 @@
 
   <script type="module" src="vendor-navbar.js"></script>
   <script>
+    if (!localStorage.getItem("vendorAuthToken")) {
+      window.location.href = "login.html";
+    }
     document.addEventListener("DOMContentLoaded", () => {
 
       const container = document.getElementById("orders-container");
 
-      fetch("http://127.0.0.1:5001/vendor/orders")
+      fetch("http://127.0.0.1:5001/vendor/orders", {
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("vendorAuthToken")
+        }
+      })
         .then(res => res.json())
         .then(data => {
           container.innerHTML = "";
@@ -100,7 +107,8 @@
               fetch(`http://127.0.0.1:5001/vendor/orders/${orderId}`, {
                 method: 'PUT',
                 headers: {
-                  'Content-Type': 'application/json'
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer ' + localStorage.getItem('vendorAuthToken')
                 },
                 body: JSON.stringify({ status: val })
               })
