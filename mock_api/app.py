@@ -24,11 +24,7 @@ marketplace = Marketplace(name="Mock Marketplace")
 # Initialize the Flask application
 app = Flask(__name__)
 CORS(app, resources={
-    r"/product-items/*": {"origins": "http://127.0.0.1:5500"}, 
-    r"/cart.*": {"origins": "http://127.0.0.1:5500"},
-    r"/checkout.*": {"origins": "http://127.0.0.1:5500"},
-    r"/orders.*": {"origins": "http://127.0.0.1:5500"},
-    r"/vendor/.*": {"origins": "http://127.0.0.1:5500"},
+    r"/*": {"origins": "http://127.0.0.1:5500"}
 })
 
 vendor_id = "vendor_001"
@@ -242,32 +238,16 @@ def delete_vendor_product(product_id):
 
 @app.route("/vendor/orders", methods=["GET"])
 def get_vendor_orders():
-    vendor_orders = []
-    
-    # Loop through every order in the system
-    for order in orders:
-        vendor_items = []
-        vendor_subtotal = 0
+    # We use DUMMY_VENDOR_EMAIL for mock auth
+    vendor_orders = marketplace.get_vendor_orders(DUMMY_VENDOR_EMAIL)
+    if vendor_orders is None:
+        return jsonify({"error": "Vendor not found"}), 404
         
+    for order in vendor_orders:
         for item in order.get("items", []):
-            product = find_product(item["product_id"])
-            if product and product.get("vendor_id") == vendor_id:
-                vendor_items.append(item)
-                vendor_subtotal += item.get("item_total", 0)
-                
-        if len(vendor_items) > 0:
-            order_copy = order.copy()
-            order_copy["items"] = vendor_items
-            
-            order_copy["pricing_summary"] = {
-                "subtotal": round(vendor_subtotal, 2),
-                "tax": 0,
-                "shipping": 0,
-                "grand_total": round(vendor_subtotal, 2)
-            }
-            vendor_orders.append(order_copy)
-            
-    # Sort the orders so the newest ones appear first (uses get_order_date function)
+            if "product" in item and "image" in item["product"]:
+                item["product"]["image"] = get_image_url(item["product"]["image"])
+        
     sorted_orders = sorted(vendor_orders, key=get_order_date, reverse=True)
     return jsonify({"orders": sorted_orders}), 200
 
@@ -278,12 +258,11 @@ def update_vendor_order_status(order_id):
     if not new_status:
         return jsonify({"error": "Status is required"}), 400
         
-    for order in orders:
-        if order["order_id"] == order_id:
-            order["status"] = new_status
-            return jsonify({"message": "Order status updated successfully", "order": order}), 200
-            
-    return jsonify({"error": "Order not found"}), 404
+    success = marketplace.update_order_status(order_id, new_status)
+    if not success:
+        return jsonify({"error": "Order not found"}), 404
+        
+    return jsonify({"message": "Order status updated successfully"}), 200
 
 @app.route("/vendor/stats", methods=["GET"])
 def get_vendor_stats():
@@ -326,6 +305,10 @@ def get_cart():
     if result is None:
         return jsonify({"error": "User not found"}), 404
         
+    for item in result.get("cart", []):
+        if "product" in item and "image" in item["product"]:
+            item["product"]["image"] = get_image_url(item["product"]["image"])
+            
     return jsonify(result), 200
 
 
@@ -390,45 +373,13 @@ def to_checkout():
     shipping_address = data.get("shipping_address", {})
     payment_details = data.get("payment_details", {})
     
-    cart_data = marketplace.get_cart(DUMMY_CUSTOMER_EMAIL)
-    if not cart_data or cart_data["total_items"] == 0:
-        return jsonify({"error": "Cart is empty"}), 400
-        
-    subtotal = cart_data["total_price"]
-    order_items = cart_data["cart"] # Already formatted
-            
-    tax = round(subtotal * TAX_RATE, 2)
-    shipping = SHIPPING_FEE
-    grand_total = round(subtotal + tax + shipping, 2)
-    
-    order_id = "ord_" + uuid.uuid4().hex[:10]
-    
-    order = {
-        "order_id": order_id,
-        "user_id": DUMMY_CUSTOMER_EMAIL,
-        "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "status": "pending",
-        "pricing_summary": {
-            "subtotal": round(subtotal, 2),
-            "tax": tax,
-            "shipping": shipping,
-            "grand_total": grand_total
-        },
-        "items": order_items,
-        "shipping_address": shipping_address,
-        "payment_details": {
-            "last_four": payment_details.get("card_number", "")[-4:],
-            "brand": "Visa"
-        }
-    }
-    
-    # Store order and empty cart
-    orders.append(order)
-    marketplace.ordercart(grand_total, DUMMY_CUSTOMER_EMAIL)
+    order = marketplace.checkout(DUMMY_CUSTOMER_EMAIL, shipping_fee=5.00)
+    if not order:
+        return jsonify({"error": "Cart is empty or user not found"}), 400
     
     return jsonify({
         "message": "Order placed successfully",
-        "order": order
+        "order": order.to_dict()
     }), 201
 
 
@@ -438,15 +389,20 @@ def get_order_date(order):
 
 @app.route("/orders", methods=["GET"])
 def get_orders():
-    user_id = "user_12345" # Hardcoded for now
+    # Use dummy customer email for now
+    customer_orders = marketplace.get_customer_orders(DUMMY_CUSTOMER_EMAIL)
+    if customer_orders is None:
+        return jsonify({"error": "Customer not found"}), 404
+        
+    formatted_orders = [o.to_dict() for o in customer_orders]
     
-    user_orders = []
-    for order in orders:
-        if order.get("user_id") == user_id:
-            user_orders.append(order)
+    for order in formatted_orders:
+        for item in order.get("items", []):
+            if "product" in item and "image" in item["product"]:
+                item["product"]["image"] = get_image_url(item["product"]["image"])
     
-
-    sorted_orders = sorted(user_orders, key=get_order_date, reverse=True)
+    # Re-use our get_order_date function
+    sorted_orders = sorted(formatted_orders, key=get_order_date, reverse=True)
     
     return jsonify({"orders": sorted_orders}), 200
 

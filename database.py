@@ -37,6 +37,7 @@ MOCK_VENDORS = [
     }
 ]
 MOCK_CARTS = {} # Maps customer_id to a list of items: [{"product": product, "quantity": quantity}]
+MOCK_ORDERS = []
 
 from mock_api.products import products as MOCK_PRODUCTS
 
@@ -155,6 +156,20 @@ def undo():
 
 def get_all_products():
     return MOCK_PRODUCTS
+
+def get_all_orders():
+    return MOCK_ORDERS
+
+def add_order(order_dict):
+    MOCK_ORDERS.append(order_dict)
+    
+def update_order(order_id, updates_dict):
+    for o in MOCK_ORDERS:
+        if o["order_id"] == order_id:
+            for k, v in updates_dict.items():
+                o[k] = v
+            return True
+    return False
 
 def findproduct(productid):
     for p in MOCK_PRODUCTS:
@@ -297,7 +312,7 @@ def addtocart(product, customer_id, quantity):
         
     # Check if item already exists in cart, update quantity if it does
     for item in MOCK_CARTS[customer_id]:
-        if item["product"].id == product.id:
+        if item["product"].product_id == product.product_id:
             item["quantity"] += quantity
             return True
             
@@ -308,13 +323,11 @@ def getcart(customer_id):
     return MOCK_CARTS.get(customer_id, [])
 
 def removefromcart(product_id, customer_id):
-    if customer_id not in MOCK_CARTS:
-        return False
-        
-    for i, item in enumerate(MOCK_CARTS[customer_id]):
-        if item["product"].id == product_id:
-            MOCK_CARTS[customer_id].pop(i)
-            return True
+    if customer_id in MOCK_CARTS:
+        for i, item in enumerate(MOCK_CARTS[customer_id]):
+            if item["product"].product_id == product_id:
+                MOCK_CARTS[customer_id].pop(i)
+                return True
     return False
 
 def checkout(customer_id):

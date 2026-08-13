@@ -92,14 +92,34 @@ class Marketplace:
         else:
             return None
         
-    def ordercart(self, balance, username, address=None):
+    def checkout(self, username, shipping_fee=5.00):
         customer = self.finduser(username)
         if customer is None:
             return None
-       
-        # order=customer.cart.pay(balance=balance,address=address)
+            
+        cart_data = self.get_cart(username)
+        if not cart_data or cart_data["total_items"] == 0:
+            return None
+            
+        subtotal = cart_data["total_price"]
+        items = cart_data["cart"]
+        
+        # We assume cart_id is the customer's unique_id for now since MOCK_CARTS maps by unique_id
+        from model.order import Order
+        new_order = Order(
+            cart_id=customer.unique_id, 
+            customer_id=customer.unique_id, 
+            subtotal=subtotal, 
+            shipping_fee=shipping_fee,
+            items=items
+        )
+        
+        # Clear cart
         database.checkout(customer.unique_id)
-        return True
+        # Add order
+        database.add_order(new_order.to_dict())
+        
+        return new_order
 
     def get_cart(self, username):
         customer = self.finduser(username)
@@ -116,12 +136,7 @@ class Marketplace:
             item_total = product.price * qty
             total_price += item_total
             formatted_items.append({
-                "product": {
-                    "id": product.id,
-                    "name": product.name,
-                    "priceCents": product.price,
-                    "image": getattr(product, "image", "products/placeholder.jpg")
-                },
+                "product": product.to_dict(),
                 "quantity": qty,
                 "item_total": round(item_total, 2)
             })
@@ -158,6 +173,55 @@ class Marketplace:
         database.addtocart(product, customer.unique_id, quantity)
         return True
     
+
+    def get_customer_orders(self, username):
+        customer = self.finduser(username)
+        if customer is None:
+            return None
+            
+        all_orders = database.get_all_orders()
+        customer_orders = []
+        for o in all_orders:
+            if o.get("user_id") == customer.unique_id:
+                customer_orders.append(o)
+        return customer_orders
+        
+    def get_vendor_orders(self, vendor_email):
+        vendor = self.findvendor(vendor_email)
+        if vendor is None:
+            return None
+            
+        all_orders = database.get_all_orders()
+        vendor_orders = []
+        
+        for order in all_orders:
+            vendor_items = []
+            vendor_subtotal = 0
+            
+            for item in order.get("items", []):
+                product_id = item.get("product", {}).get("id")
+                if not product_id:
+                    continue
+                product = self.findproduct(product_id)
+                if product and product.vendor_id == vendor.unique_id:
+                    vendor_items.append(item)
+                    vendor_subtotal += item.get("item_total", 0)
+                    
+            if len(vendor_items) > 0:
+                order_copy = order.copy()
+                order_copy["items"] = vendor_items
+                order_copy["pricing_summary"] = {
+                    "subtotal": round(vendor_subtotal, 2),
+                    "tax": 0,
+                    "shipping": 0,
+                    "grand_total": round(vendor_subtotal, 2)
+                }
+                vendor_orders.append(order_copy)
+                
+        return vendor_orders
+
+    def update_order_status(self, order_id, new_status):
+        return database.update_order(order_id, {"status": new_status})
 
     ##vendor focus
     #a vendor can--
