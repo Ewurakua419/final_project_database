@@ -26,7 +26,11 @@
   <script type="module">
     function initOrdersPage() {
       // Fetch and display orders
-      fetch("http://127.0.0.1:5001/orders")
+      fetch("http://127.0.0.1:5001/orders", {
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("authToken")
+        }
+      })
         .then(res => res.json())
         .then(data => {
           const container = document.getElementById("orders-container");

@@ -81,8 +81,8 @@ def searchcustomer(email):
     # --- MOCK LOGIC ---
     for u in MOCK_USERS:
         if u["email"] == email:
-            # Returning tuple to simulate SQL row: (unique_id, name, password, cart_ids, email)
-            return (u["unique_id"], u["name"], u["password"], "cart_mock", u["email"])
+            # Returning tuple to simulate SQL row: (unique_id, name, password, cart_ids, email, first_name, last_name, phone_number)
+            return (u["unique_id"], u["name"], u["password"], "cart_mock", u["email"], u.get("first_name", ""), u.get("last_name", ""), u.get("phone_number", ""))
     return None
 
 
@@ -108,7 +108,7 @@ def login(email, password):
     pass # In our new architecture, marketplace.py handles verification itself using searchcustomer
 
 
-def register(name, userid, cart_ids, balance, password, email):
+def register(name, userid, cart_ids, balance, password, email, first_name=None, last_name=None, phone_number=None):
     # f_name, l_name from original function definition are preserved conceptually below
     # pass
     
@@ -117,7 +117,10 @@ def register(name, userid, cart_ids, balance, password, email):
         "unique_id": userid,
         "name": name,
         "email": email,
-        "password": password
+        "password": password,
+        "first_name": first_name,
+        "last_name": last_name,
+        "phone_number": phone_number
     }
     MOCK_USERS.append(new_user)
     return new_user
@@ -143,11 +146,11 @@ def searchvendor(email):
     # --- MOCK LOGIC ---
     for v in MOCK_VENDORS:
         if v["email"] == email:
-            # Return tuple to simulate SQL row: (address, name, unique_id, email, password)
-            return (v.get("address", ""), v["name"], v["unique_id"], v["email"], v["password"])
+            # Return tuple to simulate SQL row: (address, name, unique_id, email, password, phone_number)
+            return (v.get("address", ""), v["name"], v["unique_id"], v["email"], v["password"], v.get("phone_number", ""))
     return None
 
-def registervendor(name, email, password, vendorid, address):
+def registervendor(name, email, password, vendorid, address, phone_number=None):
     # with connect() as conn:
     #     with conn.cursor() as cur:
     #         cur.execute("INSERT INTO vendor ...")
@@ -159,7 +162,8 @@ def registervendor(name, email, password, vendorid, address):
         "name": name,
         "email": email,
         "password": password,
-        "address": address
+        "address": address,
+        "phone_number": phone_number
     }
     MOCK_VENDORS.append(new_vendor)
     return new_vendor

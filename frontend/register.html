@@ -18,16 +18,33 @@
         <p>Join us to start shopping.</p>
       </div>
 
-      <form id="customer-register-form" class="flex-col" style="gap: var(--spacing-md);" onsubmit="event.preventDefault(); window.location.href = 'products/products.html';">
+      <form id="customer-register-form" class="flex-col" style="gap: var(--spacing-md);">
+        <div class="form-group flex-col" style="gap: var(--spacing-xs);">
+          <label class="eyebrow text-muted" for="first_name">First Name</label>
+          <input type="text" id="first_name" class="text-input" placeholder="John" required autofocus>
+        </div>
+
+        <div class="form-group flex-col" style="gap: var(--spacing-xs);">
+          <label class="eyebrow text-muted" for="last_name">Last Name</label>
+          <input type="text" id="last_name" class="text-input" placeholder="Doe" required>
+        </div>
+
+        <div class="form-group flex-col" style="gap: var(--spacing-xs);">
+          <label class="eyebrow text-muted" for="phone_number">Phone Number</label>
+          <input type="tel" id="phone_number" class="text-input" placeholder="0241234567" required>
+        </div>
+
         <div class="form-group flex-col" style="gap: var(--spacing-xs);">
           <label class="eyebrow text-muted" for="email">Email</label>
-          <input type="email" id="email" class="text-input" placeholder="email@example.com" required autofocus>
+          <input type="email" id="email" class="text-input" placeholder="email@example.com" required>
         </div>
 
         <div class="form-group flex-col" style="gap: var(--spacing-xs);">
           <label class="eyebrow text-muted" for="password">Password</label>
           <input type="password" id="password" class="text-input" placeholder="••••••••" required>
         </div>
+
+        <div id="error-message" style="color: red; font-size: 14px; display: none;"></div>
 
         <button type="submit" class="button-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md);">
           Sign Up
@@ -44,5 +61,46 @@
     </div>
   </div>
 
+  <script>
+    document.getElementById('customer-register-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const first_name = document.getElementById('first_name').value;
+      const last_name = document.getElementById('last_name').value;
+      const phone_number = document.getElementById('phone_number').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const errorDiv = document.getElementById('error-message');
+      
+      try {
+        const response = await fetch('http://127.0.0.1:5001/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            first_name,
+            last_name,
+            phone_number,
+            email,
+            password
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          alert("Account created successfully! Please log in.");
+          window.location.href = 'login.html';
+        } else {
+          errorDiv.style.display = 'block';
+          errorDiv.textContent = data.error || 'An error occurred during registration.';
+        }
+      } catch (error) {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = 'Could not connect to the server.';
+      }
+    });
+  </script>
 </body>
 </html>

@@ -26,6 +26,9 @@ class Marketplace:
                 unique_id=rows[0],
                 ids=rows[3],
                 email=rows[4],
+                first_name=rows[5] if len(rows) > 5 else None,
+                last_name=rows[6] if len(rows) > 6 else None,
+                phone_number=rows[7] if len(rows) > 7 else None,
             )
             return user
 
@@ -39,29 +42,30 @@ class Marketplace:
     # delete review, 
     #update review
     # update details
-    def registerCustomer(self, name, password, email):
-        # if database.search(name) is not None:
+    def registerCustomer(self, name, password, email, first_name=None, last_name=None, phone_number=None):
         if database.searchcustomer(email) is not None:
             print("User already exists")
             return None
         passworde = auth.encodere(password)
-        # user = Customer(name=name, email=email,password=passworde)
-        user = Customer(password=passworde, email=email)
+        user = Customer(
+            name=name,
+            password=passworde,
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            phone_number=phone_number
+        )
         
-        # database.register(
-        #     name,
-        #     userid=user.unique_id,
-        #     cart_ids=user.cart.ids,
-        #     balance=user.wallet.check_bal(),
-        #     password=passworde,
-        # )
         database.register(
             name=name,
             userid=user.unique_id,
             cart_ids=user.cart.ids,
             balance=0,
             password=passworde,
-            email=email
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            phone_number=phone_number
         )
 
         print("Successful")
@@ -92,12 +96,9 @@ class Marketplace:
         else:
             return None
         
-    def checkout(self, username, shipping_fee=5.00):
-        customer = self.finduser(username)
-        if customer is None:
-            return None
-            
-        cart_data = self.get_cart(username)
+    def checkout(self, customer_id, shipping_fee=0.0):
+        # We now take customer_id directly from the JWT, skipping finduser lookup
+        cart_data = self.get_cart(customer_id)
         if not cart_data or cart_data["total_items"] == 0:
             return None
             
@@ -124,26 +125,22 @@ class Marketplace:
         # We assume cart_id is the customer's unique_id for now since MOCK_CARTS maps by unique_id
         from model.order import Order
         new_order = Order(
-            cart_id=customer.unique_id, 
-            customer_id=customer.unique_id, 
+            cart_id=customer_id, 
+            customer_id=customer_id, 
             subtotal=subtotal, 
             shipping_fee=shipping_fee,
             items=items
         )
         
         # Clear cart
-        database.checkout(customer.unique_id)
+        database.checkout(customer_id)
         # Add order
         database.add_order(new_order.to_dict())
         
         return new_order
 
-    def get_cart(self, username):
-        customer = self.finduser(username)
-        if customer is None:
-            return None
-            
-        cart_items = database.getcart(customer.unique_id)
+    def get_cart(self, customer_id):
+        cart_items = database.getcart(customer_id)
         
         total_price = 0
         formatted_items = []
@@ -164,50 +161,32 @@ class Marketplace:
             "total_price": round(total_price, 2)
         }
 
-    def remove_from_cart(self, productid, username):
-        customer = self.finduser(username)
-        if customer is None:
-            return None
-
+    def remove_from_cart(self, productid, customer_id):
         product = self.findproduct(productid)
         if product is None:
             return None
         
-        customer.cart.remove_product(product)
-        database.removefromcart(productid, customer.unique_id)
+        database.removefromcart(productid, customer_id)
         return True
 
-    def add_to_cart(self, productid, username, quantity):
-        customer = self.finduser(username)
-        if customer is None:
-            return None
-
+    def add_to_cart(self, productid, customer_id, quantity):
         product = self.findproduct(productid)
         if product is None:
             return None
             
-        customer.cart.add_product(product, quantity)
-        database.addtocart(product, customer.unique_id, quantity)
+        database.addtocart(product, customer_id, quantity)
         return True
     
 
-    def get_customer_orders(self, username):
-        customer = self.finduser(username)
-        if customer is None:
-            return None
-            
+    def get_customer_orders(self, customer_id):
         all_orders = database.get_all_orders()
         customer_orders = []
         for o in all_orders:
-            if o.get("user_id") == customer.unique_id:
+            if o.get("user_id") == customer_id or o.get("customer_id") == customer_id:
                 customer_orders.append(o)
         return customer_orders
         
-    def get_vendor_orders(self, vendor_email):
-        vendor = self.findvendor(vendor_email)
-        if vendor is None:
-            return None
-            
+    def get_vendor_orders(self, vendor_id):
         all_orders = database.get_all_orders()
         vendor_orders = []
         
@@ -220,7 +199,7 @@ class Marketplace:
                 if not product_id:
                     continue
                 product = self.findproduct(product_id)
-                if product and product.vendor_id == vendor.unique_id:
+                if product and product.vendor_id == vendor_id:
                     vendor_items.append(item)
                     vendor_subtotal += item.get("item_total", 0)
                     
@@ -236,6 +215,30 @@ class Marketplace:
                 vendor_orders.append(order_copy)
                 
         return vendor_orders
+
+    def get_vendor_stats(self, vendor_id):
+        # Calculate active products
+        all_products = self.get_all_products()
+        active_products = sum(1 for p in all_products if p.vendor_id == vendor_id)
+        
+        # Calculate total sales and pending orders
+        vendor_orders = self.get_vendor_orders(vendor_id)
+        total_sales = 0
+        pending_orders = 0
+        
+        if vendor_orders:
+            for order in vendor_orders:
+                # The pricing_summary is already pre-filtered for vendor items in get_vendor_orders
+                total_sales += order.get("pricing_summary", {}).get("subtotal", 0)
+                
+                if order.get("status") == "pending":
+                    pending_orders += 1
+                    
+        return {
+            "total_sales": round(total_sales, 2),
+            "active_products": active_products,
+            "pending_orders": pending_orders
+        }
 
     def update_order_status(self, order_id, new_status):
         return database.update_order(order_id, {"status": new_status})
@@ -255,15 +258,12 @@ class Marketplace:
             ))
         return reviews
         
-    def add_product_review(self, product_id, customer_email, comment, rating):
+    def add_product_review(self, product_id, customer_id, comment, rating):
         from model.review import Review
-        customer = self.finduser(customer_email)
-        if customer is None:
-            return None
-            
+        
         review = Review(
             product_id=product_id,
-            customer_id=customer.unique_id, # Can be dummy ID
+            customer_id=customer_id,
             comment=comment,
             rating=rating
         )
@@ -312,17 +312,18 @@ class Marketplace:
                 address=rows[0],
                 name=rows[1],
                 unique_id=rows[2],
+                phone_number=rows[5] if len(rows) > 5 else None,
             )
             vendor.email = rows[3]
             vendor.password = rows[4]
             return vendor
             
-    def registerVendor(self, name, password, email, address):
+    def registerVendor(self, name, password, email, address, phone_number=None):
         if database.searchvendor(email) is not None:
             print("Vendor already exists")
             return None
         passworde = auth.encodere(password)
-        vendor = Vendor(name=name, address=address, unique_id=None)
+        vendor = Vendor(name=name, address=address, unique_id=None, phone_number=phone_number)
         vendor.email = email
         vendor.password = passworde
         
@@ -331,7 +332,8 @@ class Marketplace:
             email=email,
             password=passworde,
             vendorid=vendor.unique_id,
-            address=address
+            address=address,
+            phone_number=phone_number
         )
         print("Vendor registration successful")
         return vendor
@@ -399,14 +401,10 @@ class Marketplace:
             )
             return product
 
-    def add_product(self, vendor_email, product_data):
-        vendor = self.findvendor(vendor_email)
-        if vendor is None:
-            return None
-            
+    def add_product(self, vendor_id, product_data):
         new_product = Product(
             product_name=product_data.get("name"),
-            vendor_id=vendor.unique_id,
+            vendor_id=vendor_id,
             price=product_data.get("priceCents", 0),
             image_url=product_data.get("image", ""),
             product_type=product_data.get("type", "General"),
@@ -416,25 +414,17 @@ class Marketplace:
         database.addproduct(new_product.to_dict())
         return new_product
 
-    def update_product(self, vendor_email, product_id, updates):
-        vendor = self.findvendor(vendor_email)
-        if vendor is None:
-            return None
-            
+    def update_product(self, vendor_id, product_id, updates):
         product = self.findproduct(product_id)
-        if product is None or product.vendor_id != vendor.unique_id:
+        if product is None or product.vendor_id != vendor_id:
             return None
             
         database.updateproduct(product_id, updates)
         return self.findproduct(product_id)
 
-    def deleteproduct(self, productid, vendor_email):
-        vendor = self.findvendor(vendor_email)
-        if vendor is None:
-            return False
-
+    def deleteproduct(self, productid, vendor_id):
         product = self.findproduct(productid)
-        if product is None or product.vendor_id != vendor.unique_id:
+        if product is None or product.vendor_id != vendor_id:
             return False
         
         return database.deleteproduct(productid)

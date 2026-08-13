@@ -55,7 +55,11 @@
     document.addEventListener("DOMContentLoaded", () => {
 
       // Fetch stats
-      fetch("http://127.0.0.1:5001/vendor/stats")
+      fetch("http://127.0.0.1:5001/vendor/stats", {
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("vendorAuthToken")
+        }
+      })
         .then(res => res.json())
         .then(data => {
           document.getElementById("stat-sales").innerText = "$" + data.total_sales.toFixed(2);
@@ -72,7 +76,11 @@
       // Fetch recent orders
       const tbody = document.getElementById("recent-orders-body");
       
-      fetch("http://127.0.0.1:5001/vendor/orders")
+      fetch("http://127.0.0.1:5001/vendor/orders", {
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("vendorAuthToken")
+        }
+      })
         .then(res => res.json())
         .then(data => {
           tbody.innerHTML = "";

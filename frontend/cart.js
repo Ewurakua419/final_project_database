@@ -65,7 +65,12 @@ cartOverlay.addEventListener("click", closeCart);
     btn.style.pointerEvents = "none";
 
     if (action === "remove") {
-      fetch(`http://127.0.0.1:5001/cart/${prodId}`, { method: "DELETE" })
+      fetch(`http://127.0.0.1:5001/cart/${prodId}`, { 
+        method: "DELETE",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("authToken")
+        }
+      })
         .then(res => res.json())
         .then(() => fetchCart())
         .catch(err => console.error(err));
@@ -76,7 +81,10 @@ cartOverlay.addEventListener("click", closeCart);
       
       fetch(`http://127.0.0.1:5001/cart/${prodId}/quantity`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + localStorage.getItem("authToken")
+        },
         body: JSON.stringify({ quantity: newQty })
       })
       .then(res => res.json())
@@ -85,16 +93,23 @@ cartOverlay.addEventListener("click", closeCart);
     }
   });
 
-  export const addToCart = (prodID, quantity) => {
+  export const addToCart = (prod_id, quantity) => {
     return fetch("http://127.0.0.1:5001/cart", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prodID, quantity })
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + localStorage.getItem("authToken")
+      },
+      body: JSON.stringify({ product_id: prod_id, quantity: quantity })
     }).then(res => res.json());
   };
 
   export const fetchCart = () => {
-    fetch("http://127.0.0.1:5001/cart")
+    fetch("http://127.0.0.1:5001/cart", {
+      headers: {
+        "Authorization": "Bearer " + localStorage.getItem("authToken")
+      }
+    })
       .then(res => res.json())
       .then(data => {
         const dynamicCartBadge = document.getElementById("cart-count");

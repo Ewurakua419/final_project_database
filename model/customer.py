@@ -2,9 +2,12 @@ import uuid
 from model.cart import Cart
 from model.address import Address
 class Customer:
-    def __init__(self, name, password, email, unique_id=None, ids=None):
+    def __init__(self, name, password, email, unique_id=None, ids=None, first_name=None, last_name=None, phone_number=None):
             self.name=name
             self.email=email
+            self.first_name = first_name or (name.split(" ")[0] if name else "")
+            self.last_name = last_name or (name.split(" ")[1] if name and len(name.split(" ")) > 1 else "")
+            self.phone_number = phone_number or ""
             if unique_id==None:
                 self.unique_id = str(uuid.uuid4())[:20]
             else:

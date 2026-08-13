@@ -5,11 +5,16 @@ function initNavbar() {
   const container = document.getElementById("navbar-container");
   if (!container) return;
 
+  const isLoggedIn = !!localStorage.getItem("authToken");
+  const authBtn = isLoggedIn 
+    ? `<a href="../login.html" class="button-utility" onclick="localStorage.removeItem('authToken')">Log out</a>` 
+    : `<a href="../login.html" class="button-utility">Log in</a>`;
+
   container.innerHTML = `
     <nav class="nav-bar">
       <a href="../products/products.html" class="logo" style="font-weight: 600; text-decoration: none; color: var(--color-ink); font-size: 1.25rem;">Ecommerce store</a>
       <div class="nav-links">
-        <a href="../login.html" class="button-utility">Log in</a>
+        ${authBtn}
         <a href="../orders/orders.html" class="cart-link">
           Returns & Orders
         </a>
