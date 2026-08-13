@@ -1,15 +1,15 @@
 import uuid
 class Address:
-    def __init__(self,country,  postcode, city, street, house_num):
+    def __init__(self,landmark,  postcode, city, street, house_num):
         self.id=str(uuid.uuid4())[:20]
-        self.country=country
+        self.landmark=landmark
         self.postcode=postcode
         self.city=city
         self.street=street
         self.house_num=house_num
 
-    def set_country(self, country):
-        self.country=country
+    def set_landmark(self, landmark):
+        self.landmark=landmark
 
     def set_postcode(self, postcode):
         self.postcode=postcode
@@ -25,7 +25,7 @@ class Address:
 
     def to_dict(self):
             return {
-                "country":self.country,
+                "landmark":self.landmark,
                 "post code": self.postcode,
                 "city": self.city,
                 "street": self.street,

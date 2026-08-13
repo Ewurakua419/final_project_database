@@ -1,12 +1,14 @@
 import uuid
 
 class Product:
-    def __init__(self, name, vendor_id, brand, price, quantity, ids=None):
-        self.brand=brand
+    def __init__(self, name, vendor_id,price, quantity, description, types,ids=None):
+        
         self.name=name
         self.vendor_id=vendor_id
         self.price=price
         self.quantity=quantity
+        self.description=description
+        self.type=types
         if ids==None:
                     self.ids=str(uuid.uuid4())[:20]
         else:
@@ -14,31 +16,42 @@ class Product:
 
 class Fashion(Product):
 
-    def __init__(self, name, vendor_id, brand, size, types, category, price, quantity):
-        super().__init__(name, vendor_id, brand, price, quantity)
+    def __init__(
+        self,
+        name,
+        vendor_id,
+        size,
+        types,
+        color,
+        material,
+        gender_category,
+        price,
+        quantity,
+        description,
+    ):
+        super().__init__(
+            name, vendor_id, price, quantity, types=types, description=description
+        )
         self.size=size
         self.type=types #eg trousers shirt pants
-        self.category=category#eg male or female or kids
+        self.gender_category=gender_category#eg male or female or kids
 
 
 class Beauty(Product):
 
-    def __init__(self, name, vendor_id, brand, category, expiry_date, price, quantity):
-        super().__init__(name, vendor_id, brand, price, quantity)
+    def __init__(
+        self,
+        name,
+        vendor_id,
+        category,
+        expiry_date,
+        price,
+        quantity,
+        types,
+        description,
+    ):
+        super().__init__(
+            name, vendor_id, price, quantity, types=types, description=description
+        )
         self.category=category
         self.expiry=expiry_date
-
-
-class Tech(Product):
-
-    def __init__(self, name, vendor_id, brand, dimensions, category, price, quantity):
-        super().__init__(name, vendor_id, brand, price, quantity)
-        self.dimensions=dimensions#w*h*l
-        self.category=category#type of item
-
-
-class Food(Product):
-
-    def __init__(self, name, vendor_id, brand, expiry, price, quantity):
-        super().__init__(name, vendor_id, brand, price, quantity)
-        self.expiry=expiry

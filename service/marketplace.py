@@ -9,16 +9,15 @@ class Marketplace:
     def __init__(self, name):
         self.name=name
 
-    def finduser(self, name):
+    def finduser(self, name,password):
         name = name.strip().lower()
-        rows = database.search(name)
+        rows = database.searchcustomer(name,password)
         if rows == None:
             print("User not found")
             return None
         else:
             print("User found")
             user = Customer(
-                name=rows[1],
                 password=rows[2],
                 unique_id=rows[0],
                 ids=rows[3],
@@ -56,7 +55,7 @@ class Marketplace:
         return user
 
     def login(self, name, password):
-        customer = self.finduser(name)
+        customer = self.finduser(name,password)
 
         if customer is None:
             print("Login unsuccessful: Username not found")
@@ -103,11 +102,11 @@ class Marketplace:
         return customer.cart.products
 
     def add_to_cart(self, productid, username):
-        customer = self.finduser(username)
+        customer = database.searchcustomer(username)
         if customer is None:
             return None
 
-        product=self.findproduct(productid=productid)
+        product=database.findproduct(productid=productid)
         if product is None:
             return None
         if customer.cart.check_product(product):
@@ -169,19 +168,20 @@ class Marketplace:
     ##product focus
     def findproduct(self, productid):
             productid = productid.strip().lower()
-            rows = database.search(productid)#change to search product
+            rows = database.findproduct(productid)#change to search product
             if rows == None:
                 print("User not found")
                 return None
             else:
                 print("User found")
                 product = Product(#edit to match database
-                    name=rows[1],
-                    vendor_id=rows[2],
-                    brand=rows[0],
-                    price=rows[3],
-                    quantity=rows[4],
-                    ids=rows[0]
+                    name=rows[2],
+                    vendor_id=rows[1],
+                    description=rows[3],
+                    price=rows[4],
+                    quantity=rows[5],
+                    ids=rows[0],
+                    types=rows[6]
                 )
                 return product
 

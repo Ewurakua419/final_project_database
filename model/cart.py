@@ -16,7 +16,6 @@ class Cart:
         if balance==self.balance:
             order_id=str(uuid.uuid4())[:20]
             order1=Order(order_id=order_id,products=self.products, customer=self.user.unique_id, add_id=address.id)
-            self.user.history.append(Transaction(amount=balance, user=self.user.unique_id, order_id=order_id, product=self.products, address=address.id))
             return order1
 
     def remove_product(self, product):
