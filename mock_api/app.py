@@ -449,6 +449,20 @@ def get_orders(current_user_id):
     return jsonify({"orders": sorted_orders}), 200
 
 
+@app.route("/customer/profile", methods=["GET"])
+@token_required
+def get_customer_profile(current_user_id):
+    customer = marketplace.finduser_by_id(current_user_id)
+    if not customer:
+        return jsonify({"error": "Customer not found"}), 404
+    return jsonify({
+        "email": customer.email,
+        "first_name": customer.first_name,
+        "last_name": customer.last_name,
+        "phone_number": customer.phone_number
+    }), 200
+
+
 # Run the local development server
 
 # --- REVIEWS ---
