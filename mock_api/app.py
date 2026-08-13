@@ -9,6 +9,16 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import uuid
 from datetime import datetime, timezone
+import sys
+import os
+# Add the parent directory to sys.path so we can import auth.py
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from auth import encodere, decodere, SECRET_KEY
+import jwt
+from datetime import timedelta
+from service.marketplace import Marketplace
+
+marketplace = Marketplace(name="Mock Marketplace")
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -21,7 +31,6 @@ CORS(app, resources={
 })
 
 vendor_id = "vendor_001"
-
 def find_product(product_id):
     for p in products:
         if p["id"] == product_id:
@@ -34,7 +43,126 @@ def get_image_url(image_path):
     base_url = request.host_url
     return f"{base_url}static/{image_path}"
 
+# ---authentication----
+@app.route("/register", methods=["POST"])
+def register_customer():
+    if not request.is_json:
+        return jsonify({"error": "Missing JSON body"}), 400
+        
+    data = request.get_json()
+    email = data.get("email")
+    password = data.get("password")
+    name = data.get("name", "New User")
+    
+    if not email or not password:
+        return jsonify({"error": "Email and password are required"}), 400
+    
+    user = marketplace.registerCustomer(name, password, email)
+    if not user:
+        return jsonify({"error": "User already exists or registration failed"}), 409
+    
+    return jsonify({
+        "message": "User registered successfully", 
+        "user_id": user.unique_id
+    }), 201
 
+    
+
+@app.route("/login", methods=["POST"])
+def login_customer():
+    if not request.is_json:
+        return jsonify({"error": "Missing JSON body"}), 400
+        
+    data = request.get_json()
+    email = data.get("email")
+    password = data.get("password")
+    
+    if not email or not password:
+        return jsonify({"error": "Email and password are required"}), 400
+        
+    customer = marketplace.login(email, password)
+    
+    if not customer:
+        return jsonify({"error": "Invalid email or password"}), 401
+        
+    # Generate JWT Token
+    payload = {
+        "user_id": customer.unique_id,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=24) # Token expires in 24 hours
+    }
+    token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+    
+    return jsonify({
+        "message": "Login successful",
+        "token": token
+    }), 200
+
+
+
+@app.route("/vendor/register", methods=["POST"])
+def register_vendor():
+    if not request.is_json:
+        return jsonify({"error": "Missing JSON body"}), 400
+        
+    data = request.get_json()
+    email = data.get("email")
+    password = data.get("password")
+    
+    if not email or not password:
+        return jsonify({"error": "Email and password are required"}), 400
+        
+    for v in vendors:
+        if v["email"] == email:
+            return jsonify({"error": "Vendor already exists"}), 409
+            
+    hashed_password = encodere(password)
+    
+    new_vendor = {
+        "id": "vendor_" + uuid.uuid4().hex[:10],
+        "email": email,
+        "password": hashed_password
+    }
+    vendors.append(new_vendor)
+    
+    return jsonify({
+        "message": "Vendor registered successfully", 
+        "vendor_id": new_vendor["id"]
+    }), 201
+
+@app.route("/vendor/login", methods=["POST"])
+def login_vendor():
+    if not request.is_json:
+        return jsonify({"error": "Missing JSON body"}), 400
+        
+    data = request.get_json()
+    email = data.get("email")
+    password = data.get("password")
+    
+    if not email or not password:
+        return jsonify({"error": "Email and password are required"}), 400
+        
+    vendor = None
+    for v in vendors:
+        if v["email"] == email:
+            vendor = v
+            break
+            
+    if not vendor:
+        return jsonify({"error": "Invalid email or password"}), 401
+        
+    if not decodere(password, vendor["password"]):
+        return jsonify({"error": "Invalid email or password"}), 401
+        
+    payload = {
+        "vendor_id": vendor["id"],
+        "exp": datetime.now(timezone.utc) + timedelta(hours=24)
+    }
+    token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+    
+    return jsonify({
+        "message": "Login successful",
+        "token": token
+    }), 200
 
 @app.route("/product-items", methods = ["GET"])
 def get_products():
