@@ -236,6 +236,13 @@
       // Handle Review Submission
       document.getElementById("review-form").addEventListener("submit", (e) => {
         e.preventDefault();
+
+        if (!localStorage.getItem("authToken")) {
+          alert("You must log in to submit a review.");
+          window.location.href = `../login.html?redirect=product_detail&id=${currentProductId}`;
+          return;
+        }
+
         const btn = e.target.querySelector("button[type='submit']");
         btn.innerText = "Submitting...";
         btn.disabled = true;

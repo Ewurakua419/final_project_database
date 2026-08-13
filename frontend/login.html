@@ -67,9 +67,42 @@
         const data = await response.json();
         
         if (response.ok) {
-          // Success! Save the token and redirect to products page
+          // Success! Save the token
           localStorage.setItem('authToken', data.token);
-          window.location.href = 'products/products.html';
+
+          // Merge guest cart if present
+          const guestCartStr = localStorage.getItem("guestCart");
+          if (guestCartStr) {
+            try {
+              const guestCart = JSON.parse(guestCartStr) || [];
+              for (const item of guestCart) {
+                // Send a POST fetch to add to backend cart
+                await fetch('http://127.0.0.1:5001/cart', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + data.token
+                  },
+                  body: JSON.stringify({ product_id: item.product_id, quantity: item.quantity })
+                });
+              }
+              localStorage.removeItem("guestCart");
+            } catch (err) {
+              console.error("Error merging guest cart", err);
+            }
+          }
+
+          // Handle redirects
+          const urlParams = new URLSearchParams(window.location.search);
+          const redirect = urlParams.get('redirect');
+          if (redirect === 'checkout') {
+            window.location.href = 'g-checkout/checkout.html';
+          } else if (redirect === 'product_detail') {
+            const prodId = urlParams.get('id');
+            window.location.href = `products/product_detail.html?id=${prodId}`;
+          } else {
+            window.location.href = 'products/products.html';
+          }
         } else {
           // Show error message from backend
           errorDiv.style.display = 'block';

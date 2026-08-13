@@ -52,6 +52,9 @@
 
   <script type="module" src="vendor-navbar.js"></script>
   <script>
+    if (!localStorage.getItem("vendorAuthToken")) {
+      window.location.href = "login.html";
+    }
     document.addEventListener("DOMContentLoaded", () => {
 
       // Fetch stats

@@ -100,9 +100,17 @@ def register_customer():
     if not user:
         return jsonify({"error": "User already exists or registration failed"}), 409
     
+    # Generate JWT Token for auto-login
+    payload = {
+        "user_id": user.unique_id,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=24)
+    }
+    token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+    
     return jsonify({
         "message": "User registered successfully", 
-        "user_id": user.unique_id
+        "user_id": user.unique_id,
+        "token": token
     }), 201
 
     
@@ -157,9 +165,17 @@ def register_vendor():
     if not vendor:
         return jsonify({"error": "Vendor already exists or registration failed"}), 409
         
+    # Generate JWT Token for auto-login
+    payload = {
+        "vendor_id": vendor.unique_id,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=24)
+    }
+    token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+    
     return jsonify({
         "message": "Vendor registered successfully", 
-        "vendor_id": vendor.unique_id
+        "vendor_id": vendor.unique_id,
+        "token": token
     }), 201
 
 @app.route("/vendor/login", methods=["POST"])
