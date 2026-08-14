@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile - Ecommerce store</title>
+  <link rel="stylesheet" href="base.css">
+  <link rel="stylesheet" href="products/products.css">
+  <style>
+    .profile-card {
+      background: var(--color-surface, #ffffff);
+      border: 1px solid var(--color-hairline, #e6e6e6);
+      border-radius: var(--rounded-lg, 12px);
+      padding: var(--spacing-lg, 24px);
+      max-width: 600px;
+      margin: 2rem auto;
+      box-shadow: rgba(0, 0, 0, 0.02) 0px 2px 8px;
+    }
+    .profile-title {
+      font-size: var(--type-heading-2-size, 26px);
+      font-weight: 700;
+      letter-spacing: -0.625px;
+      color: var(--color-ink, #000000);
+      margin-bottom: var(--spacing-lg, 24px);
+    }
+    .form-section {
+      margin-bottom: var(--spacing-lg, 24px);
+      padding-bottom: var(--spacing-md, 16px);
+      border-bottom: 1px solid var(--color-hairline, #e6e6e6);
+    }
+    .form-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--color-ink-muted, #615d59);
+      margin-bottom: var(--spacing-md, 16px);
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-md, 16px);
+    }
+    .form-group.full-width {
+      grid-column: span 2;
+    }
+    .text-input {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .success-banner {
+      display: none;
+      padding: 12px;
+      background-color: rgba(26, 174, 57, 0.1);
+      color: #1aae39;
+      border: 1px solid rgba(26, 174, 57, 0.2);
+      border-radius: var(--rounded-md, 8px);
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: var(--spacing-md, 16px);
+      text-align: center;
+    }
+  </style>
+</head>
+<body style="background-color: var(--color-canvas-soft, #f6f5f4);">
+
+  <div id="navbar-container"></div>
+
+  <div class="main-content">
+    <div class="profile-card">
+      <h1 class="profile-title">My Profile</h1>
+      
+      <div id="success-message" class="success-banner">Profile updated successfully!</div>
+      <div id="error-message" style="display:none; color: red; margin-bottom: 16px; font-size: 14px; font-weight: 500;"></div>
+
+      <form id="profile-form">
+        <!-- Personal Details Section -->
+        <div class="form-section">
+          <div class="form-section-title">Personal Details</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="eyebrow text-muted" for="first-name">First Name</label>
+              <input type="text" id="first-name" class="text-input" required>
+            </div>
+            <div class="form-group">
+              <label class="eyebrow text-muted" for="last-name">Last Name</label>
+              <input type="text" id="last-name" class="text-input" required>
+            </div>
+            <div class="form-group full-width">
+              <label class="eyebrow text-muted" for="email">Email</label>
+              <input type="email" id="email" class="text-input" required>
+            </div>
+            <div class="form-group full-width">
+              <label class="eyebrow text-muted" for="phone-number">Phone Number</label>
+              <input type="tel" id="phone-number" class="text-input" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- Saved Address Section -->
+        <div class="form-section" style="border-bottom: none;">
+          <div class="form-section-title">Shipping Address</div>
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label class="eyebrow text-muted" for="address">Street Address</label>
+              <input type="text" id="address" class="text-input" placeholder="123 Main St" required>
+            </div>
+            <div class="form-group">
+              <label class="eyebrow text-muted" for="city">City</label>
+              <input type="text" id="city" class="text-input" required>
+            </div>
+            <div class="form-group">
+              <label class="eyebrow text-muted" for="country">Country</label>
+              <input type="text" id="country" class="text-input" required>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" id="save-btn" class="button-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md, 16px);">
+          Save Changes
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="navbar.js"></script>
+  <script type="module">
+    // Load profile on start
+    function loadProfile() {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      fetch("http://127.0.0.1:5001/customer/profile", {
+        headers: {
+          "Authorization": "Bearer " + token
+        }
+      })
+        .then(res => {
+          if (!res.ok) throw new Error("Failed to fetch profile");
+          return res.json();
+        })
+        .then(profile => {
+          document.getElementById("first-name").value = profile.first_name || "";
+          document.getElementById("last-name").value = profile.last_name || "";
+          document.getElementById("email").value = profile.email || "";
+          document.getElementById("phone-number").value = profile.phone_number || "";
+          
+          if (profile.address) {
+            document.getElementById("address").value = profile.address.street_address || profile.address.street || "";
+            document.getElementById("city").value = profile.address.city || "";
+            document.getElementById("country").value = profile.address.landmark || profile.address.country || "";
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          const errDiv = document.getElementById("error-message");
+          errDiv.innerText = "Error loading profile details.";
+          errDiv.style.display = "block";
+        });
+    }
+
+    // Save profile changes
+    document.getElementById("profile-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      
+      const saveBtn = document.getElementById("save-btn");
+      const originalText = saveBtn.innerText;
+      saveBtn.innerText = "Saving...";
+      saveBtn.disabled = true;
+      
+      const successDiv = document.getElementById("success-message");
+      const errDiv = document.getElementById("error-message");
+      successDiv.style.display = "none";
+      errDiv.style.display = "none";
+
+      const token = localStorage.getItem("authToken");
+      const payload = {
+        first_name: document.getElementById("first-name").value,
+        last_name: document.getElementById("last-name").value,
+        email: document.getElementById("email").value,
+        phone_number: document.getElementById("phone-number").value,
+        address: {
+          street: document.getElementById("address").value,
+          city: document.getElementById("city").value,
+          country: document.getElementById("country").value
+        }
+      };
+
+      fetch("http://127.0.0.1:5001/customer/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify(payload)
+      })
+        .then(res => {
+          if (!res.ok) throw new Error("Failed to save changes");
+          return res.json();
+        })
+        .then(profile => {
+          successDiv.style.display = "block";
+          setTimeout(() => successDiv.style.display = "none", 3000);
+        })
+        .catch(err => {
+          console.error(err);
+          errDiv.innerText = "Failed to update profile changes. Please try again.";
+          errDiv.style.display = "block";
+        })
+        .finally(() => {
+          saveBtn.innerText = originalText;
+          saveBtn.disabled = false;
+        });
+    });
+
+    loadProfile();
+  </script>
+</body>
+</html>

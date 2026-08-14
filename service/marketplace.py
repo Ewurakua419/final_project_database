@@ -112,7 +112,7 @@ class Marketplace:
         else:
             return None
         
-    def checkout(self, customer_id, shipping_fee=0.0):
+    def checkout(self, customer_id, shipping_address=None, payment_details=None, shipping_fee=0.0):
         # We now take customer_id directly from the JWT, skipping finduser lookup
         cart_data = self.get_cart(customer_id)
         if not cart_data or cart_data["total_items"] == 0:
@@ -138,15 +138,73 @@ class Marketplace:
         subtotal = round(subtotal_dollars, 2)
         items = order_items
         
-        # We assume cart_id is the customer's unique_id for now since MOCK_CARTS maps by unique_id
+        import uuid
+        from model.address import Address
+        from model.delivery import Delivery
         from model.order import Order
+        
+        # 1. Create and save Address if provided
+        address_id = None
+        if shipping_address:
+            addr_obj = Address(
+                city=shipping_address.get("city", "Default City"),
+                street_address=shipping_address.get("street", "Default Street"),
+                landmark=shipping_address.get("country", "Ghana"),
+                customer_id=customer_id
+            )
+            database.add_address(addr_obj.to_dict())
+            address_id = addr_obj.address_id
+        
+        # Generate 6-char order_id to fit VARCHAR(6) constraint
+        order_id = str(uuid.uuid4())[:6]
+        
+        # Instantiate payment subclass and save details
+        payment_record = None
+        if payment_details:
+            from model.payment import Card, Momo, Bank_T
+            pmeth = payment_details.get("method")
+            if pmeth == "card":
+                card_num = payment_details.get("card_last_4", "4242")
+                payment_record = Card(cvv="123", card_num=card_num, expiry="12/26")
+            elif pmeth == "momo":
+                phone = payment_details.get("phone_number", "")
+                net = payment_details.get("network", "")
+                payment_record = Momo(phone=phone, acc_name="Customer Wallet", network=net)
+            elif pmeth == "bank":
+                payment_record = Bank_T(acc_name="EcoBank Account", acc_num="1234567890123", bank_name="EcoBank")
+
+        payment_dict = payment_record.__dict__ if payment_record else {
+            "last_four": "4242",
+            "brand": "Visa"
+        }
+        
+        # 2. Create Order
         new_order = Order(
             cart_id=customer_id, 
             customer_id=customer_id, 
             subtotal=subtotal, 
             shipping_fee=shipping_fee,
-            items=items
+            items=items,
+            order_id=order_id,
+            shipping_address={
+                "id": address_id or "addr_1",
+                "street": shipping_address.get("street", "123 Default Street") if shipping_address else "123 Default Street",
+                "city": shipping_address.get("city", "Default City") if shipping_address else "Default City",
+                "state": "DC",
+                "zip": "10000"
+            },
+            payment_details=payment_dict
         )
+        
+        # 3. Create Delivery linked to the address and order
+        default_shipping_id = "SHIP01" # Defaulting to first shipping company
+        delivery_obj = Delivery(
+            order_id=new_order.order_id,
+            delivery_status="on the way",
+            address_id=address_id,
+            shipping_id=default_shipping_id
+        )
+        database.add_delivery(delivery_obj.to_dict())
         
         # Clear cart
         database.checkout(customer_id)
@@ -265,7 +323,23 @@ class Marketplace:
         }
 
     def update_order_status(self, order_id, new_status):
-        return database.update_order(order_id, {"status": new_status})
+        success = database.update_order(order_id, {"status": new_status})
+        if success:
+            # Sync delivery status with order status
+            delivery = database.get_delivery_by_order(order_id)
+            if delivery:
+                db_status = "on the way"
+                status_lower = new_status.lower()
+                if status_lower == "delivered":
+                    db_status = "delivered"
+                elif status_lower == "shipped":
+                    db_status = "on the way"
+                elif status_lower == "pending":
+                    # For a newly placed/pending order, default delivery status is sent to port
+                    db_status = "sent to port"
+                
+                delivery["delivery_status"] = db_status
+        return success
         
     def get_product_reviews(self, product_id):
         from model.review import Review
@@ -457,3 +531,63 @@ class Marketplace:
         return database.deleteproduct(productid)
 
     #address focus
+    def update_customer_profile(self, customer_id, data):
+        first_name = data.get("first_name")
+        last_name = data.get("last_name")
+        phone_number = data.get("phone_number")
+        email = data.get("email")
+        address_data = data.get("address")
+        
+        customer = self.finduser_by_id(customer_id)
+        if not customer:
+            return None
+            
+        if first_name is not None:
+            customer.first_name = first_name
+        if last_name is not None:
+            customer.last_name = last_name
+        if phone_number is not None:
+            customer.phone_number = phone_number
+        if email is not None:
+            customer.email = email
+            
+        customer.name = f"{customer.first_name} {customer.last_name}".strip()
+        
+        for u in database.MOCK_USERS:
+            if u["unique_id"] == customer_id:
+                u["first_name"] = customer.first_name
+                u["last_name"] = customer.last_name
+                u["phone_number"] = customer.phone_number
+                u["email"] = customer.email
+                u["name"] = customer.name
+                break
+                
+        address = None
+        if address_data:
+            from model.address import Address
+            addr_list = database.get_addresses_by_customer(customer_id)
+            if addr_list:
+                existing_addr = addr_list[0]
+                existing_addr["street"] = address_data.get("street", existing_addr.get("street"))
+                existing_addr["street_address"] = address_data.get("street", existing_addr.get("street_address"))
+                existing_addr["city"] = address_data.get("city", existing_addr.get("city"))
+                existing_addr["country"] = address_data.get("country", existing_addr.get("country"))
+                existing_addr["landmark"] = address_data.get("country", existing_addr.get("landmark"))
+                address = existing_addr
+            else:
+                addr_obj = Address(
+                    city=address_data.get("city", ""),
+                    street_address=address_data.get("street", ""),
+                    landmark=address_data.get("country", ""),
+                    customer_id=customer_id
+                )
+                database.add_address(addr_obj.to_dict())
+                address = addr_obj.to_dict()
+                
+        return {
+            "email": customer.email,
+            "first_name": customer.first_name,
+            "last_name": customer.last_name,
+            "phone_number": customer.phone_number,
+            "address": address
+        }

@@ -43,6 +43,15 @@ from mock_api.reviews import reviews as mock_api_reviews
 # --- MOCK DATA ---
 MOCK_CARTS = {} # Maps customer_id to a list of items: [{"product": product, "quantity": quantity}]
 MOCK_ORDERS = orders
+MOCK_ADDRESSES = []
+MOCK_DELIVERIES = []
+MOCK_SHIPPING_COMPANIES = [
+    {"shipping_id": "SHIP01", "name": "Speedy Delivery Ghana", "contact_phone": "+233302000001"},
+    {"shipping_id": "SHIP02", "name": "EcoTransit Logistics", "contact_phone": "+233302000002"},
+    {"shipping_id": "SHIP03", "name": "DropX Africa", "contact_phone": "+233302000003"},
+    {"shipping_id": "SHIP04", "name": "Aramex Ghana", "contact_phone": "+233302000004"},
+    {"shipping_id": "SHIP05", "name": "DHL Express Local", "contact_phone": "+233302000005"},
+]
 
 # Map the old mock review format to the new DB format
 MOCK_REVIEWS = []
@@ -194,6 +203,26 @@ def get_all_orders():
 
 def add_order(order_dict):
     MOCK_ORDERS.append(order_dict)
+
+def add_address(address_dict):
+    MOCK_ADDRESSES.append(address_dict)
+    return address_dict
+
+def get_addresses_by_customer(customer_id):
+    return [addr for addr in MOCK_ADDRESSES if addr["customer_id"] == customer_id]
+
+def add_delivery(delivery_dict):
+    MOCK_DELIVERIES.append(delivery_dict)
+    return delivery_dict
+
+def get_delivery_by_order(order_id):
+    for d in MOCK_DELIVERIES:
+        if d["order_id"] == order_id:
+            return d
+    return None
+
+def get_all_shipping_companies():
+    return MOCK_SHIPPING_COMPANIES
     
 def update_order(order_id, updates_dict):
     for o in MOCK_ORDERS:

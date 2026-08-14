@@ -307,6 +307,15 @@ def get_vendor_orders(current_vendor_id):
             if "image" in item:
                 item["image"] = get_image_url(item["image"])
         
+        # Retrieve and attach customer contact details
+        customer = marketplace.finduser_by_id(order.get("user_id"))
+        if customer:
+            order["customer_email"] = customer.email
+            order["customer_phone"] = customer.phone_number
+        else:
+            order["customer_email"] = "Unknown Customer"
+            order["customer_phone"] = "N/A"
+        
     sorted_orders = sorted(vendor_orders, key=get_order_date, reverse=True)
     return jsonify({"orders": sorted_orders}), 200
 
@@ -417,7 +426,7 @@ def to_checkout(current_user_id):
     shipping_address = data.get("shipping_address", {})
     payment_details = data.get("payment_details", {})
     
-    order = marketplace.checkout(current_user_id, shipping_fee=5.00)
+    order = marketplace.checkout(current_user_id, shipping_address=shipping_address, payment_details=payment_details, shipping_fee=5.00)
     if not order:
         return jsonify({"error": "Cart is empty or user not found"}), 400
     
@@ -436,12 +445,23 @@ def get_orders(current_user_id):
     if customer_orders is None:
         return jsonify({"error": "Customer not found"}), 404
         
+    import database
     formatted_orders = customer_orders
     
     for order in formatted_orders:
         for item in order.get("items", []):
             if "image" in item:
                 item["image"] = get_image_url(item["image"])
+        
+        # Fetch delivery details and link shipping company name
+        delivery = database.get_delivery_by_order(order["order_id"])
+        if delivery:
+            delivery_info = delivery.copy()
+            shipping_cos = database.get_all_shipping_companies()
+            for co in shipping_cos:
+                if co["shipping_id"] == delivery["shipping_id"]:
+                    delivery_info["shipping_company"] = co["name"]
+            order["delivery"] = delivery_info
     
     # Re-use our get_order_date function
     sorted_orders = sorted(formatted_orders, key=get_order_date, reverse=True)
@@ -455,11 +475,34 @@ def get_customer_profile(current_user_id):
     customer = marketplace.finduser_by_id(current_user_id)
     if not customer:
         return jsonify({"error": "Customer not found"}), 404
+        
+    import database
+    addr_list = database.get_addresses_by_customer(current_user_id)
+    address = addr_list[0] if addr_list else None
+    
     return jsonify({
         "email": customer.email,
         "first_name": customer.first_name,
         "last_name": customer.last_name,
-        "phone_number": customer.phone_number
+        "phone_number": customer.phone_number,
+        "address": address
+    }), 200
+
+@app.route("/customer/profile", methods=["PUT"])
+@token_required
+def update_customer_profile(current_user_id):
+    if not request.is_json:
+        return jsonify({"error": "Missing JSON body"}), 400
+        
+    data = request.get_json()
+    profile = marketplace.update_customer_profile(current_user_id, data)
+    
+    if not profile:
+        return jsonify({"error": "Customer not found"}), 404
+        
+    return jsonify({
+        "message": "Profile updated successfully",
+        **profile
     }), 200
 
 

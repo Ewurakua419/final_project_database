@@ -2,11 +2,13 @@ import uuid
 from datetime import datetime, timezone
 
 class Order:
-    def __init__(self, cart_id, customer_id, subtotal, shipping_fee, order_id=None, order_date=None, items=None):
+    def __init__(self, cart_id, customer_id, subtotal, shipping_fee, order_id=None, order_date=None, items=None, shipping_address=None, payment_details=None):
         self.cart_id = cart_id
         self.customer_id = customer_id
         self.subtotal = float(subtotal)
         self.shipping_fee = float(shipping_fee)
+        self.shipping_address = shipping_address
+        self.payment_details = payment_details
         
         if order_id is None:
             self.order_id = "ord_" + uuid.uuid4().hex[:10]
@@ -28,7 +30,7 @@ class Order:
             "order_id": self.order_id,
             "user_id": self.customer_id,
             "created_at": self.order_date,
-            "status": "pending", # Mocked for now
+            "status": "pending",
             "pricing_summary": {
                 "subtotal": self.subtotal,
                 "tax": tax,
@@ -36,14 +38,14 @@ class Order:
                 "grand_total": grand_total
             },
             "items": self.items,
-            "shipping_address": {
+            "shipping_address": self.shipping_address or {
                 "id": "addr_1",
                 "street": "123 Default Street",
                 "city": "Default City",
                 "state": "DC",
                 "zip": "10000"
             },
-            "payment_details": {
+            "payment_details": self.payment_details or {
                 "last_four": "4242",
                 "brand": "Visa"
             }

@@ -69,11 +69,16 @@ cartOverlay.addEventListener("click", closeCart);
 if (checkoutBtn) {
   checkoutBtn.addEventListener("click", (e) => {
     e.preventDefault();
+    const pathParts = window.location.pathname.split('/');
+    const frontendIdx = pathParts.indexOf('frontend');
+    const depth = frontendIdx !== -1 ? (pathParts.length - 1 - frontendIdx - 1) : 0;
+    const prefix = depth > 0 ? '../'.repeat(depth) : './';
+
     if (!localStorage.getItem("authToken")) {
       // Redirect to login page with query param
-      window.location.href = "../login.html?redirect=checkout";
+      window.location.href = `${prefix}login.html?redirect=checkout`;
     } else {
-      window.location.href = "../g-checkout/checkout.html";
+      window.location.href = `${prefix}g-checkout/checkout.html`;
     }
   });
 }
