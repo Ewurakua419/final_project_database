@@ -86,7 +86,7 @@
           
           showcase.innerHTML = `<img src="${product.image}" alt="${product.name}">`;
           
-          const price = (product.priceCents / 100).toFixed(2);
+          const price = (product.priceCents).toFixed(2);
           const fullStars = Math.floor(product.rating.stars);
           const hasHalfStar = product.rating.stars % 1 !== 0;
           let starsHtml = "";
@@ -94,6 +94,32 @@
             if (i < fullStars) starsHtml += "★";
             else if (i === fullStars && hasHalfStar) starsHtml += "☆";
             else starsHtml += "☆";
+          }
+
+          let attributesHtml = "";
+          if (product.type === "fashion" && product.fashion_attributes) {
+            attributesHtml = `
+              <div class="product-attributes" style="margin-top: var(--spacing-lg); padding: var(--spacing-md); background: var(--color-canvas-soft); border-radius: var(--rounded-md);">
+                <h3 style="margin-top: 0; margin-bottom: var(--spacing-sm); font-size: 1rem;">Product Specs</h3>
+                <ul style="list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm);">
+                  <li><strong>Color:</strong> ${product.fashion_attributes.Color || 'N/A'}</li>
+                  <li><strong>Material:</strong> ${product.fashion_attributes.Material || 'N/A'}</li>
+                  <li><strong>Size:</strong> ${product.fashion_attributes.Size || 'N/A'}</li>
+                  <li><strong>Gender:</strong> ${product.fashion_attributes.Gender_category || 'N/A'}</li>
+                </ul>
+              </div>
+            `;
+          } else if (product.type === "beauty" && product.beauty_attributes) {
+            attributesHtml = `
+              <div class="product-attributes" style="margin-top: var(--spacing-lg); padding: var(--spacing-md); background: var(--color-canvas-soft); border-radius: var(--rounded-md);">
+                <h3 style="margin-top: 0; margin-bottom: var(--spacing-sm); font-size: 1rem;">Product Specs</h3>
+                <ul style="list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm);">
+                  <li><strong>Skin Type:</strong> ${product.beauty_attributes.skin_type || 'N/A'}</li>
+                  <li><strong>Volume/Weight:</strong> ${product.beauty_attributes.volume_weight || 'N/A'}</li>
+                  <li><strong>Organic:</strong> ${product.beauty_attributes.Is_organic ? 'Yes' : 'No'}</li>
+                </ul>
+              </div>
+            `;
           }
 
           details.innerHTML = `
@@ -104,7 +130,7 @@
                   <span class="stars">${starsHtml}</span>
                   <span class="rating-count">(${product.rating.count} reviews)</span>
                 </div>
-                <div class="product-detail-price">$${price}</div>
+                <div class="product-detail-price">GH₵${price}</div>
               </div>
               <div class="action-bar">
                 <select id="main-qty-select" class="qty-select-large" aria-label="Quantity">
@@ -123,6 +149,7 @@
             <p class="product-description">
               ${product.description || "A high quality product crafted with attention to detail."}
             </p>
+            ${attributesHtml}
           `;
 
           // Add to cart click
@@ -170,7 +197,7 @@
             .slice(0, 5);
 
           relatedProducts.forEach(product => {
-            const price = (product.priceCents / 100).toFixed(2);
+            const price = (product.priceCents).toFixed(2);
             relatedContainer.innerHTML += `
               <a href="product_detail.html?id=${product.id}" class="related-product-card">
                 <div class="related-image-container">
@@ -178,7 +205,7 @@
                 </div>
                 <div class="related-info">
                   <h4 class="related-title">${product.name}</h4>
-                  <div class="related-price">$${price}</div>
+                  <div class="related-price">GH₵${price}</div>
                 </div>
               </a>
             `;

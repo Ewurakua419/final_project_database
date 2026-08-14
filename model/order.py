@@ -38,15 +38,6 @@ class Order:
                 "grand_total": grand_total
             },
             "items": self.items,
-            "shipping_address": self.shipping_address or {
-                "id": "addr_1",
-                "street": "123 Default Street",
-                "city": "Default City",
-                "state": "DC",
-                "zip": "10000"
-            },
-            "payment_details": self.payment_details or {
-                "last_four": "4242",
-                "brand": "Visa"
-            }
+            "shipping_address": self.shipping_address,
+            "payment_details": self.payment_details
         }

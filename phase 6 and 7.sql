@@ -2,7 +2,7 @@ show databases;
 use ecommerce;
 
 
-Alter table order_items ADD CONSTRAINT chk_orderitems_quantity CHECK (quantity > 0);
+
 
 CREATE ROLE marketplace_admin;
 CREATE ROLE marketplace_vendor;

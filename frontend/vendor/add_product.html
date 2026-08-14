@@ -22,23 +22,67 @@
             <input type="text" class="text-input" id="prod-name" placeholder="e.g. Wireless Noise-Cancelling Headphones" required>
           </div>
 
-          <div class="flex-col" style="gap: var(--spacing-xs);">
-            <label class="eyebrow text-muted">Brand</label>
-            <input type="text" class="text-input" id="prod-brand" placeholder="e.g. Sony" required>
-          </div>
 
           <div class="flex-col" style="gap: var(--spacing-xs);">
             <label class="eyebrow text-muted">Category</label>
-            <select class="text-input" id="prod-category" required>
-              <option value="tech">Tech</option>
+            <select class="text-input" id="prod-category" required onchange="toggleDynamicFields()">
               <option value="fashion">Fashion</option>
               <option value="beauty">Beauty</option>
-              <option value="food">Food</option>
             </select>
           </div>
 
+          <!-- Fashion Dynamic Fields -->
+          <div id="fashion-fields" class="full-width" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md);">
+            <div class="flex-col" style="gap: var(--spacing-xs);">
+              <label class="eyebrow text-muted">Color</label>
+              <input type="text" class="text-input" id="fashion-color" placeholder="e.g. Red">
+            </div>
+            <div class="flex-col" style="gap: var(--spacing-xs);">
+              <label class="eyebrow text-muted">Material</label>
+              <input type="text" class="text-input" id="fashion-material" placeholder="e.g. Cotton">
+            </div>
+            <div class="flex-col" style="gap: var(--spacing-xs);">
+              <label class="eyebrow text-muted">Size</label>
+              <select class="text-input" id="fashion-size">
+                <option value="">Select Size</option>
+                <option value="S">S</option>
+                <option value="M">M</option>
+                <option value="L">L</option>
+                <option value="XL">XL</option>
+                <option value="XXL">XXL</option>
+              </select>
+            </div>
+            <div class="flex-col" style="gap: var(--spacing-xs);">
+              <label class="eyebrow text-muted">Gender Category</label>
+              <select class="text-input" id="fashion-gender">
+                <option value="">Select Gender</option>
+                <option value="men">Men</option>
+                <option value="women">Women</option>
+                <option value="unisex">Unisex</option>
+                <option value="kids">Kids</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Beauty Dynamic Fields -->
+          <div id="beauty-fields" class="full-width" style="display: none; grid-template-columns: 1fr 1fr; gap: var(--spacing-md);">
+            <div class="flex-col" style="gap: var(--spacing-xs);">
+              <label class="eyebrow text-muted">Skin Type</label>
+              <input type="text" class="text-input" id="beauty-skintype" placeholder="e.g. Dry, Oily">
+            </div>
+            <div class="flex-col" style="gap: var(--spacing-xs);">
+              <label class="eyebrow text-muted">Volume/Weight</label>
+              <input type="text" class="text-input" id="beauty-volume" placeholder="e.g. 200ml">
+            </div>
+            <div class="flex-col" style="gap: var(--spacing-xs); grid-column: span 2;">
+              <label class="eyebrow text-muted" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="beauty-organic"> Is Organic
+              </label>
+            </div>
+          </div>
+
           <div class="flex-col" style="gap: var(--spacing-xs);">
-            <label class="eyebrow text-muted">Price ($)</label>
+            <label class="eyebrow text-muted">Price (GH₵)</label>
             <input type="number" step="0.01" class="text-input" id="prod-price" placeholder="299.99" required>
           </div>
 
@@ -73,6 +117,23 @@
     document.addEventListener("DOMContentLoaded", () => {
 
 
+      window.toggleDynamicFields = () => {
+        const category = document.getElementById("prod-category").value;
+        const fashionFields = document.getElementById("fashion-fields");
+        const beautyFields = document.getElementById("beauty-fields");
+        
+        if (category === "fashion") {
+          fashionFields.style.display = "grid";
+          beautyFields.style.display = "none";
+        } else if (category === "beauty") {
+          fashionFields.style.display = "none";
+          beautyFields.style.display = "grid";
+        }
+      };
+
+      // Call once to initialize
+      toggleDynamicFields();
+
       document.getElementById("add-product-form").addEventListener("submit", (e) => {
         e.preventDefault();
         
@@ -81,15 +142,30 @@
         btn.innerText = "Saving...";
         btn.disabled = true;
 
+        const category = document.getElementById("prod-category").value;
         const productData = {
           name: document.getElementById("prod-name").value,
-          brand: document.getElementById("prod-brand").value,
-          type: document.getElementById("prod-category").value,
-          priceCents: Math.round(parseFloat(document.getElementById("prod-price").value) * 100),
+          type: category,
+          priceCents: parseFloat(document.getElementById("prod-price").value),
           stock: parseInt(document.getElementById("prod-stock").value),
           image: document.getElementById("prod-image").value,
           description: document.getElementById("prod-description").value,
         };
+
+        if (category === "fashion") {
+          productData.fashion_attributes = {
+            Color: document.getElementById("fashion-color").value,
+            Material: document.getElementById("fashion-material").value,
+            Size: document.getElementById("fashion-size").value,
+            Gender_category: document.getElementById("fashion-gender").value,
+          };
+        } else if (category === "beauty") {
+          productData.beauty_attributes = {
+            skin_type: document.getElementById("beauty-skintype").value,
+            volume_weight: document.getElementById("beauty-volume").value,
+            Is_organic: document.getElementById("beauty-organic").checked,
+          };
+        }
 
         fetch("http://127.0.0.1:5001/vendor/products", {
           method: "POST",

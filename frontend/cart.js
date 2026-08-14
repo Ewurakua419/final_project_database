@@ -12,7 +12,7 @@ const cartHtml = `
     <div class="cart-footer">
       <div class="cart-total-row">
         <span class="cart-total-label">Subtotal</span>
-        <span id="cart-total-value" class="cart-total-value">$0.00</span>
+        <span id="cart-total-value" class="cart-total-value">GH₵0.00</span>
       </div>
       <button id="checkout-btn" class="button-primary checkout-btn">Proceed to Checkout</button>
     </div>
@@ -87,7 +87,7 @@ if (checkoutBtn) {
 function renderCartUI(data) {
   const dynamicCartBadge = document.getElementById("cart-count");
   if (dynamicCartBadge) dynamicCartBadge.innerText = data.total_items;
-  cartTotalValue.innerText = "$" + (data.total_price / 100).toFixed(2);
+  cartTotalValue.innerText = "GH₵" + (data.total_price).toFixed(2);
   
   if (data.cart.length === 0) {
     cartItemsContainer.innerHTML = '<div class="loading-state" style="margin: auto;">Your cart is empty.</div>';
@@ -97,7 +97,7 @@ function renderCartUI(data) {
   cartItemsContainer.innerHTML = "";
   data.cart.forEach(item => {
     const product = item.product;
-    const price = (product.priceCents / 100).toFixed(2);
+    const price = (product.priceCents).toFixed(2);
     
     const itemDiv = document.createElement("div");
     itemDiv.className = "cart-item";
@@ -105,7 +105,7 @@ function renderCartUI(data) {
       <img src="${product.image}" alt="${product.name}" class="cart-item-image">
       <div class="cart-item-details">
         <h4 class="cart-item-title">${product.name}</h4>
-        <div class="cart-item-price">$${price}</div>
+        <div class="cart-item-price">GH₵${price}</div>
         <div class="cart-item-qty">Qty: ${item.quantity}</div>
         <div class="cart-item-actions">
           <button class="cart-action-btn" data-action="increase" data-id="${product.id}" data-qty="${item.quantity}" aria-label="Increase quantity">➕</button>

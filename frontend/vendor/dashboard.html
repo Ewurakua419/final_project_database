@@ -48,6 +48,23 @@
           </tr>
         </tbody>
       </table>
+
+      <h2 class="heading-2" style="margin-top: var(--spacing-xxl); margin-bottom: var(--spacing-md);">Product Performance</h2>
+      <table class="recent-orders-table">
+        <thead>
+          <tr>
+            <th>Product Name</th>
+            <th>Units Sold</th>
+            <th>Revenue</th>
+            <th>Average Rating</th>
+          </tr>
+        </thead>
+        <tbody id="product-performance-body">
+          <tr>
+            <td colspan="4" class="loading-state" style="text-align: center; padding: 2rem; color: var(--color-ink-muted);">Analytics view coming soon (powered by vw_product_sales & vw_product_ratings)</td>
+          </tr>
+        </tbody>
+      </table>
     </main>
 
   <script type="module" src="vendor-navbar.js"></script>
@@ -65,7 +82,7 @@
       })
         .then(res => res.json())
         .then(data => {
-          document.getElementById("stat-sales").innerText = "$" + data.total_sales.toFixed(2);
+          document.getElementById("stat-sales").innerText = "GH₵" + data.total_sales.toFixed(2);
           document.getElementById("stat-products").innerText = data.active_products;
           document.getElementById("stat-orders").innerText = data.pending_orders;
         })
@@ -98,7 +115,7 @@
           
           recentOrders.forEach(order => {
             const date = new Date(order.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-            const customer = order.shipping_address ? `${order.shipping_address.first_name || ''} ${order.shipping_address.last_name || ''}`.trim() || 'Customer' : 'Customer';
+            const customer = order.shipping_address ? `${order.customer_first_name || ''} ${order.customer_last_name || ''}`.trim() || 'Customer' : 'Customer';
             const statusClass = order.status === 'pending' ? 'status-pending' : 'status-shipped';
             const statusText = order.status.charAt(0).toUpperCase() + order.status.slice(1);
             
@@ -108,7 +125,7 @@
                 <td style="color: var(--color-ink-muted);">${date}</td>
                 <td>${customer}</td>
                 <td><span class="status-pill ${statusClass}">${statusText}</span></td>
-                <td style="font-weight: 600;">$${order.pricing_summary.grand_total.toFixed(2)}</td>
+                <td style="font-weight: 600;">GH₵${order.pricing_summary.grand_total.toFixed(2)}</td>
               </tr>
             `;
           });

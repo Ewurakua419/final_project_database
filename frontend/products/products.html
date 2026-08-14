@@ -58,7 +58,7 @@
             });
             
             // Format price from cents
-            const price = (product.priceCents / 100).toFixed(2);
+            const price = (product.priceCents).toFixed(2);
             
             // Generate star ratings (simple visual representation)
             const fullStars = Math.floor(product.rating.stars);
@@ -83,7 +83,7 @@
                 <span class="stars">${starsHtml}</span>
                 <span class="rating-count">${product.rating.count}</span>
               </div>
-              <div class="product-price">$${price}</div>
+              <div class="product-price">GH₵${price}</div>
               
               <div class="product-controls">
                 <select class="qty-select" aria-label="Quantity">

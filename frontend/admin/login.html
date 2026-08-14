@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Portal - Log in</title>
+  <link rel="stylesheet" href="../base.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <div class="auth-layout">
+    <a href="#" style="font-weight: 600; text-decoration: none; color: var(--color-ink-secondary); font-size: var(--type-heading-3-size);">
+      System Administration
+    </a>
+    <div class="ex-auth-form-card">
+      <div class="auth-header">
+        <h1>Admin Sign in</h1>
+        <p>Access the platform dashboard.</p>
+      </div>
+
+      <form id="admin-login-form" class="flex-col" style="gap: var(--spacing-md); display: flex; flex-direction: column;">
+
+        <div class="form-group flex-col" style="gap: var(--spacing-xs); display: flex; flex-direction: column;">
+          <label class="eyebrow text-muted" for="email">Username</label>
+          <input type="text" id="email" class="text-input" placeholder="admin" required autofocus>
+        </div>
+
+        <div class="form-group flex-col" style="gap: var(--spacing-xs); display: flex; flex-direction: column;">
+          <label class="eyebrow text-muted" for="password">Password</label>
+          <input type="password" id="password" class="text-input" placeholder="••••••••" required>
+        </div>
+
+        <div id="error-message" style="color: var(--color-accent-orange); font-size: 14px; display: none;"></div>
+
+        <button type="submit" class="button-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md); padding: 10px; font-weight: 500; font-size: 16px;">
+          Secure Log in
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("admin-login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const errorDiv = document.getElementById('error-message');
+      
+      try {
+        const response = await fetch('http://127.0.0.1:5001/admin/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email: email, password: password })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          localStorage.setItem('adminAuthToken', data.token);
+          window.location.href = 'dashboard.html';
+        } else {
+          errorDiv.style.display = 'block';
+          errorDiv.textContent = data.error || 'An error occurred during login.';
+        }
+      } catch (error) {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = 'Could not connect to the server.';
+      }
+    });
+  </script>
+</body>
+</html>

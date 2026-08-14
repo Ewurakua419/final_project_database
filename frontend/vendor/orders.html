@@ -50,7 +50,7 @@
             const date = new Date(order.created_at).toLocaleDateString(undefined, {
               year: 'numeric', month: 'short', day: 'numeric'
             });
-            const shippingName = order.shipping_address ? `${order.shipping_address.first_name || ''} ${order.shipping_address.last_name || ''}`.trim() || 'Customer' : 'Customer';
+            const shippingName = order.shipping_address ? `${order.customer_first_name || ''} ${order.customer_last_name || ''}`.trim() || 'Customer' : 'Customer';
             const address = order.shipping_address ? `${order.shipping_address.street || ''}, ${order.shipping_address.city || ''}, ${order.shipping_address.country || ''}` : 'N/A';
             const total = order.pricing_summary.grand_total.toFixed(2);
             
@@ -81,8 +81,9 @@
                     <strong>Date:</strong> ${date}<br>
                     <strong>Shipping:</strong> ${address}
                   </div>
-                  <div style="text-align: right;">
-                    <strong>Total:</strong> <span style="color: var(--color-primary); font-size: 1.1rem; font-weight: 600;">$${total}</span>
+                  <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: var(--spacing-sm);">
+                    <div><strong>Total:</strong> <span style="color: var(--color-primary); font-size: 1.1rem; font-weight: 600;">GH₵${total}</span></div>
+                    <button class="button-utility view-details-btn" data-order='${JSON.stringify(order).replace(/'/g, "&#39;")}' style="padding: 4px 12px; font-size: var(--type-caption-size);">View Full Details</button>
                   </div>
                 </div>
               </div>
@@ -119,6 +120,15 @@
                 else console.log("Status updated successfully:", data);
               })
               .catch(err => console.error("Network error:", err));
+            });
+          });
+
+          // View Details click handler
+          document.querySelectorAll('.view-details-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              const orderData = e.target.getAttribute('data-order');
+              sessionStorage.setItem('vendor_current_order', orderData);
+              window.location.href = 'order_detail.html';
             });
           });
         })

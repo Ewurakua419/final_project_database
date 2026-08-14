@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logistics Portal - Log in</title>
+  <link rel="stylesheet" href="../base.css">
+  <style>
+    body { background-color: var(--color-canvas-soft); margin: 0; }
+    .auth-layout { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--spacing-xl); }
+    .ex-auth-form-card { background: var(--color-surface); padding: var(--spacing-xl); border-radius: var(--rounded-lg); width: 100%; max-width: 400px; box-shadow: var(--shadow-level-1); border: 1px solid var(--color-hairline); margin-top: var(--spacing-xl); }
+    .auth-header { margin-bottom: var(--spacing-xl); text-align: center; }
+    .auth-header h1 { font-size: var(--type-heading-2-size); font-weight: var(--type-heading-2-weight); margin: 0 0 var(--spacing-sm); letter-spacing: -0.625px; }
+    .auth-header p { color: var(--color-ink-muted); margin: 0; font-size: var(--type-body-md-size); }
+  </style>
+</head>
+<body>
+
+  <div class="auth-layout">
+    <a href="#" style="font-weight: 600; text-decoration: none; color: var(--color-ink-secondary); font-size: var(--type-heading-3-size);">
+      Logistics Partner Portal
+    </a>
+    <div class="ex-auth-form-card">
+      <div class="auth-header">
+        <h1>Sign in</h1>
+        <p>Access your delivery dashboard.</p>
+      </div>
+
+      <form id="shipping-login-form" class="flex-col" style="gap: var(--spacing-md); display: flex; flex-direction: column;">
+
+        <div class="form-group flex-col" style="gap: var(--spacing-xs); display: flex; flex-direction: column;">
+          <label class="eyebrow text-muted" for="email">Email / ID</label>
+          <input type="text" id="email" class="text-input" placeholder="courier@dhl.com" required autofocus>
+        </div>
+
+        <div class="form-group flex-col" style="gap: var(--spacing-xs); display: flex; flex-direction: column;">
+          <label class="eyebrow text-muted" for="password">Password</label>
+          <input type="password" id="password" class="text-input" placeholder="••••••••" required>
+        </div>
+
+        <div id="error-message" style="color: var(--color-accent-orange); font-size: 14px; display: none;"></div>
+
+        <button type="submit" class="button-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md); padding: 10px; font-weight: 500; font-size: 16px;">
+          Log in
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("shipping-login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const errorDiv = document.getElementById('error-message');
+      
+      try {
+        const response = await fetch('http://127.0.0.1:5001/shipping/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email: email, password: password })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          localStorage.setItem('shippingAuthToken', data.token);
+          window.location.href = 'dashboard.html';
+        } else {
+          errorDiv.style.display = 'block';
+          errorDiv.textContent = data.error || 'An error occurred during login.';
+        }
+      } catch (error) {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = 'Could not connect to the server.';
+      }
+    });
+  </script>
+</body>
+</html>

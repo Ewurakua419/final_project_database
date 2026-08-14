@@ -49,7 +49,7 @@
           }
 
           data.products.forEach(product => {
-            const price = (product.priceCents / 100).toFixed(2);
+            const price = (product.priceCents).toFixed(2);
             container.innerHTML += `
               <div class="product-list-card">
                 <img src="${product.image}" class="product-thumb" alt="${product.name}">
@@ -60,7 +60,7 @@
                     <span>Stock: 50 units</span>
                   </div>
                 </div>
-                <div class="product-price">$${price}</div>
+                <div class="product-price">GH₵${price}</div>
                 <div class="product-actions">
                   <a href="edit_product.html?id=${product.id}" class="button-utility" style="font-size: var(--type-caption-size); text-decoration: none;">Edit</a>
                   <button class="button-utility" style="font-size: var(--type-caption-size); color: var(--color-accent-orange);" onclick="deleteProduct('${product.id}', this)">Delete</button>

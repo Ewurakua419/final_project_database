@@ -1,407 +1,352 @@
+import database
 import psycopg
 from datetime import date
-from model.transaction import Transaction
+# from model.transaction import Transaction
 import uuid
 import mariadb
+import dotenv
+import os
+from model.product import Product
+
+dotenv.load_dotenv()
+
+
 def connect():
     return mariadb.connect(
     host="localhost",
     user="loisamoah",
-    password="9002",
+    password=os.getenv("MARIA_DB_PASS"),
     database="ecommerce",
     port=3306
 )
-##Write data
-# cur.execute("INSERT INTO students (name, age) VALUES (%s, %s)",("Alice", 20))
-# conn.commit()
 
-##read data
-# cur.execute("SELECT * FROM students")
-# rows = cur.fetchall()
-MOCK_USERS = [
-    {
-        "unique_id": "dummy_cust_001",
-        "name": "Dummy User",
-        "password": "hashed_password", # doesn't matter for cart
-        "cart_ids": "cart_001",
-        "email": "dummy@example.com"
-    }
+# ------------------------------------------------------------------
+# STRICT MOCK DATA (Mirroring ddl.sql EXACTLY)
+# ------------------------------------------------------------------
+DB_CUSTOMER = [
+    {"customer_id": "CUST01", "f_name": "Dummy", "l_name": "User", "phone_number": "0241111111", "email": "dummy@example.com"},
+    {"customer_id": "dummy_cust_001", "f_name": "Dummy", "l_name": "User", "phone_number": "0241111111", "email": "dummy@example.com"}
 ]
-MOCK_VENDORS = [
-    {
-        "unique_id": "vendor_001",
-        "name": "Dummy Vendor",
-        "email": "dummy_vendor@example.com",
-        "password": "hashed_password",
-        "address": "123 Vendor St"
-    }
+DB_CUSTOMER_CREDENTIALS = [
+    {"customer_id": "CUST01", "password_hash": "hashed_password"},
+    {"customer_id": "dummy_cust_001", "password_hash": "hashed_password"}
 ]
-from mock_api.products import products as MOCK_PRODUCTS
-from mock_api.orders import orders
-from mock_api.reviews import reviews as mock_api_reviews
 
-# --- MOCK DATA ---
-MOCK_CARTS = {} # Maps customer_id to a list of items: [{"product": product, "quantity": quantity}]
-MOCK_ORDERS = orders
-MOCK_ADDRESSES = []
-MOCK_DELIVERIES = []
-MOCK_SHIPPING_COMPANIES = [
+DB_VENDOR = [
+    {"vendor_id": "VEND01", "vendor_name": "Dummy Vendor", "email": "dummy_vendor@example.com", "phone_number": "0242222222"},
+    {"vendor_id": "vendor_001", "vendor_name": "Dummy Vendor", "email": "dummy_vendor@example.com", "phone_number": "0242222222"}
+]
+DB_VENDOR_CREDENTIALS = [
+    {"vendor_id": "VEND01", "password_hash": "hashed_password"},
+    {"vendor_id": "vendor_001", "password_hash": "hashed_password"}
+]
+
+DB_PRODUCT = [
+    {"product_id": "PROD01", "vendor_id": "VEND01", "product_name": "Classic Black Leather Jacket", "description": "Premium vintage style genuine leather jacket", "price": 299.99, "stock_quantity": 50, "product_type": "fashion", "image_url": "https://images.unsplash.com/photo-1551028719-00167b16eac5"},
+    {"product_id": "PROD02", "vendor_id": "VEND01", "product_name": "Organic Face Wash", "description": "Gentle daily cleanser", "price": 24.99, "stock_quantity": 100, "product_type": "beauty", "image_url": "https://images.unsplash.com/photo-1556228578-0d85b1a4d571"}
+]
+
+DB_FASHION = [
+    {"product_id": "PROD01", "Color": "Black", "Material": "Leather", "Size": "M", "Gender_category": "unisex"}
+]
+DB_BEAUTY = [
+    {"product_id": "PROD02", "skin_type": "All", "volume_weight": "150ml", "Is_organic": True}
+]
+
+DB_REVIEW = [
+    {"review_id": "REV01", "product_id": "PROD01", "customer_id": "CUST01", "rating": 5, "review_date": "2024-01-01", "comment": "Great headphones!"}
+]
+
+DB_CART = []
+DB_CART_ITEMS = []
+
+DB_ORDERS = []
+DB_ORDER_ITEMS = []
+
+DB_ADDRESS = [
+    {"address_id": "ADDR01", "city": "Accra", "Landmark": "Accra Mall", "street_address": "123 Main St", "customer_id": "CUST01"},
+    {"address_id": "ADDR02", "city": "Accra", "Landmark": "Accra Mall", "street_address": "123 Main St", "customer_id": "dummy_cust_001"}
+]
+
+DB_SHIPPING_COMPANY = [
     {"shipping_id": "SHIP01", "name": "Speedy Delivery Ghana", "contact_phone": "+233302000001"},
     {"shipping_id": "SHIP02", "name": "EcoTransit Logistics", "contact_phone": "+233302000002"},
     {"shipping_id": "SHIP03", "name": "DropX Africa", "contact_phone": "+233302000003"},
     {"shipping_id": "SHIP04", "name": "Aramex Ghana", "contact_phone": "+233302000004"},
-    {"shipping_id": "SHIP05", "name": "DHL Express Local", "contact_phone": "+233302000005"},
+    {"shipping_id": "SHIP05", "name": "DHL Express Local", "contact_phone": "+233302000005"}
 ]
 
-# Map the old mock review format to the new DB format
-MOCK_REVIEWS = []
-for r in mock_api_reviews:
-    MOCK_REVIEWS.append({
-        "review_id": r["id"],
-        "product_id": r["product_id"],
-        "customer_id": "dummy@example.com", # Mock mapping
-        "comment": r["text"],
-        "rating": r["rating"],
-        "review_date": r["created_at"]
-    })
+DB_DELIVERY = []
+
+DB_PAYMENT = []
+DB_CARD = []
+DB_MOBILE_MONEY = []
+DB_BANK_TRANSFER = []
+
+# ------------------------------------------------------------------
+# REFACTORED DATABASE FUNCTIONS (Acting on the strict tables above)
+# ------------------------------------------------------------------
 
 def searchcustomer(email):
-    # with connect() as conn:
-    #     with conn.cursor() as cur:
-    #         cur.execute(
-    #             """
-    #             SELECT customer.*, cart.cart_id, cart_items.product_id
-    #             FROM customer
-    #             JOIN cart
-    #                 ON customer.customer_id = cart.customer_id
-    #             JOIN cart_items
-    #                 ON cart.cart_id = cart_items.cart_id
-    #             JOIN customer_credentials
-    #                 ON customer.customer_id = customer_credentials.customer_id
-    #             WHERE customer.email = %s
-    #             """,
-    #             (email,)
-    #         )
-    #         rows = cur.fetchone()
-    #         if not rows:
-    #             return None
-    #         return rows
-    
-    # --- MOCK LOGIC ---
-    for u in MOCK_USERS:
-        if u["email"] == email:
-            # Returning tuple to simulate SQL row: (unique_id, name, password, cart_ids, email, first_name, last_name, phone_number)
-            return (u["unique_id"], u["name"], u["password"], "cart_mock", u["email"], u.get("first_name", ""), u.get("last_name", ""), u.get("phone_number", ""))
+    for c in DB_CUSTOMER:
+        if c["email"] == email:
+            # Need to get password hash
+            pw_hash = ""
+            for cred in DB_CUSTOMER_CREDENTIALS:
+                if cred["customer_id"] == c["customer_id"]:
+                    pw_hash = cred["password_hash"]
+                    break
+            # Return tuple to simulate SQL row: (customer_id, f_name, l_name, phone_number, email, password_hash)
+            return (c["customer_id"], c["f_name"], c["l_name"], c["phone_number"], c["email"], pw_hash)
     return None
 
 def searchcustomer_by_id(customer_id):
-    # with connect() as conn:
-    #     with conn.cursor() as cur:
-    #         cur.execute("SELECT ... WHERE customer_id = %s", (customer_id,))
-    #         # ...
-    
-    # --- MOCK LOGIC ---
-    for u in MOCK_USERS:
-        if u["unique_id"] == customer_id:
-            # Returning tuple to simulate SQL row: (unique_id, name, password, cart_ids, email, first_name, last_name, phone_number)
-            return (u["unique_id"], u["name"], u["password"], "cart_mock", u["email"], u.get("first_name", ""), u.get("last_name", ""), u.get("phone_number", ""))
+    for c in DB_CUSTOMER:
+        if c["customer_id"] == customer_id:
+            pw_hash = ""
+            for cred in DB_CUSTOMER_CREDENTIALS:
+                if cred["customer_id"] == c["customer_id"]:
+                    pw_hash = cred["password_hash"]
+                    break
+            return (c["customer_id"], c["f_name"], c["l_name"], c["phone_number"], c["email"], pw_hash)
     return None
 
-
-def login(email, password):
-    # with connect() as conn:
-    #     with conn.cursor() as cur:
-    #         cur.execute(
-    #             """
-    #             SELECT customer.*,cart.id,customer_credentials.password_hash
-    #             FROM customer
-    #             JOIN customer_credentials
-    #                 ON customer.customer_id = customer_credentials.customer_id
-    #             WHERE customer.email = %s""",
-    #             (email, ),
-    #         )
-    #         rows = cur.fetchone()
-    #         if not rows:
-    #             return None
-    #         if password==rows[-1]:
-    #             return rows
-    
-    # --- MOCK LOGIC ---
-    pass # In our new architecture, marketplace.py handles verification itself using searchcustomer
-
-
 def register(name, userid, cart_ids, balance, password, email, first_name=None, last_name=None, phone_number=None):
-    # f_name, l_name from original function definition are preserved conceptually below
-    # pass
-    
-    # --- MOCK LOGIC ---
-    new_user = {
-        "unique_id": userid,
-        "name": name,
-        "email": email,
-        "password": password,
-        "first_name": first_name,
-        "last_name": last_name,
-        "phone_number": phone_number
+    c = {
+        "customer_id": userid,
+        "f_name": first_name or name,
+        "l_name": last_name or "",
+        "phone_number": phone_number or "",
+        "email": email
     }
-    MOCK_USERS.append(new_user)
-    return new_user
+    DB_CUSTOMER.append(c)
+    DB_CUSTOMER_CREDENTIALS.append({"customer_id": userid, "password_hash": password})
+    return c
 
 def searchvendor(email):
-    # with connect() as conn:
-    #     with conn.cursor() as cur:
-    #         cur.execute(
-    #             """
-    #             SELECT vendor.*, vendor_credentials.password_hash
-    #             FROM vendor
-    #             JOIN vendor_credentials
-    #                 ON vendor.vendor_id = vendor_credentials.vendor_id
-    #             WHERE vendor.email = %s
-    #             """,
-    #             (email,)
-    #         )
-    #         rows = cur.fetchone()
-    #         if not rows:
-    #             return None
-    #         return rows
-    
-    # --- MOCK LOGIC ---
-    for v in MOCK_VENDORS:
+    for v in DB_VENDOR:
         if v["email"] == email:
-            # Return tuple to simulate SQL row: (address, name, unique_id, email, password, phone_number)
-            return (v.get("address", ""), v["name"], v["unique_id"], v["email"], v["password"], v.get("phone_number", ""))
+            pw_hash = ""
+            for cred in DB_VENDOR_CREDENTIALS:
+                if cred["vendor_id"] == v["vendor_id"]:
+                    pw_hash = cred["password_hash"]
+                    break
+            # return tuple: (vendor_id, vendor_name, email, phone_number, password_hash)
+            return (v["vendor_id"], v["vendor_name"], v["email"], v["phone_number"], pw_hash)
     return None
 
 def registervendor(name, email, password, vendorid, address, phone_number=None):
-    # with connect() as conn:
-    #     with conn.cursor() as cur:
-    #         cur.execute("INSERT INTO vendor ...")
-    #         conn.commit()
-    
-    # --- MOCK LOGIC ---
-    new_vendor = {
-        "unique_id": vendorid,
-        "name": name,
+    v = {
+        "vendor_id": vendorid,
+        "vendor_name": name,
         "email": email,
-        "password": password,
-        "address": address,
-        "phone_number": phone_number
+        "phone_number": phone_number or ""
     }
-    MOCK_VENDORS.append(new_vendor)
-    return new_vendor
+    DB_VENDOR.append(v)
+    DB_VENDOR_CREDENTIALS.append({"vendor_id": vendorid, "password_hash": password})
+    return v
 
 def undo():
-    with connect() as conn:
-        conn.rollback()
-
+    pass
 
 def get_all_products():
-    return MOCK_PRODUCTS
+    return DB_PRODUCT
 
 def get_all_orders():
-    return MOCK_ORDERS
+    return DB_ORDERS
 
 def add_order(order_dict):
-    MOCK_ORDERS.append(order_dict)
+    DB_ORDERS.append(order_dict)
 
 def add_address(address_dict):
-    MOCK_ADDRESSES.append(address_dict)
+    DB_ADDRESS.append(address_dict)
     return address_dict
 
 def get_addresses_by_customer(customer_id):
-    return [addr for addr in MOCK_ADDRESSES if addr["customer_id"] == customer_id]
+    return [addr for addr in DB_ADDRESS if addr["customer_id"] == customer_id]
 
 def add_delivery(delivery_dict):
-    MOCK_DELIVERIES.append(delivery_dict)
+    DB_DELIVERY.append(delivery_dict)
     return delivery_dict
 
 def get_delivery_by_order(order_id):
-    for d in MOCK_DELIVERIES:
+    for d in DB_DELIVERY:
         if d["order_id"] == order_id:
             return d
     return None
 
 def get_all_shipping_companies():
-    return MOCK_SHIPPING_COMPANIES
+    return DB_SHIPPING_COMPANY
     
 def update_order(order_id, updates_dict):
-    for o in MOCK_ORDERS:
-        if o["order_id"] == order_id:
-            for k, v in updates_dict.items():
-                o[k] = v
-            return True
-    return False
+    # This was historically used for status updates. Wait, status isn't in orders table directly, it's in delivery.
+    # But for backward compatibility in mock, if we need to update order table.
+    pass
 
 def get_reviews_by_product(product_id):
-    return [r for r in MOCK_REVIEWS if r["product_id"] == product_id]
+    return [r for r in DB_REVIEW if r["product_id"] == product_id]
 
 def add_review(review_dict):
-    MOCK_REVIEWS.append(review_dict)
+    DB_REVIEW.append(review_dict)
 
 def findproduct(productid):
-    for p in MOCK_PRODUCTS:
-        if p["id"] == productid:
-            # Return tuple: (product_id, vendor_id, product_name, price, image_url, product_type, description)
+    for p in DB_PRODUCT:
+        if p["product_id"] == productid:
             return (
-                p["id"],
+                p["product_id"],
                 p["vendor_id"],
-                p["name"],
-                p.get("priceCents", 0),
-                p.get("image", ""),
-                p.get("type", ""),
-                p.get("description", "")
+                p["product_name"],
+                p["price"],
+                p["image_url"],
+                p["product_type"],
+                p["description"]
             )
     return None
 
 def addproduct(product_dict):
-    # product_dict should match the frontend format
-    MOCK_PRODUCTS.insert(0, product_dict)
+    DB_PRODUCT.insert(0, product_dict)
+
+def add_fashion(fashion_dict):
+    DB_FASHION.insert(0, fashion_dict)
+
+def add_beauty(beauty_dict):
+    DB_BEAUTY.insert(0, beauty_dict)
+
     
 def updateproduct(productid, updates_dict):
-    for p in MOCK_PRODUCTS:
-        if p["id"] == productid:
+    for p in DB_PRODUCT:
+        if p["product_id"] == productid:
             for k, v in updates_dict.items():
                 p[k] = v
             return True
     return False
 
+def update_fashion(productid, updates_dict):
+    for f in DB_FASHION:
+        if f["product_id"] == productid:
+            for k, v in updates_dict.items():
+                f[k] = v
+            return True
+    return False
+
+def update_beauty(productid, updates_dict):
+    for b in DB_BEAUTY:
+        if b["product_id"] == productid:
+            for k, v in updates_dict.items():
+                b[k] = v
+            return True
+    return False
+
 def deleteproduct(productid):
-    for i, p in enumerate(MOCK_PRODUCTS):
-        if p["id"] == productid:
-            del MOCK_PRODUCTS[i]
+    for i, p in enumerate(DB_PRODUCT):
+        if p["product_id"] == productid:
+            del DB_PRODUCT[i]
+            # cascade delete in fashion/beauty
+            for j, f in enumerate(DB_FASHION):
+                if f["product_id"] == productid:
+                    del DB_FASHION[j]
+                    break
+            for j, b in enumerate(DB_BEAUTY):
+                if b["product_id"] == productid:
+                    del DB_BEAUTY[j]
+                    break
             return True
     return False
 
 def viewtopproducs():
-    with connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute("""SELECT
-                p.product_id,
-                p.product_name,
-                SUM(ci.quantity) AS total_units_sold
-            FROM `Order` o
-            JOIN Cart_Item ci
-                ON o.cart_id = ci.cart_id
-            JOIN Product p
-                ON ci.product_id = p.product_id
-            GROUP BY
-                p.product_id,
-                p.product_name
-            ORDER BY total_units_sold DESC
-            """)
-            rows = cur.fetchall()
-            return rows
+    pass
 
 def viewhighestspender():
-    with connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute("""SELECT
-                c.customer_id,
-                c.f_name,
-                c.l_name,
-                SUM(o.subtotal + o.shipping_fee) AS total_spent
-            FROM Customer c
-            JOIN `Order` o
-                ON c.customer_id = o.customer_id
-            GROUP BY
-                c.customer_id,
-                c.f_name,
-                c.l_name
-            ORDER BY total_spent DESC
-            LIMIT 1
-            """)
-            rows = cur.fetchall()
-            return rows
+    pass
 
 def highestrevenue_vendors():
-    with connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute("""SELECT
-                    v.vendor_id,
-                    v.vendor_name,
-                    SUM(ci.quantity * p.price) AS total_revenue
-                FROM Vendor v
-                JOIN Product p
-                    ON v.vendor_id = p.vendor_id
-                JOIN Cart_Item ci
-                    ON p.product_id = ci.product_id
-                JOIN `Order` o
-                    ON ci.cart_id = o.cart_id
-                GROUP BY
-                    v.vendor_id,
-                    v.vendor_name
-                ORDER BY total_revenue DESC """)
-            rows = cur.fetchall()
-            return rows
+    pass
 
 def top_popular_products_categories():
-    with connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute("""WITH ProductCategories AS (
-                    SELECT product_id, 'Fashion' AS category
-                    FROM Fashion
-
-                    UNION ALL
-
-                    SELECT product_id, 'Beauty' AS category
-                    FROM Beauty
-                )
-                SELECT
-                    pc.category,
-                    SUM(oi.quantity) AS units_sold
-                FROM ProductCategories pc
-                JOIN Order_Item oi
-                    ON pc.product_id = oi.product_id
-                GROUP BY pc.category
-                ORDER BY units_sold DESC
-
-                """)
-            rows = cur.fetchall()
-            return rows
+    pass
 
 def addtocart(product, customer_id, quantity):
-    # dates=date.today()
-    # if searchcustomer(customer.email)!=None:
-    #     with connect() as conn:
-    #             with conn.cursor() as cur:
-    #                 cur.execute(
-    #                     """
-    #                     SELECT cart_id
-    #                     FROM  cart
-    #                     WHERE where cart.customer_id = %s """,
-    #                     (customer.customer_id,),
-    #                 )
-    #                 ... (SQL commented out)
+    # Support both a Product object and a tuple: (product_id, vendor_id, ...)
+    if hasattr(product, 'product_id'):
+        product_id = product.product_id
+    else:
+        product_id = product[0]
+
     
-    # --- MOCK LOGIC ---
-    if customer_id not in MOCK_CARTS:
-        MOCK_CARTS[customer_id] = []
+    # Ensure cart exists
+    cart_id = None
+    for c in DB_CART:
+        if c["customer_id"] == customer_id:
+            cart_id = c["cart_id"]
+            break
+            
+    if not cart_id:
+        cart_id = "CART" + customer_id
+        DB_CART.append({"cart_id": cart_id, "customer_id": customer_id})
         
-    # Check if item already exists in cart, update quantity if it does
-    for item in MOCK_CARTS[customer_id]:
-        if item["product"].product_id == product.product_id:
-            item["quantity"] += quantity
+    # Check if item in cart
+    for ci in DB_CART_ITEMS:
+        if ci["cart_id"] == cart_id and ci["product_id"] == product_id:
+            ci["quantity"] += quantity
             return True
             
-    MOCK_CARTS[customer_id].append({"product": product, "quantity": quantity})
+    DB_CART_ITEMS.append({"product_id": product_id, "cart_id": cart_id, "quantity": quantity, "added_date": str(date.today())})
     return True
 
 def getcart(customer_id):
-    return MOCK_CARTS.get(customer_id, [])
+    # Returning the structure mock_api/app.py expects, but querying from strict DB tables
+    cart_id = None
+    for c in DB_CART:
+        if c["customer_id"] == customer_id:
+            cart_id = c["cart_id"]
+            break
+            
+    if not cart_id:
+        return []
+        
+    items = []
+    for ci in DB_CART_ITEMS:
+        if ci["cart_id"] == cart_id:
+            # find product
+            for p in DB_PRODUCT:
+                if p["product_id"] == ci["product_id"]:
+                    product_obj = Product(
+                        product_name=p["product_name"],
+                        vendor_id=p["vendor_id"],
+                        price=p["price"],
+                        image_url=p["image_url"],
+                        product_type=p["product_type"],
+                        product_id=p["product_id"],
+                        description=p["description"]
+                    )
+                    items.append({"product": product_obj, "quantity": ci["quantity"]})
+    return items
 
 def removefromcart(product_id, customer_id):
-    if customer_id in MOCK_CARTS:
-        for i, item in enumerate(MOCK_CARTS[customer_id]):
-            if item["product"].product_id == product_id:
-                MOCK_CARTS[customer_id].pop(i)
-                return True
+    cart_id = None
+    for c in DB_CART:
+        if c["customer_id"] == customer_id:
+            cart_id = c["cart_id"]
+            break
+    if not cart_id:
+        return False
+        
+    for i, ci in enumerate(DB_CART_ITEMS):
+        if ci["cart_id"] == cart_id and ci["product_id"] == product_id:
+            DB_CART_ITEMS.pop(i)
+            return True
     return False
 
 def checkout(customer_id):
-    if customer_id not in MOCK_CARTS or not MOCK_CARTS[customer_id]:
+    cart_id = None
+    for c in DB_CART:
+        if c["customer_id"] == customer_id:
+            cart_id = c["cart_id"]
+            break
+    if not cart_id:
         return False
-    
-    # In a real DB, you would move items from Cart to Order tables here.
-    # For now, we just clear the mock cart.
-    MOCK_CARTS[customer_id] = []
+        
+    # Remove cart items
+    global DB_CART_ITEMS
+    DB_CART_ITEMS = [ci for ci in DB_CART_ITEMS if ci["cart_id"] != cart_id]
     return True

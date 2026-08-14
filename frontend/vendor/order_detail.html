@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Detail - Vendor Portal</title>
+  <link rel="stylesheet" href="vendor-base.css">
+  <style>
+    .detail-grid { display: grid; grid-template-columns: 2fr 1fr; gap: var(--spacing-xl); }
+    @media (max-width: 768px) { .detail-grid { grid-template-columns: 1fr; } }
+    .detail-section { background: var(--color-surface); border: 1px solid var(--color-hairline); border-radius: var(--rounded-lg); padding: var(--spacing-lg); margin-bottom: var(--spacing-lg); }
+    .section-title { font-size: var(--type-heading-3-size); font-weight: var(--type-heading-3-weight); margin-bottom: var(--spacing-md); }
+    .info-row { display: flex; justify-content: space-between; margin-bottom: var(--spacing-sm); padding-bottom: var(--spacing-sm); border-bottom: 1px solid var(--color-canvas); }
+    .info-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .label { color: var(--color-ink-muted); font-size: var(--type-body-sm-size); }
+    .value { font-weight: 500; text-align: right;}
+    .product-item { display: flex; align-items: center; gap: var(--spacing-md); padding: var(--spacing-md) 0; border-bottom: 1px solid var(--color-canvas); }
+    .product-item:last-child { border-bottom: none; }
+    .product-img { width: 60px; height: 60px; object-fit: cover; border-radius: var(--rounded-md); border: 1px solid var(--color-hairline); }
+    .product-info { flex: 1; }
+    .status-pill { display: inline-block; padding: 4px 10px; border-radius: var(--rounded-full); font-size: var(--type-eyebrow-size); font-weight: 600; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+
+  <div id="vendor-nav-container"></div>
+  <main class="container" style="padding-top: var(--spacing-xl); padding-bottom: var(--spacing-xxl);">
+    <a href="orders.html" style="color: var(--color-primary); text-decoration: none; font-size: var(--type-body-sm-size); display: inline-block; margin-bottom: var(--spacing-md);">&larr; Back to Orders</a>
+    
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--spacing-xl);">
+      <div>
+        <h1 class="display-2" style="margin-bottom: var(--spacing-xs);">Order <span id="display-order-id"></span></h1>
+        <p style="color: var(--color-ink-muted); margin: 0;" id="display-date"></p>
+      </div>
+      <div>
+        <span id="display-status" class="status-pill"></span>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <!-- Left Column -->
+      <div>
+        <div class="detail-section">
+          <h2 class="section-title">Products Ordered</h2>
+          <div id="products-list"></div>
+        </div>
+        
+        <div class="detail-section">
+          <h2 class="section-title">Payment Summary</h2>
+          <div class="info-row">
+            <span class="label">Subtotal</span>
+            <span class="value" id="summary-subtotal"></span>
+          </div>
+          <div class="info-row">
+            <span class="label">Estimated Tax</span>
+            <span class="value" id="summary-tax"></span>
+          </div>
+          <div class="info-row">
+            <span class="label">Grand Total (Your Share)</span>
+            <span class="value" style="font-size: 1.1rem; color: var(--color-primary);" id="summary-total"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div>
+        <div class="detail-section">
+          <h2 class="section-title">Customer Info</h2>
+          <div class="info-row"><span class="label">Name</span><span class="value" id="cust-name"></span></div>
+          <div class="info-row"><span class="label">Email</span><span class="value" id="cust-email"></span></div>
+          <div class="info-row"><span class="label">Phone</span><span class="value" id="cust-phone"></span></div>
+        </div>
+
+        <div class="detail-section">
+          <h2 class="section-title">Logistics & Tracking</h2>
+          <div class="info-row"><span class="label">Courier</span><span class="value" id="log-courier"></span></div>
+          <div class="info-row"><span class="label">Delivery Status</span><span class="value" id="log-status"></span></div>
+          <div style="margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--color-canvas);">
+            <div class="label" style="margin-bottom: 4px;">Shipping Address</div>
+            <div class="value" style="text-align: left; font-size: 14px; font-weight: normal; line-height: 1.4;" id="log-address"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script type="module" src="vendor-navbar.js"></script>
+  <script>
+    if (!localStorage.getItem("vendorAuthToken")) {
+      window.location.href = "login.html";
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const orderStr = sessionStorage.getItem('vendor_current_order');
+      if (!orderStr) {
+        window.location.href = "orders.html";
+        return;
+      }
+
+      const order = JSON.parse(orderStr);
+
+      // Header
+      document.getElementById("display-order-id").textContent = "#" + order.order_id;
+      document.getElementById("display-date").textContent = "Placed on " + new Date(order.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      
+      const statusPill = document.getElementById("display-status");
+      statusPill.textContent = order.status;
+      if (order.status === 'pending') {
+        statusPill.style.backgroundColor = 'rgba(221, 91, 0, 0.1)';
+        statusPill.style.color = 'var(--color-accent-orange)';
+      } else if (order.status === 'shipped') {
+        statusPill.style.backgroundColor = 'rgba(42, 157, 153, 0.1)';
+        statusPill.style.color = 'var(--color-primary)';
+      } else {
+        statusPill.style.backgroundColor = 'rgba(26, 174, 57, 0.1)';
+        statusPill.style.color = 'var(--color-accent-green)';
+      }
+
+      // Products
+      const productsList = document.getElementById("products-list");
+      order.items.forEach(item => {
+        productsList.innerHTML += `
+          <div class="product-item">
+            <img src="${item.image || '../products/assets/placeholder.jpg'}" class="product-img" alt="Product">
+            <div class="product-info">
+              <div style="font-weight: 500; font-size: 15px;">${item.name}</div>
+              <div style="color: var(--color-ink-muted); font-size: 13px;">Qty: ${item.quantity}</div>
+            </div>
+            <div style="font-weight: 600;">GH₵${item.item_total.toFixed(2)}</div>
+          </div>
+        `;
+      });
+
+      // Payment
+      document.getElementById("summary-subtotal").textContent = "GH₵" + order.pricing_summary.subtotal.toFixed(2);
+      document.getElementById("summary-tax").textContent = "GH₵" + order.pricing_summary.tax.toFixed(2);
+      document.getElementById("summary-total").textContent = "GH₵" + order.pricing_summary.grand_total.toFixed(2);
+
+      // Customer
+      document.getElementById("cust-name").textContent = order.customer_name || 'Customer';
+      document.getElementById("cust-email").textContent = order.customer_email || 'N/A';
+      document.getElementById("cust-phone").textContent = order.customer_phone || 'N/A';
+
+      // Logistics
+      document.getElementById("log-address").innerHTML = order.shipping_address ? 
+        `${order.shipping_address.street || ''}<br>${order.shipping_address.city || ''}, ${order.shipping_address.country || ''}` : 'N/A';
+        
+      if (order.delivery) {
+        document.getElementById("log-courier").textContent = order.delivery.shipping_company || 'Standard Shipping';
+        const dStatus = order.delivery.delivery_status || 'pending';
+        let dColor = 'var(--color-ink-muted)';
+        if (dStatus === 'on the way') dColor = 'var(--color-primary)';
+        if (dStatus === 'delivered') dColor = 'var(--color-accent-green)';
+        
+        document.getElementById("log-status").innerHTML = `<span style="color: ${dColor}; font-weight: 600; text-transform: capitalize;">${dStatus}</span>`;
+      } else {
+        document.getElementById("log-courier").textContent = 'Pending Assignment';
+        document.getElementById("log-status").textContent = 'Awaiting Dispatch';
+      }
+    });
+  </script>
+</body>
+</html>

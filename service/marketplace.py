@@ -20,14 +20,17 @@ class Marketplace:
             return None
         else:
             print("User found")
+            first_name = rows[1]
+            last_name = rows[2]
             user = Customer(
-                password=rows[2],
-                unique_id=rows[0],
-                ids=rows[3],
+                name=f"{first_name} {last_name}".strip(),
+                password=rows[5],
                 email=rows[4],
-                first_name=rows[5] if len(rows) > 5 else None,
-                last_name=rows[6] if len(rows) > 6 else None,
-                phone_number=rows[7] if len(rows) > 7 else None,
+                unique_id=rows[0],
+                ids=None,
+                first_name=first_name,
+                last_name=last_name,
+                phone_number=rows[3],
             )
             return user
 
@@ -37,15 +40,17 @@ class Marketplace:
             print("User not found by ID")
             return None
         else:
+            first_name = rows[1]
+            last_name = rows[2]
             return Customer(
-                name=rows[1],
-                password=rows[2],
-                unique_id=rows[0],
-                ids=rows[3],
+                name=f"{first_name} {last_name}".strip(),
+                password=rows[5],
                 email=rows[4],
-                first_name=rows[5] if len(rows) > 5 else None,
-                last_name=rows[6] if len(rows) > 6 else None,
-                phone_number=rows[7] if len(rows) > 7 else None,
+                unique_id=rows[0],
+                ids=None,
+                first_name=first_name,
+                last_name=last_name,
+                phone_number=rows[3],
             )
 
     ##customer focus
@@ -122,7 +127,7 @@ class Marketplace:
         subtotal_dollars = 0
         for item in cart_data["cart"]:
             prod = item["product"]
-            price_dollars = prod.get("priceCents", 0) / 100
+            price_dollars = prod.get("priceCents", 0)
             item_total = price_dollars * item["quantity"]
             subtotal_dollars += item_total
             
@@ -145,38 +150,65 @@ class Marketplace:
         
         # 1. Create and save Address if provided
         address_id = None
+        shipping_address_dict = None
         if shipping_address:
             addr_obj = Address(
-                city=shipping_address.get("city", "Default City"),
-                street_address=shipping_address.get("street", "Default Street"),
+                city=shipping_address.get("city", "Accra"),
+                street_address=shipping_address.get("street", "123 Liberation Road"),
                 landmark=shipping_address.get("country", "Ghana"),
                 customer_id=customer_id
             )
             database.add_address(addr_obj.to_dict())
             address_id = addr_obj.address_id
-        
+            shipping_address_dict = {
+                "id": address_id,
+                "street": shipping_address.get("street"),
+                "city": shipping_address.get("city"),
+                "country": shipping_address.get("country", "Ghana")
+            }
+        else:
+            # Look up saved address
+            addr_list = database.get_addresses_by_customer(customer_id)
+            if addr_list:
+                addr = addr_list[0]
+                address_id = addr.get("address_id")
+                shipping_address_dict = {
+                    "id": address_id,
+                    "street": addr.get("street") or addr.get("street_address"),
+                    "city": addr.get("city"),
+                    "country": addr.get("country") or addr.get("landmark", "Ghana")
+                }
+
         # Generate 6-char order_id to fit VARCHAR(6) constraint
         order_id = str(uuid.uuid4())[:6]
         
         # Instantiate payment subclass and save details
-        payment_record = None
+        payment_dict = None
         if payment_details:
             from model.payment import Card, Momo, Bank_T
             pmeth = payment_details.get("method")
             if pmeth == "card":
-                card_num = payment_details.get("card_last_4", "4242")
+                card_num = payment_details.get("card_last_4") or payment_details.get("card_num", "4242")
                 payment_record = Card(cvv="123", card_num=card_num, expiry="12/26")
+                payment_dict = {
+                    "last_four": card_num[-4:] if len(card_num) >= 4 else card_num,
+                    "brand": "Card"
+                }
             elif pmeth == "momo":
                 phone = payment_details.get("phone_number", "")
                 net = payment_details.get("network", "")
                 payment_record = Momo(phone=phone, acc_name="Customer Wallet", network=net)
+                payment_dict = {
+                    "last_four": phone[-4:] if len(phone) >= 4 else phone,
+                    "brand": net or "Momo"
+                }
             elif pmeth == "bank":
-                payment_record = Bank_T(acc_name="EcoBank Account", acc_num="1234567890123", bank_name="EcoBank")
-
-        payment_dict = payment_record.__dict__ if payment_record else {
-            "last_four": "4242",
-            "brand": "Visa"
-        }
+                acc_num = payment_details.get("acc_num") or "123456789"
+                payment_record = Bank_T(acc_name="EcoBank Account", acc_num=acc_num, bank_name="EcoBank")
+                payment_dict = {
+                    "last_four": acc_num[-4:] if len(acc_num) >= 4 else acc_num,
+                    "brand": "Bank Transfer"
+                }
         
         # 2. Create Order
         new_order = Order(
@@ -186,13 +218,7 @@ class Marketplace:
             shipping_fee=shipping_fee,
             items=items,
             order_id=order_id,
-            shipping_address={
-                "id": address_id or "addr_1",
-                "street": shipping_address.get("street", "123 Default Street") if shipping_address else "123 Default Street",
-                "city": shipping_address.get("city", "Default City") if shipping_address else "Default City",
-                "state": "DC",
-                "zip": "10000"
-            },
+            shipping_address=shipping_address_dict,
             payment_details=payment_dict
         )
         
@@ -265,7 +291,12 @@ class Marketplace:
         customer_orders = []
         for o in all_orders:
             if o.get("user_id") == customer_id or o.get("customer_id") == customer_id:
-                customer_orders.append(o)
+                o_copy = o.copy()
+                customer = self.finduser_by_id(customer_id)
+                if customer:
+                    o_copy["customer_first_name"] = customer.first_name
+                    o_copy["customer_last_name"] = customer.last_name
+                customer_orders.append(o_copy)
         return customer_orders
         
     def get_vendor_orders(self, vendor_id):
@@ -294,6 +325,14 @@ class Marketplace:
                     "shipping": 0,
                     "grand_total": round(vendor_subtotal, 2)
                 }
+                
+                cid = order_copy.get("customer_id") or order_copy.get("user_id")
+                if cid:
+                    customer = self.finduser_by_id(cid)
+                    if customer:
+                        order_copy["customer_first_name"] = customer.first_name
+                        order_copy["customer_last_name"] = customer.last_name
+                        
                 vendor_orders.append(order_copy)
                 
         return vendor_orders
@@ -410,12 +449,12 @@ class Marketplace:
         else:
             print("Vendor found")
             vendor = Vendor(
-                address=rows[0],
                 name=rows[1],
-                unique_id=rows[2],
-                phone_number=rows[5] if len(rows) > 5 else None,
+                address="",
+                unique_id=rows[0],
+                phone_number=rows[3],
             )
-            vendor.email = rows[3]
+            vendor.email = rows[2]
             vendor.password = rows[4]
             return vendor
             
@@ -467,15 +506,15 @@ class Marketplace:
         raw_products = database.get_all_products()
         products = []
         for p_dict in raw_products:
-            rating = self._calculate_product_rating(p_dict["id"])
+            rating = self._calculate_product_rating(p_dict["product_id"])
             # Reconstruct Product object to return to frontend
             p = Product(
-                product_name=p_dict["name"],
+                product_name=p_dict["product_name"],
                 vendor_id=p_dict["vendor_id"],
-                price=p_dict.get("priceCents", 0),
-                image_url=p_dict.get("image", ""),
-                product_type=p_dict.get("type", ""),
-                product_id=p_dict["id"],
+                price=p_dict.get("price", 0),
+                image_url=p_dict.get("image_url", ""),
+                product_type=p_dict.get("product_type", ""),
+                product_id=p_dict["product_id"],
                 description=p_dict.get("description", ""),
                 rating=rating
             )
@@ -483,7 +522,7 @@ class Marketplace:
         return products
 
     def findproduct(self, productid):
-        productid = productid.strip().lower()
+        productid = productid.strip()
         rows = database.findproduct(productid)
         if rows is None:
             return None
@@ -511,8 +550,38 @@ class Marketplace:
             product_type=product_data.get("type", "General"),
             description=product_data.get("description", "")
         )
-        # We store it in db using to_dict to match the mock storage format
-        database.addproduct(new_product.to_dict())
+        db_product = {
+            "product_id": new_product.product_id,
+            "vendor_id": new_product.vendor_id,
+            "product_name": new_product.product_name,
+            "price": new_product.price,
+            "image_url": new_product.image_url,
+            "product_type": new_product.product_type,
+            "description": new_product.description,
+            "stock_quantity": product_data.get("stock", 0)
+        }
+        database.addproduct(db_product)
+        
+        if new_product.product_type == "fashion":
+            f_attrs = product_data.get("fashion_attributes", {})
+            db_fashion = {
+                "product_id": new_product.product_id,
+                "color": f_attrs.get("Color", ""),
+                "material": f_attrs.get("Material", ""),
+                "size": f_attrs.get("Size", ""),
+                "gender_category": f_attrs.get("Gender_category", "")
+            }
+            database.add_fashion(db_fashion)
+        elif new_product.product_type == "beauty":
+            b_attrs = product_data.get("beauty_attributes", {})
+            db_beauty = {
+                "product_id": new_product.product_id,
+                "skin_type": b_attrs.get("skin_type", ""),
+                "volume_weight": b_attrs.get("volume_weight", ""),
+                "Is_organic": str(b_attrs.get("Is_organic", "False")).lower() in ("true", "1", "yes")
+            }
+            database.add_beauty(db_beauty)
+            
         return new_product
 
     def update_product(self, vendor_id, product_id, updates):
@@ -520,7 +589,33 @@ class Marketplace:
         if product is None or product.vendor_id != vendor_id:
             return None
             
-        database.updateproduct(product_id, updates)
+        db_updates = {}
+        if "name" in updates: db_updates["product_name"] = updates["name"]
+        if "priceCents" in updates: db_updates["price"] = updates["priceCents"]
+        if "image" in updates: db_updates["image_url"] = updates["image"]
+        if "type" in updates: db_updates["product_type"] = updates["type"]
+        if "description" in updates: db_updates["description"] = updates["description"]
+        if "stock" in updates: db_updates["stock_quantity"] = updates["stock"]
+
+        database.updateproduct(product_id, db_updates)
+        
+        f_attrs = updates.get("fashion_attributes")
+        if f_attrs:
+            db_f_updates = {}
+            if "Color" in f_attrs: db_f_updates["color"] = f_attrs["Color"]
+            if "Material" in f_attrs: db_f_updates["material"] = f_attrs["Material"]
+            if "Size" in f_attrs: db_f_updates["size"] = f_attrs["Size"]
+            if "Gender_category" in f_attrs: db_f_updates["gender_category"] = f_attrs["Gender_category"]
+            database.update_fashion(product_id, db_f_updates)
+
+        b_attrs = updates.get("beauty_attributes")
+        if b_attrs:
+            db_b_updates = {}
+            if "skin_type" in b_attrs: db_b_updates["skin_type"] = b_attrs["skin_type"]
+            if "volume_weight" in b_attrs: db_b_updates["volume_weight"] = b_attrs["volume_weight"]
+            if "Is_organic" in b_attrs: db_b_updates["Is_organic"] = str(b_attrs["Is_organic"]).lower() in ("true", "1", "yes")
+            database.update_beauty(product_id, db_b_updates)
+
         return self.findproduct(product_id)
 
     def deleteproduct(self, productid, vendor_id):
