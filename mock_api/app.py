@@ -29,7 +29,7 @@ def token_required(f):
         token = auth_header.split(" ")[1]
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            current_user_id = data["user_id"]
+            current_user_id = data["user_id"][:6]
         except jwt.ExpiredSignatureError:
             return jsonify({"error": "Token has expired"}), 401
         except jwt.InvalidTokenError:
@@ -48,7 +48,7 @@ def vendor_token_required(f):
         token = auth_header.split(" ")[1]
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            current_vendor_id = data["vendor_id"]
+            current_vendor_id = data["vendor_id"][:6]
         except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, KeyError):
             return jsonify({"error": "Unauthorized"}), 401
             
@@ -65,7 +65,7 @@ def shipping_token_required(f):
         token = auth_header.split(" ")[1]
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            current_shipping_id = data["shipping_id"]
+            current_shipping_id = data["shipping_id"][:6]
         except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, KeyError):
             return jsonify({"error": "Unauthorized"}), 401
             
@@ -110,6 +110,9 @@ def register_customer():
     
     name = f"{first_name} {last_name}".strip()
     user = marketplace.registerCustomer(name, password, email, first_name=first_name, last_name=last_name, phone_number=phone_number)
+    
+    if user is None:
+        return jsonify({"error": "Email already registered"}), 409
     
     payload = {"user_id": user.unique_id, "exp": datetime.now(timezone.utc) + timedelta(hours=24)}
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
@@ -303,22 +306,16 @@ def login_shipping():
 @app.route("/shipping/deliveries", methods=["GET"])
 @shipping_token_required
 def get_shipping_deliveries(current_shipping_id):
-    dels = []
-    for d in database.DB_DELIVERY:
-        if d["shipping_id"] == current_shipping_id:
-            dels.append({
-                "id": d["delivery_id"],
-                "status": d["delivery_status"]
-            })
+    dels = database.get_deliveries_by_shipping_company(current_shipping_id)
     return jsonify({"deliveries": dels}), 200
 
 @app.route("/shipping/deliveries/<delivery_id>", methods=["PUT"])
 @shipping_token_required
 def update_shipping_delivery(current_shipping_id, delivery_id):
-    for d in database.DB_DELIVERY:
-        if d["delivery_id"] == delivery_id:
-            d["delivery_status"] = request.get_json().get("status")
-            return jsonify({"message": "Status updated successfully"}), 200
+    new_status = request.get_json().get("status")
+    updated = database.update_delivery_status(delivery_id, new_status)
+    if updated:
+        return jsonify({"message": "Status updated successfully"}), 200
     return jsonify({"error": "Delivery not found"}), 404
 
 # --- MISC / ADMIN ---
@@ -334,20 +331,13 @@ def login_admin():
 @app.route("/admin/stats", methods=["GET"])
 @admin_token_required
 def get_admin_stats():
-    return jsonify({
-        "total_revenue": 0,
-        "total_users": len(database.DB_CUSTOMER) + len(database.DB_VENDOR),
-        "total_orders": len(database.DB_ORDERS)
-    }), 200
+    stats = database.get_admin_stats()
+    return jsonify(stats), 200
 
 @app.route("/admin/users", methods=["GET"])
 @admin_token_required
 def get_admin_users():
-    users = []
-    for c in database.DB_CUSTOMER:
-        users.append({"id": c.get("customer_id"), "name": f"{c.get('f_name')} {c.get('l_name')}", "email": c.get("email"), "role": "customer"})
-    for v in database.DB_VENDOR:
-        users.append({"id": v.get("vendor_id"), "name": v.get("vendor_name"), "email": v.get("email"), "role": "vendor"})
+    users = database.get_admin_users()
     return jsonify({"users": users}), 200
 
 if __name__ == "__main__":

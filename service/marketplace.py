@@ -222,6 +222,9 @@ class Marketplace:
             payment_details=payment_dict
         )
         
+        # Add order first to satisfy foreign key constraint in delivery table
+        database.add_order(new_order.to_dict())
+        
         # 3. Create Delivery linked to the address and order
         default_shipping_id = "SHIP01" # Defaulting to first shipping company
         delivery_obj = Delivery(
@@ -234,8 +237,6 @@ class Marketplace:
         
         # Clear cart
         database.checkout(customer_id)
-        # Add order
-        database.add_order(new_order.to_dict())
         
         return new_order
 
@@ -545,7 +546,7 @@ class Marketplace:
         new_product = Product(
             product_name=product_data.get("name"),
             vendor_id=vendor_id,
-            price=product_data.get("priceCents", 0),
+            price=product_data.get("priceCents", product_data.get("price", 0)),
             image_url=product_data.get("image", ""),
             product_type=product_data.get("type", "General"),
             description=product_data.get("description", "")
@@ -592,6 +593,7 @@ class Marketplace:
         db_updates = {}
         if "name" in updates: db_updates["product_name"] = updates["name"]
         if "priceCents" in updates: db_updates["price"] = updates["priceCents"]
+        elif "price" in updates: db_updates["price"] = updates["price"]
         if "image" in updates: db_updates["image_url"] = updates["image"]
         if "type" in updates: db_updates["product_type"] = updates["type"]
         if "description" in updates: db_updates["description"] = updates["description"]
@@ -648,14 +650,18 @@ class Marketplace:
             
         customer.name = f"{customer.first_name} {customer.last_name}".strip()
         
-        for u in database.MOCK_USERS:
-            if u["unique_id"] == customer_id:
-                u["first_name"] = customer.first_name
-                u["last_name"] = customer.last_name
-                u["phone_number"] = customer.phone_number
-                u["email"] = customer.email
-                u["name"] = customer.name
-                break
+        # Persist to database
+        updates = {}
+        if first_name is not None:
+            updates["f_name"] = first_name
+        if last_name is not None:
+            updates["l_name"] = last_name
+        if phone_number is not None:
+            updates["phone_number"] = phone_number
+        if email is not None:
+            updates["email"] = email
+        if updates:
+            database.update_customer(customer_id, updates)
                 
         address = None
         if address_data:
@@ -663,11 +669,16 @@ class Marketplace:
             addr_list = database.get_addresses_by_customer(customer_id)
             if addr_list:
                 existing_addr = addr_list[0]
-                existing_addr["street"] = address_data.get("street", existing_addr.get("street"))
-                existing_addr["street_address"] = address_data.get("street", existing_addr.get("street_address"))
-                existing_addr["city"] = address_data.get("city", existing_addr.get("city"))
-                existing_addr["country"] = address_data.get("country", existing_addr.get("country"))
-                existing_addr["landmark"] = address_data.get("country", existing_addr.get("landmark"))
+                addr_updates = {}
+                if address_data.get("street"):
+                    addr_updates["street_address"] = address_data["street"]
+                if address_data.get("city"):
+                    addr_updates["city"] = address_data["city"]
+                if address_data.get("country"):
+                    addr_updates["landmark"] = address_data["country"]
+                if addr_updates:
+                    database.update_address(existing_addr.get("address_id", ""), addr_updates)
+                existing_addr.update(addr_updates)
                 address = existing_addr
             else:
                 addr_obj = Address(
