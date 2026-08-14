@@ -159,6 +159,26 @@ class Marketplace:
         # Generate 6-char order_id to fit VARCHAR(6) constraint
         order_id = str(uuid.uuid4())[:6]
         
+        # Instantiate payment subclass and save details
+        payment_record = None
+        if payment_details:
+            from model.payment import Card, Momo, Bank_T
+            pmeth = payment_details.get("method")
+            if pmeth == "card":
+                card_num = payment_details.get("card_last_4", "4242")
+                payment_record = Card(cvv="123", card_num=card_num, expiry="12/26")
+            elif pmeth == "momo":
+                phone = payment_details.get("phone_number", "")
+                net = payment_details.get("network", "")
+                payment_record = Momo(phone=phone, acc_name="Customer Wallet", network=net)
+            elif pmeth == "bank":
+                payment_record = Bank_T(acc_name="EcoBank Account", acc_num="1234567890123", bank_name="EcoBank")
+
+        payment_dict = payment_record.__dict__ if payment_record else {
+            "last_four": "4242",
+            "brand": "Visa"
+        }
+        
         # 2. Create Order
         new_order = Order(
             cart_id=customer_id, 
@@ -166,7 +186,15 @@ class Marketplace:
             subtotal=subtotal, 
             shipping_fee=shipping_fee,
             items=items,
-            order_id=order_id
+            order_id=order_id,
+            shipping_address={
+                "id": address_id or "addr_1",
+                "street": shipping_address.get("street", "123 Default Street") if shipping_address else "123 Default Street",
+                "city": shipping_address.get("city", "Default City") if shipping_address else "Default City",
+                "state": "DC",
+                "zip": "10000"
+            },
+            payment_details=payment_dict
         )
         
         # 3. Create Delivery linked to the address and order
@@ -496,3 +524,63 @@ class Marketplace:
         return database.deleteproduct(productid)
 
     #address focus
+    def update_customer_profile(self, customer_id, data):
+        first_name = data.get("first_name")
+        last_name = data.get("last_name")
+        phone_number = data.get("phone_number")
+        email = data.get("email")
+        address_data = data.get("address")
+        
+        customer = self.finduser_by_id(customer_id)
+        if not customer:
+            return None
+            
+        if first_name is not None:
+            customer.first_name = first_name
+        if last_name is not None:
+            customer.last_name = last_name
+        if phone_number is not None:
+            customer.phone_number = phone_number
+        if email is not None:
+            customer.email = email
+            
+        customer.name = f"{customer.first_name} {customer.last_name}".strip()
+        
+        for u in database.MOCK_USERS:
+            if u["unique_id"] == customer_id:
+                u["first_name"] = customer.first_name
+                u["last_name"] = customer.last_name
+                u["phone_number"] = customer.phone_number
+                u["email"] = customer.email
+                u["name"] = customer.name
+                break
+                
+        address = None
+        if address_data:
+            from model.address import Address
+            addr_list = database.get_addresses_by_customer(customer_id)
+            if addr_list:
+                existing_addr = addr_list[0]
+                existing_addr["street"] = address_data.get("street", existing_addr.get("street"))
+                existing_addr["street_address"] = address_data.get("street", existing_addr.get("street_address"))
+                existing_addr["city"] = address_data.get("city", existing_addr.get("city"))
+                existing_addr["country"] = address_data.get("country", existing_addr.get("country"))
+                existing_addr["landmark"] = address_data.get("country", existing_addr.get("landmark"))
+                address = existing_addr
+            else:
+                addr_obj = Address(
+                    city=address_data.get("city", ""),
+                    street_address=address_data.get("street", ""),
+                    landmark=address_data.get("country", ""),
+                    customer_id=customer_id
+                )
+                database.add_address(addr_obj.to_dict())
+                address = addr_obj.to_dict()
+                
+        return {
+            "email": customer.email,
+            "first_name": customer.first_name,
+            "last_name": customer.last_name,
+            "phone_number": customer.phone_number,
+            "address": address
+        }

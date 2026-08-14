@@ -475,11 +475,34 @@ def get_customer_profile(current_user_id):
     customer = marketplace.finduser_by_id(current_user_id)
     if not customer:
         return jsonify({"error": "Customer not found"}), 404
+        
+    import database
+    addr_list = database.get_addresses_by_customer(current_user_id)
+    address = addr_list[0] if addr_list else None
+    
     return jsonify({
         "email": customer.email,
         "first_name": customer.first_name,
         "last_name": customer.last_name,
-        "phone_number": customer.phone_number
+        "phone_number": customer.phone_number,
+        "address": address
+    }), 200
+
+@app.route("/customer/profile", methods=["PUT"])
+@token_required
+def update_customer_profile(current_user_id):
+    if not request.is_json:
+        return jsonify({"error": "Missing JSON body"}), 400
+        
+    data = request.get_json()
+    profile = marketplace.update_customer_profile(current_user_id, data)
+    
+    if not profile:
+        return jsonify({"error": "Customer not found"}), 404
+        
+    return jsonify({
+        "message": "Profile updated successfully",
+        **profile
     }), 200
 
 
