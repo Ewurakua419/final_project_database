@@ -307,6 +307,15 @@ def get_vendor_orders(current_vendor_id):
             if "image" in item:
                 item["image"] = get_image_url(item["image"])
         
+        # Retrieve and attach customer contact details
+        customer = marketplace.finduser_by_id(order.get("user_id"))
+        if customer:
+            order["customer_email"] = customer.email
+            order["customer_phone"] = customer.phone_number
+        else:
+            order["customer_email"] = "Unknown Customer"
+            order["customer_phone"] = "N/A"
+        
     sorted_orders = sorted(vendor_orders, key=get_order_date, reverse=True)
     return jsonify({"orders": sorted_orders}), 200
 

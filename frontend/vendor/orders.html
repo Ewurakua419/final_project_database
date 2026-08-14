@@ -76,7 +76,8 @@
                 </div>
                 <div class="order-details">
                   <div>
-                    <strong>Customer:</strong> ${shippingName}<br>
+                    <strong>Customer:</strong> ${order.customer_email || 'Customer'}<br>
+                    <strong>Phone:</strong> ${order.customer_phone || 'N/A'}<br>
                     <strong>Date:</strong> ${date}<br>
                     <strong>Shipping:</strong> ${address}
                   </div>
