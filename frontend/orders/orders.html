@@ -92,6 +92,28 @@
                     <span class="order-meta-value status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
                   </div>
                 </div>
+                
+                ${order.delivery ? `
+                <div style="padding: 16px var(--spacing-lg); background-color: var(--color-canvas-soft, #f6f5f4); border-bottom: 1px solid var(--color-hairline, #e6e6e6); font-size: 0.85rem; color: var(--color-ink-secondary, #31302e);">
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--spacing-md, 16px); line-height: 1.5;">
+                    <div>
+                      <span style="color: var(--color-ink-muted, #615d59); font-weight: 600; display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Delivery Status</span>
+                      <span style="font-weight: 600; color: ${order.delivery.delivery_status === 'delivered' ? '#1aae39' : (order.delivery.delivery_status === 'on the way' ? '#0075de' : '#dd5b00')};">
+                        ${order.delivery.delivery_status.charAt(0).toUpperCase() + order.delivery.delivery_status.slice(1)}
+                      </span>
+                    </div>
+                    <div>
+                      <span style="color: var(--color-ink-muted, #615d59); font-weight: 600; display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Estimated Arrival</span>
+                      <span style="font-weight: 500;">${order.delivery.estimated_delivery_date}</span>
+                    </div>
+                    <div>
+                      <span style="color: var(--color-ink-muted, #615d59); font-weight: 600; display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Carrier</span>
+                      <span style="font-weight: 500;">${order.delivery.shipping_company || 'N/A'}</span>
+                    </div>
+                  </div>
+                </div>
+                ` : ''}
+
                 <div class="order-items-list">
                   ${itemsHtml}
                 </div>

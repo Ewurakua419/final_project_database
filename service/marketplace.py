@@ -113,7 +113,7 @@ class Marketplace:
         else:
             return None
         
-    def checkout(self, customer_id, shipping_fee=0.0):
+    def checkout(self, customer_id, shipping_address=None, payment_details=None, shipping_fee=0.0):
         # We now take customer_id directly from the JWT, skipping finduser lookup
         cart_data = self.get_cart(customer_id)
         if not cart_data or cart_data["total_items"] == 0:
@@ -139,15 +139,45 @@ class Marketplace:
         subtotal = round(subtotal_dollars, 2)
         items = order_items
         
-        # We assume cart_id is the customer's unique_id for now since MOCK_CARTS maps by unique_id
+        import uuid
+        from model.address import Address
+        from model.delivery import Delivery
         from model.order import Order
+        
+        # 1. Create and save Address if provided
+        address_id = None
+        if shipping_address:
+            addr_obj = Address(
+                city=shipping_address.get("city", "Default City"),
+                street_address=shipping_address.get("street", "Default Street"),
+                landmark=shipping_address.get("country", "Ghana"),
+                customer_id=customer_id
+            )
+            database.add_address(addr_obj.to_dict())
+            address_id = addr_obj.address_id
+        
+        # Generate 6-char order_id to fit VARCHAR(6) constraint
+        order_id = str(uuid.uuid4())[:6]
+        
+        # 2. Create Order
         new_order = Order(
             cart_id=customer_id, 
             customer_id=customer_id, 
             subtotal=subtotal, 
             shipping_fee=shipping_fee,
-            items=items
+            items=items,
+            order_id=order_id
         )
+        
+        # 3. Create Delivery linked to the address and order
+        default_shipping_id = "SHIP01" # Defaulting to first shipping company
+        delivery_obj = Delivery(
+            order_id=new_order.order_id,
+            delivery_status="on the way",
+            address_id=address_id,
+            shipping_id=default_shipping_id
+        )
+        database.add_delivery(delivery_obj.to_dict())
         
         # Clear cart
         database.checkout(customer_id)
@@ -258,7 +288,23 @@ class Marketplace:
         }
 
     def update_order_status(self, order_id, new_status):
-        return database.update_order(order_id, {"status": new_status})
+        success = database.update_order(order_id, {"status": new_status})
+        if success:
+            # Sync delivery status with order status
+            delivery = database.get_delivery_by_order(order_id)
+            if delivery:
+                db_status = "on the way"
+                status_lower = new_status.lower()
+                if status_lower == "delivered":
+                    db_status = "delivered"
+                elif status_lower == "shipped":
+                    db_status = "on the way"
+                elif status_lower == "pending":
+                    # For a newly placed/pending order, default delivery status is sent to port
+                    db_status = "sent to port"
+                
+                delivery["delivery_status"] = db_status
+        return success
         
     def get_product_reviews(self, product_id):
         from model.review import Review

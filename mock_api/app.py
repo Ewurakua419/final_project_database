@@ -417,7 +417,7 @@ def to_checkout(current_user_id):
     shipping_address = data.get("shipping_address", {})
     payment_details = data.get("payment_details", {})
     
-    order = marketplace.checkout(current_user_id, shipping_fee=5.00)
+    order = marketplace.checkout(current_user_id, shipping_address=shipping_address, payment_details=payment_details, shipping_fee=5.00)
     if not order:
         return jsonify({"error": "Cart is empty or user not found"}), 400
     
@@ -436,12 +436,23 @@ def get_orders(current_user_id):
     if customer_orders is None:
         return jsonify({"error": "Customer not found"}), 404
         
+    import database
     formatted_orders = customer_orders
     
     for order in formatted_orders:
         for item in order.get("items", []):
             if "image" in item:
                 item["image"] = get_image_url(item["image"])
+        
+        # Fetch delivery details and link shipping company name
+        delivery = database.get_delivery_by_order(order["order_id"])
+        if delivery:
+            delivery_info = delivery.copy()
+            shipping_cos = database.get_all_shipping_companies()
+            for co in shipping_cos:
+                if co["shipping_id"] == delivery["shipping_id"]:
+                    delivery_info["shipping_company"] = co["name"]
+            order["delivery"] = delivery_info
     
     # Re-use our get_order_date function
     sorted_orders = sorted(formatted_orders, key=get_order_date, reverse=True)

@@ -1,11 +1,15 @@
 import uuid
 
-class Shipping:
-    def __init__(self, name, address,unique_id, rate):
-        if unique_id==None:
-            self.unique_id = str(uuid.uuid4())[:20]
-        else:
-            self.unique_id=unique_id
-        self.name=name
-        self.address=address#Address class
-        self.rate=rate
+class ShippingCompany:
+    def __init__(self, name, contact_phone=None, shipping_id=None):
+        self.shipping_id = shipping_id or str(uuid.uuid4())[:6]
+        self.name = name
+        self.contact_phone = contact_phone or ""
+
+    def to_dict(self):
+        return {
+            "shipping_id": self.shipping_id,
+            "name": self.name,
+            "contact_phone": self.contact_phone
+        }
+

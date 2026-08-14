@@ -1,35 +1,22 @@
 import uuid
+
 class Address:
-    def __init__(self,country,  postcode, city, street, house_num):
-        self.id=str(uuid.uuid4())[:20]
-        self.country=country
-        self.postcode=postcode
-        self.city=city
-        self.street=street
-        self.house_num=house_num
-
-    def set_country(self, country):
-        self.country=country
-
-    def set_postcode(self, postcode):
-        self.postcode=postcode
-
-    def set_city(self, city):
-        self.city=city
-
-    def set_street(self, street):
-        self.street=street
-
-    def set_house_num(self, house_num):
-        self.house_num=house_num
+    def __init__(self, city, street_address, customer_id, landmark=None, address_id=None):
+        self.address_id = address_id or str(uuid.uuid4())[:6]
+        self.city = city
+        self.street_address = street_address
+        self.customer_id = customer_id
+        self.landmark = landmark
 
     def to_dict(self):
-            return {
-                "country":self.country,
-                "post code": self.postcode,
-                "city": self.city,
-                "street": self.street,
-                "house_num": self.house_num
-            }
+        return {
+            "address_id": self.address_id,
+            "city": self.city,
+            "street": self.street_address,          # For frontend template compatibility
+            "street_address": self.street_address,   # Matches DB schema column name
+            "country": self.landmark,                # For frontend template compatibility
+            "landmark": self.landmark,               # Matches DB schema column name
+            "customer_id": self.customer_id
+        }
 
     
