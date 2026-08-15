@@ -340,6 +340,15 @@ def add_customer_address(current_user_id):
     database.add_address(addr_obj.to_dict())
     return jsonify(addr_obj.to_dict()), 201
 
+@app.route("/customer/addresses/<address_id>", methods=["DELETE"])
+@token_required
+def delete_customer_address(current_user_id, address_id):
+    """Delete a customer address."""
+    success = database.delete_address(address_id, current_user_id)
+    if success:
+        return jsonify({"message": "Address deleted successfully"}), 200
+    return jsonify({"error": "Address not found or unauthorized"}), 404
+
 # --- SHIPPING ---
 @app.route("/shipping/login", methods=["POST"])
 def login_shipping():

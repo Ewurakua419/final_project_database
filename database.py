@@ -411,6 +411,12 @@ def get_addresses_by_customer(customer_id):
         })
     return addresses
 
+def delete_address(address_id, customer_id):
+    """Delete an address belonging to a specific customer."""
+    query = "DELETE FROM address WHERE address_id = %s AND customer_id = %s"
+    rows_affected = run_query(query, (address_id[:6], customer_id[:6]), commit=True)
+    return rows_affected is not None and rows_affected > 0
+
 def add_delivery(delivery_dict):
     delivery_id = delivery_dict["delivery_id"][:6]
     order_id = delivery_dict["order_id"][:6]

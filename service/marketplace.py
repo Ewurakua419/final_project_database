@@ -282,6 +282,9 @@ class Marketplace:
             
         database.addtocart(product, customer_id, quantity)
         return True
+
+    def delete_customer_address(self, customer_id, address_id):
+        return database.delete_address(address_id, customer_id)
     
     def create_review(self, username, message, productid, rating=5):
         customer = self.finduser(username)

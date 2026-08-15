@@ -189,14 +189,59 @@
           if (profile.addresses && profile.addresses.length > 0) {
             profile.addresses.forEach(addr => {
               addrContainer.innerHTML += `
-                <div class="list-card">
+                <div class="list-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
                   <div class="list-card-content">
                     <strong style="color: var(--color-ink); font-size: 14px;">${addr.street_address || addr.street}</strong>
-                    <span style="color: var(--color-ink-muted); font-size: 14px;">${addr.city}, ${addr.country || addr.landmark}</span>
+                    <span style="color: var(--color-ink-muted); font-size: 13px;">${addr.city}, ${addr.country || addr.landmark}</span>
                   </div>
-                  ${addr.is_default ? '<span class="badge">Default</span>' : ''}
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    ${addr.is_default ? '<span class="badge" style="margin-right: 4px;">Default</span>' : ''}
+                    <button type="button" class="button-utility delete-addr-btn" data-address-id="${addr.address_id}" title="Remove Address" style="padding: 4px 10px; font-size: 12px; color: var(--color-accent-orange); border-color: rgba(221, 91, 0, 0.3); background: transparent; cursor: pointer;">
+                      ✕ Remove
+                    </button>
+                  </div>
                 </div>
               `;
+            });
+
+            // Bind Delete Address handlers
+            document.querySelectorAll(".delete-addr-btn").forEach(btn => {
+              btn.addEventListener("click", async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const addrId = btn.getAttribute("data-address-id");
+                if (!addrId) return;
+
+                if (!confirm("Are you sure you want to remove this address from your address book?")) {
+                  return;
+                }
+
+                const originalBtnText = btn.innerText;
+                btn.innerText = "Removing...";
+                btn.disabled = true;
+
+                try {
+                  const res = await fetch(`http://127.0.0.1:5001/customer/addresses/${addrId}`, {
+                    method: "DELETE",
+                    headers: {
+                      "Authorization": "Bearer " + token
+                    }
+                  });
+                  const data = await res.json();
+                  if (res.ok) {
+                    loadProfile();
+                  } else {
+                    alert(data.error || "Failed to remove address.");
+                    btn.innerText = originalBtnText;
+                    btn.disabled = false;
+                  }
+                } catch (err) {
+                  console.error(err);
+                  alert("Network error removing address.");
+                  btn.innerText = originalBtnText;
+                  btn.disabled = false;
+                }
+              });
             });
           } else {
             addrContainer.innerHTML = '<div style="color: var(--color-ink-muted); font-size: 14px;">No addresses saved.</div>';
