@@ -117,7 +117,7 @@ class Marketplace:
         else:
             return None
         
-    def checkout(self, customer_id, shipping_address=None, payment_details=None, shipping_fee=0.0):
+    def checkout(self, customer_id, shipping_address=None, payment_details=None, shipping_fee=0.0, shipping_id=None):
         # We now take customer_id directly from the JWT, skipping finduser lookup
         cart_data = self.get_cart(customer_id)
         if not cart_data or cart_data["total_items"] == 0:
@@ -127,7 +127,7 @@ class Marketplace:
         subtotal_dollars = 0
         for item in cart_data["cart"]:
             prod = item["product"]
-            price_dollars = prod.get("priceCents", 0)
+            price_dollars = prod.get("price", prod.get("priceCents", 0))
             item_total = price_dollars * item["quantity"]
             subtotal_dollars += item_total
             
@@ -152,19 +152,23 @@ class Marketplace:
         address_id = None
         shipping_address_dict = None
         if shipping_address:
+            # Accept both 'street' and 'street_address' (frontend sends street_address)
+            street = shipping_address.get("street") or shipping_address.get("street_address", "123 Liberation Road")
+            # Accept both 'country' and 'landmark' (DB calls it Landmark)
+            landmark = shipping_address.get("country") or shipping_address.get("landmark") or shipping_address.get("Landmark", "Ghana")
             addr_obj = Address(
                 city=shipping_address.get("city", "Accra"),
-                street_address=shipping_address.get("street", "123 Liberation Road"),
-                landmark=shipping_address.get("country", "Ghana"),
+                street_address=street,
+                landmark=landmark,
                 customer_id=customer_id
             )
             database.add_address(addr_obj.to_dict())
             address_id = addr_obj.address_id
             shipping_address_dict = {
                 "id": address_id,
-                "street": shipping_address.get("street"),
+                "street": street,
                 "city": shipping_address.get("city"),
-                "country": shipping_address.get("country", "Ghana")
+                "country": landmark
             }
         else:
             # Look up saved address
@@ -186,7 +190,7 @@ class Marketplace:
         payment_dict = None
         if payment_details:
             from model.payment import Card, Momo, Bank_T
-            pmeth = payment_details.get("method")
+            pmeth = payment_details.get("method") or payment_details.get("type")
             if pmeth == "card":
                 card_num = payment_details.get("card_last_4") or payment_details.get("card_num", "4242")
                 payment_record = Card(cvv="123", card_num=card_num, expiry="12/26")
@@ -226,12 +230,13 @@ class Marketplace:
         database.add_order(new_order.to_dict())
         
         # 3. Create Delivery linked to the address and order
-        default_shipping_id = "SHIP01" # Defaulting to first shipping company
+        # Use shipping_id from request if provided, else fall back to first company
+        resolved_shipping_id = shipping_id[:6] if shipping_id else "SHIP01"
         delivery_obj = Delivery(
             order_id=new_order.order_id,
             delivery_status="on the way",
             address_id=address_id,
-            shipping_id=default_shipping_id
+            shipping_id=resolved_shipping_id
         )
         database.add_delivery(delivery_obj.to_dict())
         
@@ -333,34 +338,15 @@ class Marketplace:
                     if customer:
                         order_copy["customer_first_name"] = customer.first_name
                         order_copy["customer_last_name"] = customer.last_name
+                        order_copy["customer_email"] = customer.email
+                        order_copy["customer_phone"] = customer.phone_number
                         
                 vendor_orders.append(order_copy)
                 
         return vendor_orders
 
     def get_vendor_stats(self, vendor_id):
-        # Calculate active products
-        all_products = self.get_all_products()
-        active_products = sum(1 for p in all_products if p.vendor_id == vendor_id)
-        
-        # Calculate total sales and pending orders
-        vendor_orders = self.get_vendor_orders(vendor_id)
-        total_sales = 0
-        pending_orders = 0
-        
-        if vendor_orders:
-            for order in vendor_orders:
-                # The pricing_summary is already pre-filtered for vendor items in get_vendor_orders
-                total_sales += order.get("pricing_summary", {}).get("subtotal", 0)
-                
-                if order.get("status") == "pending":
-                    pending_orders += 1
-                    
-        return {
-            "total_sales": round(total_sales, 2),
-            "active_products": active_products,
-            "pending_orders": pending_orders
-        }
+        return database.get_vendor_dashboard_stats(vendor_id)
 
     def update_order_status(self, order_id, new_status):
         success = database.update_order(order_id, {"status": new_status})
@@ -517,7 +503,8 @@ class Marketplace:
                 product_type=p_dict.get("product_type", ""),
                 product_id=p_dict["product_id"],
                 description=p_dict.get("description", ""),
-                rating=rating
+                rating=rating,
+                stock_quantity=p_dict.get("stock_quantity", 0)
             )
             products.append(p)
         return products
@@ -529,7 +516,7 @@ class Marketplace:
             return None
         else:
             rating = self._calculate_product_rating(rows[0])
-            # (product_id, vendor_id, product_name, price, image_url, product_type, description)
+            # (product_id, vendor_id, product_name, price, image_url, product_type, description, stock_quantity)
             product = Product(
                 product_id=rows[0],
                 vendor_id=rows[1],
@@ -538,7 +525,8 @@ class Marketplace:
                 image_url=rows[4],
                 product_type=rows[5],
                 description=rows[6],
-                rating=rating
+                rating=rating,
+                stock_quantity=rows[7] if len(rows) > 7 else 0
             )
             return product
 
@@ -546,7 +534,7 @@ class Marketplace:
         new_product = Product(
             product_name=product_data.get("name"),
             vendor_id=vendor_id,
-            price=product_data.get("priceCents", product_data.get("price", 0)),
+            price=product_data.get("price", product_data.get("priceCents", 0)),
             image_url=product_data.get("image", ""),
             product_type=product_data.get("type", "General"),
             description=product_data.get("description", "")
@@ -592,8 +580,8 @@ class Marketplace:
             
         db_updates = {}
         if "name" in updates: db_updates["product_name"] = updates["name"]
-        if "priceCents" in updates: db_updates["price"] = updates["priceCents"]
-        elif "price" in updates: db_updates["price"] = updates["price"]
+        if "price" in updates: db_updates["price"] = updates["price"]
+        elif "priceCents" in updates: db_updates["price"] = updates["priceCents"]
         if "image" in updates: db_updates["image_url"] = updates["image"]
         if "type" in updates: db_updates["product_type"] = updates["type"]
         if "description" in updates: db_updates["description"] = updates["description"]

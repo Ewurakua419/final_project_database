@@ -89,7 +89,7 @@
           document.getElementById("prod-name").value = product.name || '';
           document.getElementById("prod-brand").value = product.brand || '';
           document.getElementById("prod-category").value = product.type || 'tech';
-          document.getElementById("prod-price").value = (product.priceCents).toFixed(2);
+          document.getElementById("prod-price").value = (product.price).toFixed(2);
           document.getElementById("prod-stock").value = product.stock || 0;
           document.getElementById("prod-image").value = product.image || '';
           document.getElementById("prod-description").value = product.description || '';
@@ -112,7 +112,7 @@
           name: document.getElementById("prod-name").value,
           brand: document.getElementById("prod-brand").value,
           type: document.getElementById("prod-category").value,
-          priceCents: parseFloat(document.getElementById("prod-price").value),
+          price: parseFloat(document.getElementById("prod-price").value),
           stock: parseInt(document.getElementById("prod-stock").value),
           image: document.getElementById("prod-image").value,
           description: document.getElementById("prod-description").value,

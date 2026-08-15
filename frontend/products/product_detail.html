@@ -86,7 +86,7 @@
           
           showcase.innerHTML = `<img src="${product.image}" alt="${product.name}">`;
           
-          const price = (product.priceCents).toFixed(2);
+          const price = (product.price).toFixed(2);
           const fullStars = Math.floor(product.rating.stars);
           const hasHalfStar = product.rating.stars % 1 !== 0;
           let starsHtml = "";
@@ -197,7 +197,7 @@
             .slice(0, 5);
 
           relatedProducts.forEach(product => {
-            const price = (product.priceCents).toFixed(2);
+            const price = (product.price).toFixed(2);
             relatedContainer.innerHTML += `
               <a href="product_detail.html?id=${product.id}" class="related-product-card">
                 <div class="related-image-container">

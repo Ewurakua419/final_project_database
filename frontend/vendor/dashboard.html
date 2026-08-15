@@ -134,6 +134,40 @@
           console.error("Failed to load recent orders", err);
           tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--color-accent-orange);">Failed to load orders.</td></tr>';
         });
+
+      // Fetch product analytics
+      const analyticsBody = document.getElementById("product-performance-body");
+      
+      fetch("http://127.0.0.1:5001/vendor/analytics", {
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("vendorAuthToken")
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          analyticsBody.innerHTML = "";
+          
+          if(data.analytics.length === 0) {
+            analyticsBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--color-ink-muted); padding: 2rem;">No product data available yet.</td></tr>';
+            return;
+          }
+          
+          data.analytics.forEach(item => {
+            const ratingText = item.average_rating > 0 ? item.average_rating.toFixed(1) + " ★" : "No ratings";
+            analyticsBody.innerHTML += `
+              <tr>
+                <td style="font-weight: 500;">${item.product_name}</td>
+                <td>${item.units_sold}</td>
+                <td style="font-weight: 600;">GH₵${item.revenue.toFixed(2)}</td>
+                <td>${ratingText}</td>
+              </tr>
+            `;
+          });
+        })
+        .catch(err => {
+          console.error("Failed to load analytics", err);
+          analyticsBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--color-accent-orange);">Failed to load analytics.</td></tr>';
+        });
     });
   </script>
 </body>

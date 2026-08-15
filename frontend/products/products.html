@@ -13,6 +13,9 @@
   <div id="navbar-container"></div>
 
   <main class="container">
+    <div style="margin-bottom: 2rem;">
+      <input type="text" id="product-search" placeholder="Search products..." style="width: 100%; padding: 12px; border: 1px solid var(--color-hairline); border-radius: 8px; font-size: 16px;">
+    </div>
     <div id="products-container" class="product-grid">
       <div class="loading-state">Loading products...</div>
     </div>
@@ -26,8 +29,126 @@
     import { addToCart } from '../cart.js';
     import { openCart } from '../cart.js';
     
+    let allProducts = [];
+    
+    function renderProducts(productsToRender) {
+      const container = document.getElementById("products-container");
+      container.innerHTML = "";
+      
+      if (!productsToRender || productsToRender.length === 0) {
+        container.innerHTML = `<div class="error-state">No products found.</div>`;
+        return;
+      }
+
+      productsToRender.forEach(product => {
+        const card = document.createElement("div");
+        card.className = "product-card";
+        card.style.cursor = "pointer";
+        
+        // Navigate to detail page on card click (unless clicking controls)
+        card.addEventListener('click', (e) => {
+          if (!e.target.closest('.product-controls')) {
+            window.location.href = `product_detail.html?id=${product.id}`;
+          }
+        });
+            
+        // Format price
+        const price = (product.price).toFixed(2);
+        
+        // Generate star ratings (simple visual representation)
+        const fullStars = Math.floor(product.rating.stars);
+        const hasHalfStar = product.rating.stars % 1 !== 0;
+        let starsHtml = "";
+        for (let i = 0; i < 5; i++) {
+          if (i < fullStars) {
+            starsHtml += "★";
+          } else if (i === fullStars && hasHalfStar) {
+            starsHtml += "☆"; // Could use a better half-star, but using open star for simplicity
+          } else {
+            starsHtml += "☆";
+          }
+        }
+
+        card.innerHTML = `
+          <div class="product-image-container">
+            <img src="${product.image}" alt="${product.name}" class="product-image">
+          </div>
+          <h3 class="product-title">${product.name}</h3>
+          <div class="product-rating">
+            <span class="stars">${starsHtml}</span>
+            <span class="rating-count">${product.rating.count}</span>
+          </div>
+          <div class="product-price">GH₵${price}</div>
+          
+          <div class="product-controls">
+            <select class="qty-select" aria-label="Quantity">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+            </select>
+            
+            <button class="button-primary add-to-cart-btn" data-product-id="${product.id}">
+              Add to Cart
+            </button>
+          </div>
+        `;
+        
+        container.appendChild(card);
+      });
+      
+      // Add event listeners to the "Add to Cart" buttons
+      document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const productId = e.target.getAttribute('data-product-id');
+          const qtySelect = e.target.parentElement.querySelector('.qty-select');
+          const qty = parseInt(qtySelect.value, 10);
+          
+          const originalText = e.target.innerText;
+          e.target.innerText = "Adding...";
+          
+          addToCart(productId, qty)
+          .then(data => {
+            e.target.innerText = "Added!";
+            e.target.style.backgroundColor = "var(--color-accent-green)";
+            e.target.style.color = "var(--color-on-primary)";
+            
+            openCart(); // Opens cart and triggers fetchCart() to reflect changes
+            
+            setTimeout(() => {
+              e.target.innerText = originalText;
+              e.target.style.backgroundColor = "";
+              e.target.style.color = "";
+            }, 1500);
+          })
+          .catch(err => {
+            console.error(err);
+            e.target.innerText = "Error!";
+            e.target.style.backgroundColor = "var(--color-accent-orange)";
+            setTimeout(() => {
+              e.target.innerText = originalText;
+              e.target.style.backgroundColor = "";
+            }, 1500);
+          });
+        });
+      });
+    }
+
     function initProductsPage() {
       const container = document.getElementById("products-container");
+      const searchInput = document.getElementById("product-search");
+      
+      searchInput.addEventListener("input", (e) => {
+        const query = e.target.value.toLowerCase();
+        const filtered = allProducts.filter(p => p.name.toLowerCase().includes(query));
+        renderProducts(filtered);
+      });
       
       // Fetch products from the local Flask API
       fetch("http://127.0.0.1:5001/product-items")
@@ -38,111 +159,12 @@
           return response.json();
         })
         .then(data => {
-          container.innerHTML = ""; // Clear loading state
-          
-          if (!data.products || data.products.length === 0) {
-            container.innerHTML = `<div class="error-state">No products found.</div>`;
-            return;
+          if (data.products) {
+            allProducts = data.products;
+            renderProducts(allProducts);
+          } else {
+            renderProducts([]);
           }
-
-          data.products.forEach(product => {
-            const card = document.createElement("div");
-            card.className = "product-card";
-            card.style.cursor = "pointer";
-            
-            // Navigate to detail page on card click (unless clicking controls)
-            card.addEventListener('click', (e) => {
-              if (!e.target.closest('.product-controls')) {
-                window.location.href = `product_detail.html?id=${product.id}`;
-              }
-            });
-            
-            // Format price from cents
-            const price = (product.priceCents).toFixed(2);
-            
-            // Generate star ratings (simple visual representation)
-            const fullStars = Math.floor(product.rating.stars);
-            const hasHalfStar = product.rating.stars % 1 !== 0;
-            let starsHtml = "";
-            for (let i = 0; i < 5; i++) {
-              if (i < fullStars) {
-                starsHtml += "★";
-              } else if (i === fullStars && hasHalfStar) {
-                starsHtml += "☆"; // Could use a better half-star, but using open star for simplicity
-              } else {
-                starsHtml += "☆";
-              }
-            }
-
-            card.innerHTML = `
-              <div class="product-image-container">
-                <img src="${product.image}" alt="${product.name}" class="product-image">
-              </div>
-              <h3 class="product-title">${product.name}</h3>
-              <div class="product-rating">
-                <span class="stars">${starsHtml}</span>
-                <span class="rating-count">${product.rating.count}</span>
-              </div>
-              <div class="product-price">GH₵${price}</div>
-              
-              <div class="product-controls">
-                <select class="qty-select" aria-label="Quantity">
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                  <option value="6">6</option>
-                  <option value="7">7</option>
-                  <option value="8">8</option>
-                  <option value="9">9</option>
-                  <option value="10">10</option>
-                </select>
-                
-                <button class="button-primary add-to-cart-btn" data-product-id="${product.id}">
-                  Add to Cart
-                </button>
-              </div>
-            `;
-            
-            container.appendChild(card);
-          });
-          
-          // Add event listeners to the "Add to Cart" buttons
-          document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-              const productId = e.target.getAttribute('data-product-id');
-              const qtySelect = e.target.parentElement.querySelector('.qty-select');
-              const qty = parseInt(qtySelect.value, 10);
-              
-              const originalText = e.target.innerText;
-              e.target.innerText = "Adding...";
-              
-              addToCart(productId, qty)
-              .then(data => {
-                e.target.innerText = "Added!";
-                e.target.style.backgroundColor = "var(--color-accent-green)";
-                e.target.style.color = "var(--color-on-primary)";
-                
-                openCart(); // Opens cart and triggers fetchCart() to reflect changes
-                
-                setTimeout(() => {
-                  e.target.innerText = originalText;
-                  e.target.style.backgroundColor = "";
-                  e.target.style.color = "";
-                }, 1500);
-              })
-              .catch(err => {
-                console.error(err);
-                e.target.innerText = "Error!";
-                e.target.style.backgroundColor = "var(--color-accent-orange)";
-                setTimeout(() => {
-                  e.target.innerText = originalText;
-                  e.target.style.backgroundColor = "";
-                }, 1500);
-              });
-            });
-          });
         })
         .catch(error => {
           console.error("Error fetching products:", error);

@@ -15,6 +15,10 @@
       <h1 class="display-2">Inventory</h1>
       <a href="add_product.html" class="button-utility" style="background-color: var(--color-primary); color: white; border: none;">+ Add Product</a>
     </div>
+    
+    <div style="margin-bottom: 2rem;">
+      <input type="text" id="vendor-product-search" placeholder="Search inventory..." style="width: 100%; padding: 12px; border: 1px solid var(--color-hairline); border-radius: 8px; font-size: 16px;">
+    </div>
 
       <div id="vendor-products-container">
         <div class="loading-state">Loading your inventory...</div>
@@ -31,6 +35,49 @@
 
       const container = document.getElementById("vendor-products-container");
 
+      let allVendorProducts = [];
+      
+      function renderVendorProducts(productsToRender) {
+        const container = document.getElementById("vendor-products-container");
+        container.innerHTML = "";
+        
+        if(productsToRender.length === 0) {
+          container.innerHTML = `
+            <div class="error-state" style="background: var(--color-canvas); border-color: var(--color-hairline); color: var(--color-ink-muted);">
+              No products found.
+            </div>`;
+          return;
+        }
+
+        productsToRender.forEach(product => {
+          const price = (product.price).toFixed(2);
+          container.innerHTML += `
+            <div class="product-list-card">
+              <img src="${product.image}" class="product-thumb" alt="${product.name}">
+              <div class="product-info">
+                <h3 class="product-title">${product.name}</h3>
+                <div class="product-meta">
+                  <span>Category: ${product.type || 'General'}</span>
+                  <span>Stock: 50 units</span>
+                </div>
+              </div>
+              <div class="product-price">GH₵${price}</div>
+              <div class="product-actions">
+                <a href="edit_product.html?id=${product.id}" class="button-utility" style="font-size: var(--type-caption-size); text-decoration: none;">Edit</a>
+                <button class="button-utility" style="font-size: var(--type-caption-size); color: var(--color-accent-orange);" onclick="deleteProduct('${product.id}', this)">Delete</button>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      const searchInput = document.getElementById("vendor-product-search");
+      searchInput.addEventListener("input", (e) => {
+        const query = e.target.value.toLowerCase();
+        const filtered = allVendorProducts.filter(p => p.name.toLowerCase().includes(query));
+        renderVendorProducts(filtered);
+      });
+
       fetch("http://127.0.0.1:5001/vendor/products", {
         headers: {
           "Authorization": "Bearer " + localStorage.getItem("vendorAuthToken")
@@ -38,36 +85,12 @@
       })
         .then(res => res.json())
         .then(data => {
-          container.innerHTML = "";
-          
-          if(data.products.length === 0) {
-            container.innerHTML = `
-              <div class="error-state" style="background: var(--color-canvas); border-color: var(--color-hairline); color: var(--color-ink-muted);">
-                You haven't added any products yet.
-              </div>`;
-            return;
+          if (data.products) {
+            allVendorProducts = data.products;
+            renderVendorProducts(allVendorProducts);
+          } else {
+            renderVendorProducts([]);
           }
-
-          data.products.forEach(product => {
-            const price = (product.priceCents).toFixed(2);
-            container.innerHTML += `
-              <div class="product-list-card">
-                <img src="${product.image}" class="product-thumb" alt="${product.name}">
-                <div class="product-info">
-                  <h3 class="product-title">${product.name}</h3>
-                  <div class="product-meta">
-                    <span>Category: ${product.type || 'General'}</span>
-                    <span>Stock: 50 units</span>
-                  </div>
-                </div>
-                <div class="product-price">GH₵${price}</div>
-                <div class="product-actions">
-                  <a href="edit_product.html?id=${product.id}" class="button-utility" style="font-size: var(--type-caption-size); text-decoration: none;">Edit</a>
-                  <button class="button-utility" style="font-size: var(--type-caption-size); color: var(--color-accent-orange);" onclick="deleteProduct('${product.id}', this)">Delete</button>
-                </div>
-              </div>
-            `;
-          });
         })
         .catch(err => {
           console.error(err);

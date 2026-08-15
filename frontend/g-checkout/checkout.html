@@ -44,11 +44,48 @@
 
         <h2 class="section-title" style="margin-top: 2rem;">Payment</h2>
         <div class="form-group">
-          <label for="saved-payment">Select Payment Method</label>
-          <select id="saved-payment" class="text-input" required style="appearance: auto; padding: 12px; margin-bottom: var(--spacing-sm);">
-            <option value='{"type": "card", "brand": "Visa", "last_four": "4242"}'>Visa ending in 4242</option>
-            <option value='{"type": "momo", "network": "MTN", "phone_number": "0241112222"}'>MTN Momo</option>
+          <label for="payment-type">Payment Type</label>
+          <select id="payment-type" class="text-input" required style="appearance: auto; padding: 12px; margin-bottom: var(--spacing-md);" onchange="togglePaymentFields()">
+            <option value="card">Credit / Debit Card</option>
+            <option value="momo">Mobile Money (Momo)</option>
+            <option value="bank">Bank Transfer</option>
           </select>
+        </div>
+        
+        <div id="card-fields" class="payment-fields-group">
+          <div class="form-group">
+            <label for="card-brand">Card Brand</label>
+            <select id="card-brand" class="text-input" style="appearance: auto; padding: 12px; margin-bottom: var(--spacing-sm);">
+              <option value="Visa">Visa</option>
+              <option value="MasterCard">MasterCard</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="card-number">Card Number</label>
+            <input type="text" id="card-number" class="text-input" placeholder="XXXX XXXX XXXX XXXX" maxlength="19">
+          </div>
+        </div>
+
+        <div id="momo-fields" class="payment-fields-group" style="display: none;">
+          <div class="form-group">
+            <label for="momo-network">Network</label>
+            <select id="momo-network" class="text-input" style="appearance: auto; padding: 12px; margin-bottom: var(--spacing-sm);">
+              <option value="MTN">MTN</option>
+              <option value="Telecel">Telecel</option>
+              <option value="AT">AT</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="momo-phone">Phone Number</label>
+            <input type="tel" id="momo-phone" class="text-input" placeholder="024 123 4567">
+          </div>
+        </div>
+        
+        <div id="bank-fields" class="payment-fields-group" style="display: none;">
+          <div class="form-group">
+            <label for="bank-name">Bank Name</label>
+            <input type="text" id="bank-name" class="text-input" placeholder="e.g. Ecobank">
+          </div>
         </div>
 
         <button type="submit" class="button-primary" id="place-order-btn" style="width: 100%; padding: 1rem; font-size: 1.1rem; margin-top: 2rem;">
@@ -110,7 +147,7 @@
           let subtotal = 0;
           data.cart.forEach(item => {
             const product = item.product;
-            const price = product.priceCents;
+            const price = product.price;
             const itemTotal = price * item.quantity;
             subtotal += itemTotal;
             
@@ -142,13 +179,17 @@
         .then(res => res.json())
         .then(profile => {
           if (profile.email) document.getElementById("email").value = profile.email;
+          if (profile.phone_number) document.getElementById("momo-phone").value = profile.phone_number;
           
           const addrSelect = document.getElementById("saved-address");
           addrSelect.innerHTML = "";
           if (profile.addresses && profile.addresses.length > 0) {
             profile.addresses.forEach(addr => {
-              const addrData = {street_address: addr.street_address, city: addr.city, Landmark: addr.Landmark};
-              addrSelect.innerHTML += `<option value='${JSON.stringify(addrData)}'>${addr.street_address}, ${addr.city} - ${addr.Landmark || ""}</option>`;
+              // Use both lowercase 'landmark' and fallback to 'country' for the display label
+              const landmarkLabel = addr.landmark || addr.country || "";
+              const streetLabel = addr.street_address || addr.street || "";
+              const addrData = { street_address: streetLabel, city: addr.city, landmark: landmarkLabel };
+              addrSelect.innerHTML += `<option value='${JSON.stringify(addrData)}'>${streetLabel}, ${addr.city} - ${landmarkLabel}</option>`;
             });
           } else {
             addrSelect.innerHTML = "<option value=''>No addresses found</option>";
@@ -168,17 +209,37 @@
         btn.disabled = true;
 
         const addressVal = document.getElementById("saved-address").value;
-        const paymentVal = document.getElementById("saved-payment").value;
+        const paymentType = document.getElementById("payment-type").value;
+        let paymentDetails = {};
+        
+        if (paymentType === "card") {
+          const cardNum = document.getElementById("card-number").value || "0000000000000000";
+          paymentDetails = {
+            method: "card",
+            brand: document.getElementById("card-brand").value,
+            last_four: cardNum.slice(-4)
+          };
+        } else if (paymentType === "momo") {
+          paymentDetails = {
+            method: "momo",
+            brand: document.getElementById("momo-network").value,
+            phone_number: document.getElementById("momo-phone").value
+          };
+        } else if (paymentType === "bank") {
+          paymentDetails = {
+            method: "bank",
+            brand: document.getElementById("bank-name").value || "Bank Transfer"
+          };
+        }
 
-        if (!addressVal || !paymentVal) {
-          alert("Please select an address and payment method.");
+        if (!addressVal) {
+          alert("Please select a shipping address.");
           btn.innerText = originalText;
           btn.disabled = false;
           return;
         }
 
         const shippingAddress = JSON.parse(addressVal);
-        const paymentDetails = JSON.parse(paymentVal);
         const shippingCompanyId = document.getElementById("shipping-company").value;
 
         fetch("http://127.0.0.1:5001/checkout", {
@@ -214,6 +275,14 @@
         });
       });
     }
+
+    function togglePaymentFields() {
+      const type = document.getElementById("payment-type").value;
+      document.getElementById("card-fields").style.display = type === "card" ? "block" : "none";
+      document.getElementById("momo-fields").style.display = type === "momo" ? "block" : "none";
+      document.getElementById("bank-fields").style.display = type === "bank" ? "block" : "none";
+    }
+    window.togglePaymentFields = togglePaymentFields;
 
     initCheckoutPage();
   </script>

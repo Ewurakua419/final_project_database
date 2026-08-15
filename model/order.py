@@ -11,7 +11,7 @@ class Order:
         self.payment_details = payment_details
         
         if order_id is None:
-            self.order_id = "ord_" + uuid.uuid4().hex[:10]
+            self.order_id = str(uuid.uuid4())[:6]
         else:
             self.order_id = order_id
             

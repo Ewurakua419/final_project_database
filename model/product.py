@@ -1,13 +1,14 @@
 import uuid
 
 class Product:
-    def __init__(self, product_name, vendor_id, price, image_url, product_type, product_id=None, description="", rating=None):
+    def __init__(self, product_name, vendor_id, price, image_url, product_type, product_id=None, description="", rating=None, stock_quantity=0):
         self.product_name = product_name
         self.vendor_id = vendor_id
         self.price = price
         self.image_url = image_url
         self.product_type = product_type
         self.description = description
+        self.stock_quantity = stock_quantity
         
         if rating is None:
             self.rating = {"stars": 0, "count": 0}
@@ -24,13 +25,13 @@ class Product:
             "id": self.product_id,
             "name": self.product_name,
             "image": self.image_url,
-            "priceCents": self.price,
+            "price": self.price,
             "type": self.product_type,
             "description": self.description,
             "vendor_id": self.vendor_id,
             "rating": self.rating,
-            "keywords": [], # Default for now
-            "stock": 10 # Default for now
+            "keywords": [],
+            "stock": self.stock_quantity
         }
 
 class Fashion(Product):

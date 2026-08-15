@@ -237,7 +237,15 @@ def update_item_qty(current_user_id, product_id):
 @token_required
 def to_checkout(current_user_id):
     data = request.get_json()
-    order = marketplace.checkout(current_user_id, shipping_address=data.get("shipping_address"), payment_details=data.get("payment_details"), shipping_fee=5.00)
+    order = marketplace.checkout(
+        current_user_id,
+        shipping_address=data.get("shipping_address"),
+        payment_details=data.get("payment_details"),
+        shipping_fee=5.00,
+        shipping_id=data.get("shipping_id")
+    )
+    if order is None:
+        return jsonify({"error": "Cart is empty"}), 400
     return jsonify(order.to_dict()), 201
 
 @app.route("/orders", methods=["GET"])
@@ -252,11 +260,30 @@ def get_vendor_orders(current_vendor_id):
     vendor_orders = marketplace.get_vendor_orders(current_vendor_id)
     return jsonify({"orders": vendor_orders}), 200
 
+@app.route("/vendor/orders/<order_id>", methods=["PUT"])
+@vendor_token_required
+def update_vendor_order_status(current_vendor_id, order_id):
+    data = request.get_json()
+    new_status = data.get("status")
+    if not new_status:
+        return jsonify({"error": "Status is required"}), 400
+    success = marketplace.update_order_status(order_id, new_status)
+    if success:
+        return jsonify({"message": "Order status updated"}), 200
+    return jsonify({"error": "Order not found or update failed"}), 404
+
 @app.route("/vendor/stats", methods=["GET"])
 @vendor_token_required
 def get_vendor_stats(current_vendor_id):
     stats = marketplace.get_vendor_stats(current_vendor_id)
     return jsonify(stats), 200
+
+@app.route("/vendor/analytics", methods=["GET"])
+@vendor_token_required
+def get_vendor_analytics(current_vendor_id):
+    import database
+    analytics = database.get_vendor_product_analytics(current_vendor_id)
+    return jsonify({"analytics": analytics}), 200
 
 # --- PROFILE ---
 @app.route("/customer/profile", methods=["GET"])
@@ -317,6 +344,23 @@ def update_shipping_delivery(current_shipping_id, delivery_id):
     if updated:
         return jsonify({"message": "Status updated successfully"}), 200
     return jsonify({"error": "Delivery not found"}), 404
+
+# --- REVIEWS ---
+@app.route("/product-items/<product_id>/reviews", methods=["GET"])
+def get_product_reviews(product_id):
+    reviews = marketplace.get_product_reviews(product_id)
+    return jsonify({"reviews": [r.to_dict() for r in reviews]}), 200
+
+@app.route("/product-items/<product_id>/reviews", methods=["POST"])
+@token_required
+def add_product_review(current_user_id, product_id):
+    data = request.get_json()
+    rating = data.get("rating")
+    comment = data.get("text") or data.get("comment", "")
+    if not rating or not comment:
+        return jsonify({"error": "Rating and comment are required"}), 400
+    review = marketplace.add_product_review(product_id, current_user_id, comment, rating)
+    return jsonify(review.to_dict()), 201
 
 # --- MISC / ADMIN ---
 @app.route("/admin/login", methods=["POST"])

@@ -178,13 +178,24 @@ def get_all_orders():
         shipping_fee = float(o_row[5])
         
         # 2. Fetch delivery status and details
-        del_query = "SELECT delivery_status, address_id, shipping_id FROM delivery WHERE order_id = %s LIMIT 1"
+        del_query = """
+            SELECT d.delivery_status, d.address_id, d.shipping_id, d.estimated_delivery_date, sc.name
+            FROM delivery d
+            LEFT JOIN shipping_company sc ON d.shipping_id = sc.shipping_id
+            WHERE d.order_id = %s LIMIT 1
+        """
         del_row = run_query(del_query, (order_id,), fetch='one')
         status = "pending"
         address_id = None
+        delivery_obj = None
         if del_row:
             status = del_row[0]
             address_id = del_row[1]
+            delivery_obj = {
+                "delivery_status": del_row[0],
+                "estimated_delivery_date": str(del_row[3]) if del_row[3] else "N/A",
+                "shipping_company": del_row[4] or "N/A"
+            }
             
         # 3. Fetch address
         addr_dict = None
@@ -242,6 +253,16 @@ def get_all_orders():
             WHERE oi.order_id = %s
         """
         item_rows = run_query(item_query, (order_id,), fetch='all')
+        if not item_rows and cart_id:
+            # Fallback to cart_items for seeded orders which don't have order_items entries
+            cart_item_query = """
+                SELECT ci.product_id, p.product_name, p.image_url, p.price, ci.quantity 
+                FROM cart_items ci 
+                JOIN product p ON ci.product_id = p.product_id 
+                WHERE ci.cart_id = %s
+            """
+            item_rows = run_query(cart_item_query, (cart_id,), fetch='all')
+            
         items = []
         for i_row in item_rows:
             items.append({
@@ -262,6 +283,7 @@ def get_all_orders():
             "customer_id": customer_id,
             "created_at": order_date,
             "status": status,
+            "delivery": delivery_obj,
             "pricing_summary": {
                 "subtotal": subtotal,
                 "tax": tax,
@@ -465,20 +487,21 @@ def add_review(review_dict):
 
 def findproduct(productid):
     query = """
-        SELECT product_id, vendor_id, product_name, price, image_url, product_type, description 
+        SELECT product_id, vendor_id, product_name, price, image_url, product_type, description, stock_quantity
         FROM product 
         WHERE product_id = %s
     """
     row = run_query(query, (productid.strip()[:6],), fetch='one')
     if row:
         return (
-            row[0],
-            row[1],
-            row[2],
-            float(row[3]),
-            row[4],
-            row[5],
-            row[6]
+            row[0],  # product_id
+            row[1],  # vendor_id
+            row[2],  # product_name
+            float(row[3]),  # price
+            row[4],  # image_url
+            row[5],  # product_type
+            row[6],  # description
+            row[7],  # stock_quantity
         )
     return None
 
@@ -748,3 +771,57 @@ def update_address(address_id, updates_dict):
     run_query(query, tuple(params), commit=True)
     return True
 
+def get_vendor_product_analytics(vendor_id):
+    query = """
+        SELECT
+            p.product_id,
+            p.product_name,
+            COALESCE(s.units_sold, 0) as units_sold,
+            COALESCE(s.total_revenue, 0) as total_revenue,
+            COALESCE(r.average_rating, 0) as average_rating
+        FROM Product p
+        LEFT JOIN vw_product_sales s ON p.product_id = s.product_id
+        LEFT JOIN vw_product_ratings r ON p.product_id = r.product_id
+        WHERE p.vendor_id = %s
+        ORDER BY units_sold DESC
+    """
+    rows = run_query(query, (vendor_id[:6],), fetch='all')
+    analytics = []
+    for r in rows:
+        analytics.append({
+            "product_id": r[0],
+            "product_name": r[1],
+            "units_sold": int(r[2]),
+            "revenue": float(r[3]),
+            "average_rating": float(r[4])
+        })
+    return analytics
+
+def get_vendor_dashboard_stats(vendor_id):
+    # Total sales from vw_vendor_sales
+    query_sales = "SELECT total_revenue FROM vw_vendor_sales WHERE vendor_id = %s"
+    sales_row = run_query(query_sales, (vendor_id[:6],), fetch='one')
+    total_sales = float(sales_row[0]) if sales_row else 0.0
+    
+    # Active products from product table
+    query_products = "SELECT COUNT(*) FROM product WHERE vendor_id = %s"
+    prod_row = run_query(query_products, (vendor_id[:6],), fetch='one')
+    active_products = int(prod_row[0]) if prod_row else 0
+    
+    # Pending orders from delivery table (left join since seeded orders might not have delivery records)
+    query_orders = """
+        SELECT COUNT(DISTINCT o.order_id) 
+        FROM orders o 
+        LEFT JOIN delivery d ON o.order_id = d.order_id 
+        JOIN cart_items ci ON o.cart_id = ci.cart_id
+        JOIN product p ON ci.product_id = p.product_id
+        WHERE p.vendor_id = %s AND (d.delivery_status IS NULL OR d.delivery_status != 'delivered')
+    """
+    ord_row = run_query(query_orders, (vendor_id[:6],), fetch='one')
+    pending_orders = int(ord_row[0]) if ord_row else 0
+    
+    return {
+        "total_sales": total_sales,
+        "active_products": active_products,
+        "pending_orders": pending_orders
+    }

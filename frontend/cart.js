@@ -97,7 +97,7 @@ function renderCartUI(data) {
   cartItemsContainer.innerHTML = "";
   data.cart.forEach(item => {
     const product = item.product;
-    const price = (product.priceCents).toFixed(2);
+    const price = (product.price).toFixed(2);
     
     const itemDiv = document.createElement("div");
     itemDiv.className = "cart-item";
@@ -228,7 +228,7 @@ export const fetchCart = () => {
           const product = productsMap[item.product_id];
           if (product) {
             total_items += item.quantity;
-            total_price += product.priceCents * item.quantity;
+            total_price += product.price * item.quantity;
             cartList.push({
               product: product,
               quantity: item.quantity
