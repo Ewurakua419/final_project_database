@@ -1,4 +1,4 @@
-use ecommercetest;
+use ecommerce;
 
 INSERT INTO customer (customer_id, f_name, l_name, phone_number, email) VALUES
 ('CUST00', 'Kofi', 'Mensah', '+233241234501', 'kofi.mensah1@email.com'),
