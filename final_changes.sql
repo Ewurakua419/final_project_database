@@ -1,6 +1,7 @@
 -- final_changes.sql
 -- Safely migrates historical cart items into Order_Items without deducting current active stock.
 
+use ecommerce;
 -- 1. Drop the stock trigger temporarily
 DROP TRIGGER IF EXISTS trg_reduce_stock_after_order_item;
 

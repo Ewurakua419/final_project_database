@@ -1,5 +1,5 @@
 -- my changes (Haris)
-
+use ecommerce;
 -- 1
 DROP VIEW IF EXISTS vw_product_sales;
 

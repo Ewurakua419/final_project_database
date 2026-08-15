@@ -1,3 +1,4 @@
+use ecommerce;
 DROP VIEW IF EXISTS vw_vendor_sales;
 
 CREATE VIEW vw_vendor_sales AS
