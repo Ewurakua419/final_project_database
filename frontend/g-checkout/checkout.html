@@ -34,11 +34,7 @@
         <div class="form-group" style="margin-top: var(--spacing-md);">
           <label for="shipping-company">Shipping Carrier</label>
           <select id="shipping-company" class="text-input" required style="appearance: auto;">
-            <option value="SHIP01">Speedy Delivery Ghana</option>
-            <option value="SHIP02">EcoTransit Logistics</option>
-            <option value="SHIP03">DropX Africa</option>
-            <option value="SHIP04">Aramex Ghana</option>
-            <option value="SHIP05">DHL Express Local</option>
+            <option value="">Loading carriers...</option>
           </select>
         </div>
 
@@ -53,16 +49,30 @@
         </div>
         
         <div id="card-fields" class="payment-fields-group">
-          <div class="form-group">
+          <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+            <label for="card-name">Cardholder Name</label>
+            <input type="text" id="card-name" class="text-input" placeholder="e.g. John Doe">
+          </div>
+          <div class="form-group" style="margin-bottom: var(--spacing-sm);">
             <label for="card-brand">Card Brand</label>
-            <select id="card-brand" class="text-input" style="appearance: auto; padding: 12px; margin-bottom: var(--spacing-sm);">
+            <select id="card-brand" class="text-input" style="appearance: auto; padding: 12px;">
               <option value="Visa">Visa</option>
               <option value="MasterCard">MasterCard</option>
             </select>
           </div>
-          <div class="form-group">
+          <div class="form-group" style="margin-bottom: var(--spacing-sm);">
             <label for="card-number">Card Number</label>
             <input type="text" id="card-number" class="text-input" placeholder="XXXX XXXX XXXX XXXX" maxlength="19">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm);">
+            <div class="form-group">
+              <label for="card-expiry">Expiry Date</label>
+              <input type="month" id="card-expiry" class="text-input">
+            </div>
+            <div class="form-group">
+              <label for="card-cvv">CVV</label>
+              <input type="text" id="card-cvv" class="text-input" placeholder="123" maxlength="4">
+            </div>
           </div>
         </div>
 
@@ -82,9 +92,13 @@
         </div>
         
         <div id="bank-fields" class="payment-fields-group" style="display: none;">
-          <div class="form-group">
+          <div class="form-group" style="margin-bottom: var(--spacing-sm);">
             <label for="bank-name">Bank Name</label>
             <input type="text" id="bank-name" class="text-input" placeholder="e.g. Ecobank">
+          </div>
+          <div class="form-group">
+            <label for="bank-account">Account Number</label>
+            <input type="text" id="bank-account" class="text-input" placeholder="Enter account number">
           </div>
         </div>
 
@@ -199,6 +213,26 @@
         })
         .catch(err => console.error("Failed to load profile", err));
 
+      // Fetch shipping carriers dynamically
+      fetch("http://127.0.0.1:5001/shipping-companies")
+        .then(res => res.json())
+        .then(data => {
+          const carrierSelect = document.getElementById("shipping-company");
+          carrierSelect.innerHTML = "";
+          const carriers = data.shipping_companies || [];
+          if (carriers.length === 0) {
+            carrierSelect.innerHTML = '<option value="">No carriers available</option>';
+            return;
+          }
+          carriers.forEach(c => {
+            carrierSelect.innerHTML += `<option value="${c.shipping_id}">${c.name}</option>`;
+          });
+        })
+        .catch(err => {
+          console.error("Failed to load carriers", err);
+          document.getElementById("shipping-company").innerHTML = '<option value="SHIP01">Default Carrier</option>';
+        });
+
       // Handle form submission
       document.getElementById("checkout-form").addEventListener("submit", (e) => {
         e.preventDefault();
@@ -217,7 +251,9 @@
           paymentDetails = {
             method: "card",
             brand: document.getElementById("card-brand").value,
-            last_four: cardNum.slice(-4)
+            last_four: cardNum.slice(-4),
+            card_name: document.getElementById("card-name").value || "Customer",
+            expiry: document.getElementById("card-expiry").value || ""
           };
         } else if (paymentType === "momo") {
           paymentDetails = {
@@ -228,7 +264,8 @@
         } else if (paymentType === "bank") {
           paymentDetails = {
             method: "bank",
-            brand: document.getElementById("bank-name").value || "Bank Transfer"
+            brand: document.getElementById("bank-name").value || "Bank Transfer",
+            account_number: document.getElementById("bank-account").value
           };
         }
 

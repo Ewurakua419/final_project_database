@@ -245,9 +245,9 @@ def get_all_orders():
                 "brand": brand
             }
             
-        # 5. Fetch order items
+        # 5. Fetch order items (include item_status for vendor fulfillment workflow)
         item_query = """
-            SELECT oi.product_id, p.product_name, p.image_url, p.price, oi.quantity 
+            SELECT oi.product_id, p.product_name, p.image_url, p.price, oi.quantity, oi.item_status 
             FROM order_items oi 
             JOIN product p ON oi.product_id = p.product_id 
             WHERE oi.order_id = %s
@@ -265,14 +265,20 @@ def get_all_orders():
             
         items = []
         for i_row in item_rows:
-            items.append({
+            item_dict = {
                 "product_id": i_row[0],
                 "name": i_row[1],
                 "image": i_row[2],
                 "price_at_purchase": float(i_row[3]),
                 "quantity": i_row[4],
                 "item_total": round(float(i_row[3]) * i_row[4], 2)
-            })
+            }
+            # item_status is only available from order_items (index 5), not from cart_items fallback
+            if len(i_row) > 5:
+                item_dict["item_status"] = i_row[5]
+            else:
+                item_dict["item_status"] = "sent to port"
+            items.append(item_dict)
             
         tax = round(subtotal * 0.08, 2)
         grand_total = round(subtotal + tax + shipping_fee, 2)
@@ -344,19 +350,30 @@ def add_order(order_dict):
             
             # Subtypes
             if pay_type == "card":
-                cursor.execute(
-                    "INSERT INTO card (payment_id, token_id, card_num, card_name, Expiry_date) VALUES (%s, %s, %s, %s, DATE_ADD(CURRENT_DATE, INTERVAL 3 YEAR))",
-                    (pay_id, "001", "4111XXXX" + pay_details.get("last_four", "1234"), "Customer Card")
-                )
+                card_name = pay_details.get("card_name", "Customer Card")
+                expiry_str = pay_details.get("expiry")
+                if expiry_str:
+                    expiry_date = expiry_str + "-01" # Convert YYYY-MM to YYYY-MM-DD
+                    cursor.execute(
+                        "INSERT INTO card (payment_id, token_id, card_num, card_name, Expiry_date) VALUES (%s, %s, %s, %s, %s)",
+                        (pay_id, "001", "4111XXXX" + pay_details.get("last_four", "1234"), card_name, expiry_date)
+                    )
+                else:
+                    cursor.execute(
+                        "INSERT INTO card (payment_id, token_id, card_num, card_name, Expiry_date) VALUES (%s, %s, %s, %s, DATE_ADD(CURRENT_DATE, INTERVAL 3 YEAR))",
+                        (pay_id, "001", "4111XXXX" + pay_details.get("last_four", "1234"), card_name)
+                    )
             elif pay_type == "mobile money":
+                phone = pay_details.get("phone_number") or ("024" + pay_details.get("last_four", "1234567"))
                 cursor.execute(
                     "INSERT INTO mobile_money (payment_id, network, phone_number, account_name) VALUES (%s, %s, %s, %s)",
-                    (pay_id, pay_details.get("brand", "MTN"), "024" + pay_details.get("last_four", "1234567"), "Momo Wallet")
+                    (pay_id, pay_details.get("brand", "MTN"), phone, "Momo Wallet")
                 )
             elif pay_type == "bank transfer":
+                account = pay_details.get("account_number") or ("100" + pay_details.get("last_four", "1234"))
                 cursor.execute(
                     "INSERT INTO bank_transfer (payment_id, bank_name, account_number, account_name) VALUES (%s, %s, %s, %s)",
-                    (pay_id, pay_details.get("brand", "Ecobank"), "100" + pay_details.get("last_four", "1234"), "Bank Transfer")
+                    (pay_id, pay_details.get("brand", "Ecobank"), account, "Bank Transfer")
                 )
                 
         conn.commit()
@@ -602,17 +619,94 @@ def deleteproduct(productid):
     run_query(query, (productid[:6],), commit=True)
     return True
 
-def viewtopproducs():
-    pass
+def viewtopproducs(limit=5):
+    """Retrieve top selling products by units sold and revenue."""
+    query = """
+        SELECT p.product_id, p.product_name, COALESCE(SUM(oi.quantity), 0) AS total_units_sold, COALESCE(SUM(oi.quantity * p.price), 0) AS total_revenue
+        FROM product p
+        JOIN order_items oi ON p.product_id = oi.product_id
+        GROUP BY p.product_id, p.product_name
+        ORDER BY total_units_sold DESC
+        LIMIT %s
+    """
+    rows = run_query(query, (limit,), fetch='all')
+    products = []
+    for r in rows:
+        products.append({
+            "product_id": r[0],
+            "product_name": r[1],
+            "units_sold": int(r[2]),
+            "revenue": float(r[3])
+        })
+    return products
 
-def viewhighestspender():
-    pass
+def viewhighestspender(limit=5):
+    """Retrieve top spending customers by total order amount."""
+    query = """
+        SELECT c.customer_id, c.f_name, c.l_name, c.email, SUM(o.subtotal + o.shipping_fee) AS total_spent, COUNT(o.order_id) AS total_orders
+        FROM customer c
+        JOIN orders o ON c.customer_id = o.customer_id
+        GROUP BY c.customer_id, c.f_name, c.l_name, c.email
+        ORDER BY total_spent DESC
+        LIMIT %s
+    """
+    rows = run_query(query, (limit,), fetch='all')
+    spenders = []
+    for r in rows:
+        spenders.append({
+            "customer_id": r[0],
+            "customer_name": f"{r[1]} {r[2]}".strip(),
+            "email": r[3],
+            "total_spent": float(r[4]),
+            "total_orders": int(r[5])
+        })
+    return spenders
 
 def highestrevenue_vendors():
-    pass
+    """Retrieve vendor revenue rankings and units sold."""
+    query = """
+        SELECT v.vendor_id, v.vendor_name, COALESCE(SUM(oi.quantity * p.price), 0) AS total_revenue, COALESCE(SUM(oi.quantity), 0) AS units_sold
+        FROM vendor v
+        JOIN product p ON v.vendor_id = p.vendor_id
+        JOIN order_items oi ON p.product_id = oi.product_id
+        GROUP BY v.vendor_id, v.vendor_name
+        ORDER BY total_revenue DESC
+    """
+    rows = run_query(query, fetch='all')
+    vendors = []
+    for r in rows:
+        vendors.append({
+            "vendor_id": r[0],
+            "vendor_name": r[1],
+            "total_revenue": float(r[2]),
+            "units_sold": int(r[3])
+        })
+    return vendors
 
 def top_popular_products_categories():
-    pass
+    """Retrieve sales breakdown by product categories."""
+    query = """
+        WITH ProductCategories AS (
+            SELECT product_id, 'Fashion' AS category FROM fashion
+            UNION ALL
+            SELECT product_id, 'Beauty' AS category FROM beauty
+        )
+        SELECT pc.category, COALESCE(SUM(oi.quantity), 0) AS units_sold, COALESCE(SUM(oi.quantity * p.price), 0) AS total_revenue
+        FROM ProductCategories pc
+        JOIN product p ON pc.product_id = p.product_id
+        JOIN order_items oi ON pc.product_id = oi.product_id
+        GROUP BY pc.category
+        ORDER BY units_sold DESC
+    """
+    rows = run_query(query, fetch='all')
+    categories = []
+    for r in rows:
+        categories.append({
+            "category": r[0],
+            "units_sold": int(r[1]),
+            "revenue": float(r[2])
+        })
+    return categories
 
 def addtocart(product, customer_id, quantity):
     if hasattr(product, 'product_id'):
@@ -713,9 +807,36 @@ def update_customer(customer_id, updates_dict):
     return True
 
 def get_deliveries_by_shipping_company(shipping_id):
-    query = "SELECT delivery_id, delivery_status FROM delivery WHERE shipping_id = %s"
+    query = """
+        SELECT 
+            d.delivery_id, 
+            CONCAT(c.f_name, ' ', c.l_name),
+            c.phone_number,
+            a.city,
+            a.street_address,
+            a.Landmark,
+            d.estimated_delivery_date,
+            d.delivery_status
+        FROM delivery d
+        LEFT JOIN orders o ON d.order_id = o.order_id
+        LEFT JOIN customer c ON o.customer_id = c.customer_id
+        LEFT JOIN address a ON d.address_id = a.address_id
+        WHERE d.shipping_id = %s
+    """
     rows = run_query(query, (shipping_id[:6],), fetch='all')
-    return [{"delivery_id": r[0], "delivery_status": r[1]} for r in rows]
+    deliveries = []
+    for r in rows:
+        deliveries.append({
+            "id": r[0],
+            "customer": r[1] or "Unknown Customer",
+            "phone": r[2] or "N/A",
+            "city": r[3] or "N/A",
+            "street": r[4] or "N/A",
+            "landmark": r[5] or "N/A",
+            "estDate": str(r[6]) if r[6] else "TBD",
+            "status": r[7]
+        })
+    return deliveries
 
 def get_admin_stats():
     # Sum subtotal of all orders
@@ -813,8 +934,8 @@ def get_vendor_dashboard_stats(vendor_id):
         SELECT COUNT(DISTINCT o.order_id) 
         FROM orders o 
         LEFT JOIN delivery d ON o.order_id = d.order_id 
-        JOIN cart_items ci ON o.cart_id = ci.cart_id
-        JOIN product p ON ci.product_id = p.product_id
+        JOIN order_items oi ON o.order_id = oi.order_id
+        JOIN product p ON oi.product_id = p.product_id
         WHERE p.vendor_id = %s AND (d.delivery_status IS NULL OR d.delivery_status != 'delivered')
     """
     ord_row = run_query(query_orders, (vendor_id[:6],), fetch='one')
@@ -825,3 +946,82 @@ def get_vendor_dashboard_stats(vendor_id):
         "active_products": active_products,
         "pending_orders": pending_orders
     }
+
+def searchshipping(email_or_id):
+    query = """
+        SELECT s.shipping_id, s.name, s.email, s.contact_phone, sc.password_hash
+        FROM shipping_company s
+        JOIN shipping_credentials sc ON s.shipping_id = sc.shipping_id
+        WHERE LOWER(s.email) = LOWER(%s) OR s.shipping_id = %s
+    """
+    row = run_query(query, (email_or_id.strip(), email_or_id.strip()[:6]), fetch='one')
+    if row:
+        return {
+            "shipping_id": row[0],
+            "name": row[1],
+            "email": row[2],
+            "contact_phone": row[3],
+            "password_hash": row[4]
+        }
+    return None
+
+def get_all_shipping_companies():
+    query = "SELECT shipping_id, name, email, contact_phone FROM shipping_company"
+    rows = run_query(query, fetch='all')
+    carriers = []
+    for r in rows:
+        carriers.append({
+            "shipping_id": r[0],
+            "name": r[1],
+            "email": r[2],
+            "contact_phone": r[3]
+        })
+    return carriers
+
+def register_shipping_company(name, email, phone_number, password_hash, shipping_id=None):
+    if not shipping_id:
+        shipping_id = ("SH" + str(uuid.uuid4()).replace("-", "").upper())[:6]
+    else:
+        shipping_id = shipping_id[:6]
+        
+    conn = connect()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO shipping_company (shipping_id, name, email, contact_phone) VALUES (%s, %s, %s, %s)",
+            (shipping_id, name, email.strip(), phone_number or "")
+        )
+        cursor.execute(
+            "INSERT INTO shipping_credentials (shipping_id, password_hash) VALUES (%s, %s)",
+            (shipping_id, password_hash)
+        )
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
+        
+    return {
+        "shipping_id": shipping_id,
+        "name": name,
+        "email": email,
+        "contact_phone": phone_number or ""
+    }
+
+def update_order_item_status(order_id, product_id, new_status):
+    """Update the item_status for a specific item in an order (vendor fulfillment)."""
+    # Verify the order_item exists
+    exists = run_query(
+        "SELECT product_id FROM order_items WHERE order_id = %s AND product_id = %s",
+        (order_id[:6], product_id[:6]), fetch='one'
+    )
+    if not exists:
+        return False
+    run_query(
+        "UPDATE order_items SET item_status = %s WHERE order_id = %s AND product_id = %s",
+        (new_status, order_id[:6], product_id[:6]), commit=True
+    )
+    return True
+

@@ -234,7 +234,7 @@ class Marketplace:
         resolved_shipping_id = shipping_id[:6] if shipping_id else "SHIP01"
         delivery_obj = Delivery(
             order_id=new_order.order_id,
-            delivery_status="on the way",
+            delivery_status="sent to port",
             address_id=address_id,
             shipping_id=resolved_shipping_id
         )
@@ -283,14 +283,14 @@ class Marketplace:
         database.addtocart(product, customer_id, quantity)
         return True
     
-    def create_review(self, username, message, productid):
+    def create_review(self, username, message, productid, rating=5):
         customer = self.finduser(username)
         if customer is None:
             return None
-        product=self.findproduct(productid=productid)
+        product = self.findproduct(productid=productid)
         if product is None:
             return None
-        #add to table message, userid and productid
+        return self.add_product_review(product_id=productid, customer_id=customer.id, comment=message, rating=rating)
 
     def get_customer_orders(self, customer_id):
         all_orders = database.get_all_orders()

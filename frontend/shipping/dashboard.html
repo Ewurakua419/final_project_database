@@ -18,15 +18,15 @@
     <div class="metrics-grid">
       <div class="metric-card">
         <div class="metric-label">Active Deliveries</div>
-        <div class="metric-value">24</div>
+        <div class="metric-value" id="metric-active">—</div>
       </div>
       <div class="metric-card">
         <div class="metric-label">In Transit</div>
-        <div class="metric-value">12</div>
+        <div class="metric-value" id="metric-transit">—</div>
       </div>
       <div class="metric-card">
-        <div class="metric-label">Delivered Today</div>
-        <div class="metric-value">48</div>
+        <div class="metric-label">Delivered</div>
+        <div class="metric-value" id="metric-delivered">—</div>
       </div>
     </div>
 
@@ -61,20 +61,45 @@
       .then(res => res.json())
       .then(data => {
         const mockDeliveries = data.deliveries || [];
+
+        // Compute metrics from actual data
+        const activeCount = mockDeliveries.filter(d => d.status !== 'delivered').length;
+        const transitCount = mockDeliveries.filter(d => d.status === 'on the way').length;
+        const deliveredCount = mockDeliveries.filter(d => d.status === 'delivered').length;
+        document.getElementById("metric-active").textContent = activeCount;
+        document.getElementById("metric-transit").textContent = transitCount;
+        document.getElementById("metric-delivered").textContent = deliveredCount;
+
         const tbody = document.getElementById("delivery-body");
         tbody.innerHTML = "";
         
         mockDeliveries.forEach(del => {
           let statusClass = "status-pending";
-          let statusText = "Pending";
+          let statusText = del.status || "Pending";
           
-          if (del.status === "transit") {
+          if (del.status === "on the way" || del.status === "transit") {
             statusClass = "status-transit";
             statusText = "On the way";
           } else if (del.status === "delivered") {
             statusClass = "status-delivered";
             statusText = "Delivered";
+          } else if (del.status === "sent to port") {
+            statusClass = "status-pending";
+            statusText = "At Port";
           }
+
+          const isDelivered = del.status === "delivered";
+          const actionContent = isDelivered 
+            ? `<span style="color: var(--color-accent-green); font-weight: 500; font-size: 13px;">✓ Complete</span>`
+            : `
+              <div class="update-action">
+                <select id="status-${del.id}" class="text-input" style="padding: 4px 8px; border-radius: var(--rounded-xs); font-size: var(--type-caption-size); appearance: auto;">
+                  <option value="on the way" ${del.status === 'on the way' ? 'selected' : ''}>On the Way</option>
+                  <option value="delivered">Delivered</option>
+                </select>
+                <button class="button-utility" style="padding: 4px 8px;" onclick="updateStatus('${del.id}')">Update</button>
+              </div>
+            `;
 
           const tr = document.createElement("tr");
           tr.innerHTML = `
@@ -90,17 +115,7 @@
             </td>
             <td>${del.estDate}</td>
             <td><span class="status-pill ${statusClass}">${statusText}</span></td>
-            <td>
-              <div class="update-action">
-                <select id="status-${del.id}" class="text-input" style="padding: 4px; border-radius: var(--rounded-xs); font-size: var(--type-caption-size);">
-                  <option value="pending" ${del.status === 'pending' ? 'selected' : ''}>Pending</option>
-                  <option value="sent to port" ${del.status === 'sent to port' ? 'selected' : ''}>Sent to Port</option>
-                  <option value="transit" ${del.status === 'transit' ? 'selected' : ''}>On the Way</option>
-                  <option value="delivered" ${del.status === 'delivered' ? 'selected' : ''}>Delivered</option>
-                </select>
-                <button class="button-utility" style="padding: 4px 8px;" onclick="updateStatus('${del.id}')">Update</button>
-              </div>
-            </td>
+            <td>${actionContent}</td>
           `;
           tbody.appendChild(tr);
         });
@@ -119,14 +134,16 @@
           },
           body: JSON.stringify({ status: newStatus })
         });
+        const data = await response.json().catch(() => ({}));
         if (response.ok) {
           alert('Status updated successfully!');
           window.location.reload();
         } else {
-          alert('Error updating status');
+          alert(data.error || 'Error updating status');
         }
       } catch (err) {
         console.error(err);
+        alert('Network error communicating with server.');
       }
     };
   </script>

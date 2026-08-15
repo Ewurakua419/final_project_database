@@ -64,15 +64,42 @@
               statusStyle = 'background-color: rgba(26, 174, 57, 0.1); color: var(--color-accent-green); border-color: transparent;';
             }
 
+            // Build item fulfillment rows
+            let itemsHtml = '';
+            const pendingCount = (order.items || []).filter(i => i.item_status === 'pending').length;
+            (order.items || []).forEach(item => {
+              const isPending = item.item_status === 'pending';
+              const badgeStyle = isPending
+                ? 'background-color: rgba(221, 91, 0, 0.1); color: var(--color-accent-orange);'
+                : 'background-color: rgba(26, 174, 57, 0.1); color: var(--color-accent-green);';
+              const badgeText = isPending ? 'Pending' : 'Sent to Port';
+              const actionBtn = isPending
+                ? `<button class="button-utility send-to-port-btn" data-order-id="${order.order_id}" data-product-id="${item.product_id}" style="padding: 3px 10px; font-size: 11px; white-space: nowrap;">Send to Port</button>`
+                : `<span style="color: var(--color-accent-green); font-size: 12px; font-weight: 500;">✓ Done</span>`;
+              itemsHtml += `
+                <div style="display: flex; align-items: center; gap: var(--spacing-sm); padding: 8px 0; border-bottom: 1px solid var(--color-canvas, #f6f5f4);">
+                  <div style="flex: 1; font-size: 14px; font-weight: 500;">${item.name}</div>
+                  <div style="font-size: 13px; color: var(--color-ink-muted);">Qty: ${item.quantity}</div>
+                  <span style="padding: 2px 8px; border-radius: var(--rounded-full); font-size: 11px; font-weight: 600; ${badgeStyle}">${badgeText}</span>
+                  ${actionBtn}
+                </div>
+              `;
+            });
+
+            const fulfillmentNotice = pendingCount > 0
+              ? `<div style="padding: 8px 12px; margin-top: var(--spacing-sm); background: rgba(221, 91, 0, 0.06); border-radius: var(--rounded-md); font-size: 12px; color: var(--color-accent-orange);">⚠ ${pendingCount} item(s) still pending — courier dispatch is blocked until all items are sent to port.</div>`
+              : `<div style="padding: 8px 12px; margin-top: var(--spacing-sm); background: rgba(26, 174, 57, 0.06); border-radius: var(--rounded-md); font-size: 12px; color: var(--color-accent-green);">✓ All items sent to port — courier can dispatch.</div>`;
+
+            let deliveryStatusLabel = 'Sent to Port';
+            if (order.status === 'on the way') deliveryStatusLabel = 'In Transit';
+            else if (order.status === 'delivered') deliveryStatusLabel = 'Delivered';
+            else if (order.status === 'sent to port') deliveryStatusLabel = 'At Port';
+
             container.innerHTML += `
               <div class="feature-card" style="margin-bottom: var(--spacing-xl);">
                 <div class="order-header">
                   <span class="order-id">${order.order_id}</span>
-                  <select class="status-select" data-order-id="${order.order_id}" style="${statusStyle}">
-                    <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
-                    <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
-                    <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
-                  </select>
+                  <span class="status-pill" style="${statusStyle} font-size: var(--type-caption-size); padding: 4px 12px;">Courier: ${deliveryStatusLabel}</span>
                 </div>
                 <div class="order-details">
                   <div>
@@ -86,41 +113,13 @@
                     <button class="button-utility view-details-btn" data-order='${JSON.stringify(order).replace(/'/g, "&#39;")}' style="padding: 4px 12px; font-size: var(--type-caption-size);">View Full Details</button>
                   </div>
                 </div>
+                <div style="padding: 0 var(--spacing-lg) var(--spacing-md); margin-top: calc(-1 * var(--spacing-sm));">
+                  <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-ink-muted); margin-bottom: var(--spacing-xs);">Item Fulfillment</div>
+                  ${itemsHtml}
+                  ${fulfillmentNotice}
+                </div>
               </div>
             `;
-          });
-          
-          // Re-attach status change listeners
-          document.querySelectorAll('.status-select').forEach(select => {
-            select.addEventListener('change', (e) => {
-              const val = e.target.value;
-              if (val === 'pending') {
-                e.target.style.backgroundColor = 'rgba(221, 91, 0, 0.1)';
-                e.target.style.color = 'var(--color-accent-orange)';
-              } else if (val === 'shipped') {
-                e.target.style.backgroundColor = 'rgba(42, 157, 153, 0.1)';
-                e.target.style.color = 'var(--color-primary)';
-              } else {
-                e.target.style.backgroundColor = 'rgba(26, 174, 57, 0.1)';
-                e.target.style.color = 'var(--color-accent-green)';
-              }
-              
-              const orderId = e.target.getAttribute('data-order-id');
-              fetch(`http://127.0.0.1:5001/vendor/orders/${orderId}`, {
-                method: 'PUT',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': 'Bearer ' + localStorage.getItem('vendorAuthToken')
-                },
-                body: JSON.stringify({ status: val })
-              })
-              .then(res => res.json())
-              .then(data => {
-                if (data.error) console.error("Error updating status:", data.error);
-                else console.log("Status updated successfully:", data);
-              })
-              .catch(err => console.error("Network error:", err));
-            });
           });
 
           // View Details click handler
@@ -129,6 +128,39 @@
               const orderData = e.target.getAttribute('data-order');
               sessionStorage.setItem('vendor_current_order', orderData);
               window.location.href = 'order_detail.html';
+            });
+          });
+
+          // Send to Port click handler (item fulfillment)
+          document.querySelectorAll('.send-to-port-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const orderId = e.target.getAttribute('data-order-id');
+              const productId = e.target.getAttribute('data-product-id');
+              e.target.innerText = 'Sending...';
+              e.target.disabled = true;
+              try {
+                const res = await fetch(`http://127.0.0.1:5001/vendor/orders/${orderId}/items/${productId}/status`, {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('vendorAuthToken')
+                  },
+                  body: JSON.stringify({ item_status: 'sent to port' })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                  window.location.reload();
+                } else {
+                  alert(data.error || 'Failed to update item status');
+                  e.target.innerText = 'Send to Port';
+                  e.target.disabled = false;
+                }
+              } catch (err) {
+                console.error(err);
+                alert('Network error');
+                e.target.innerText = 'Send to Port';
+                e.target.disabled = false;
+              }
             });
           });
         })

@@ -14,7 +14,7 @@ Alter table customer add CONSTRAINT uq_customer_email UNIQUE (email);
 
 Create table customer_credentials
 (customer_id varchar(6) primary key, 
-password_hash varchar(50) not null, 
+password_hash varchar(255) not null, 
 foreign key (customer_id) references customer(customer_id) ON DELETE CASCADE);
 
 Create table vendor 
@@ -27,7 +27,7 @@ Alter table vendor add CONSTRAINT uq_vendor_email UNIQUE (email);
 
 Create table vendor_credentials
 (vendor_id varchar(6) primary key, 
-password_hash varchar(50) not null, 
+password_hash varchar(255) not null, 
 foreign key (vendor_id) references vendor(vendor_id) ON DELETE CASCADE);
 
 Create table product

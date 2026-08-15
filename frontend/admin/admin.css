@@ -24,3 +24,12 @@ body { background-color: var(--color-canvas-soft); margin: 0; }
 .badge-admin { background: rgba(0, 117, 222, 0.1); color: var(--color-primary); }
 .badge-vendor { background: rgba(214, 182, 246, 0.3); color: var(--color-accent-purple-deep); }
 .badge-customer { background: rgba(42, 157, 153, 0.1); color: var(--color-accent-teal); }
+.badge-shipping { background: rgba(255, 149, 0, 0.15); color: #b25900; }
+
+/* Filter button group */
+.filter-group { display: inline-flex; background: var(--color-canvas-soft); padding: 3px; border-radius: var(--rounded-md); border: 1px solid var(--color-hairline); }
+.filter-btn { border: none; background: transparent; padding: 6px 14px; font-size: var(--type-body-sm-size); font-weight: 500; color: var(--color-ink-muted); border-radius: var(--rounded-sm); cursor: pointer; transition: all 0.15s ease; font-family: inherit; }
+.filter-btn:hover { color: var(--color-ink); }
+.filter-btn.active { background: var(--color-surface); color: var(--color-ink); box-shadow: var(--shadow-level-1); font-weight: 600; }
+
+

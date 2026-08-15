@@ -30,11 +30,167 @@
       </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr; gap: var(--spacing-xl); margin-top: var(--spacing-xxl);">
+    <!-- Marketplace Analytics & Vendor Performance Section -->
+    <div style="margin-top: var(--spacing-xxl);">
+      <div style="margin-bottom: var(--spacing-md);">
+        <h2 class="heading-2" style="margin: 0; font-size: var(--type-heading-2-size); font-weight: var(--type-heading-2-weight);">Marketplace Performance & Analytics</h2>
+        <p style="color: var(--color-ink-muted); font-size: var(--type-body-sm-size); margin: 4px 0 0 0;">Deep-dive sales insights, top performing stores, and product categories.</p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: var(--spacing-xl);">
+        
+        <!-- Vendor Revenue Leaderboard -->
+        <div style="background: var(--color-surface); border: 1px solid var(--color-hairline); border-radius: var(--rounded-lg); padding: var(--spacing-lg);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
+            <h3 style="margin: 0; font-size: 16px; font-weight: 600;">Top Performing Vendors</h3>
+            <span class="badge badge-vendor" style="font-size: 11px;">By Revenue</span>
+          </div>
+          <table class="data-table" style="margin-top: var(--spacing-xs);">
+            <thead>
+              <tr>
+                <th>Vendor</th>
+                <th style="text-align: center;">Units Sold</th>
+                <th style="text-align: right;">Total Revenue</th>
+              </tr>
+            </thead>
+            <tbody id="top-vendors-body">
+              <tr><td colspan="3" style="text-align: center; color: var(--color-ink-muted);">Loading vendor rankings...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Top Selling Products -->
+        <div style="background: var(--color-surface); border: 1px solid var(--color-hairline); border-radius: var(--rounded-lg); padding: var(--spacing-lg);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
+            <h3 style="margin: 0; font-size: 16px; font-weight: 600;">Top Selling Products</h3>
+            <span class="badge badge-admin" style="font-size: 11px;">By Units</span>
+          </div>
+          <table class="data-table" style="margin-top: var(--spacing-xs);">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th style="text-align: center;">Units Sold</th>
+                <th style="text-align: right;">Total Revenue</th>
+              </tr>
+            </thead>
+            <tbody id="top-products-body">
+              <tr><td colspan="3" style="text-align: center; color: var(--color-ink-muted);">Loading top products...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Category Sales Breakdown -->
+        <div style="background: var(--color-surface); border: 1px solid var(--color-hairline); border-radius: var(--rounded-lg); padding: var(--spacing-lg);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
+            <h3 style="margin: 0; font-size: 16px; font-weight: 600;">Category Performance</h3>
+            <span class="badge badge-customer" style="font-size: 11px;">Fashion vs Beauty</span>
+          </div>
+          <table class="data-table" style="margin-top: var(--spacing-xs);">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th style="text-align: center;">Units Sold</th>
+                <th style="text-align: right;">Revenue</th>
+              </tr>
+            </thead>
+            <tbody id="category-perf-body">
+              <tr><td colspan="3" style="text-align: center; color: var(--color-ink-muted);">Loading categories...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Highest Spending Customers -->
+        <div style="background: var(--color-surface); border: 1px solid var(--color-hairline); border-radius: var(--rounded-lg); padding: var(--spacing-lg);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
+            <h3 style="margin: 0; font-size: 16px; font-weight: 600;">Top VIP Spenders</h3>
+            <span class="badge badge-shipping" style="font-size: 11px;">Customers</span>
+          </div>
+          <table class="data-table" style="margin-top: var(--spacing-xs);">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th style="text-align: center;">Orders</th>
+                <th style="text-align: right;">Total Spent</th>
+              </tr>
+            </thead>
+            <tbody id="top-spenders-body">
+              <tr><td colspan="3" style="text-align: center; color: var(--color-ink-muted);">Loading VIP spenders...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr; gap: var(--spacing-xxl); margin-top: var(--spacing-xxl);">
       
+      <!-- Logistics Partners Section -->
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
+          <div>
+            <h2 class="heading-2" style="margin: 0; font-size: var(--type-heading-2-size); font-weight: var(--type-heading-2-weight);">Logistics Partners</h2>
+            <p style="color: var(--color-ink-muted); font-size: var(--type-body-sm-size); margin: 4px 0 0 0;">Manage and provision shipping courier accounts.</p>
+          </div>
+          <button id="toggle-add-carrier-btn" class="button-primary" style="padding: 8px 16px; font-size: 14px;">+ Register Carrier</button>
+        </div>
+
+        <!-- Add Carrier Panel (Collapsible) -->
+        <div id="add-carrier-panel" style="display: none; background: var(--color-surface); border: 1px solid var(--color-hairline); border-radius: var(--rounded-lg); padding: var(--spacing-lg); margin-bottom: var(--spacing-lg); box-shadow: var(--shadow-level-1);">
+          <h3 style="margin-top: 0; margin-bottom: var(--spacing-md); font-size: 16px;">Provision New Logistics Account</h3>
+          <form id="create-carrier-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-md); align-items: flex-end;">
+            <div class="form-group flex-col" style="gap: var(--spacing-xs); display: flex; flex-direction: column;">
+              <label class="eyebrow text-muted" for="carrier-name">Company Name</label>
+              <input type="text" id="carrier-name" class="text-input" placeholder="e.g. Express Courier GH" required>
+            </div>
+            <div class="form-group flex-col" style="gap: var(--spacing-xs); display: flex; flex-direction: column;">
+              <label class="eyebrow text-muted" for="carrier-email">Email Address</label>
+              <input type="email" id="carrier-email" class="text-input" placeholder="courier@express.gh" required>
+            </div>
+            <div class="form-group flex-col" style="gap: var(--spacing-xs); display: flex; flex-direction: column;">
+              <label class="eyebrow text-muted" for="carrier-phone">Contact Phone</label>
+              <input type="tel" id="carrier-phone" class="text-input" placeholder="+233XXXXXXXXX">
+            </div>
+            <div class="form-group flex-col" style="gap: var(--spacing-xs); display: flex; flex-direction: column;">
+              <label class="eyebrow text-muted" for="carrier-password">Default Password</label>
+              <input type="password" id="carrier-password" class="text-input" placeholder="••••••••" required>
+            </div>
+            <div>
+              <button type="submit" class="button-primary" style="width: 100%; padding: 10px; font-weight: 500;">Save & Provision</button>
+            </div>
+          </form>
+          <div id="carrier-form-feedback" style="font-size: 14px; margin-top: var(--spacing-sm); display: none;"></div>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Shipping ID</th>
+              <th>Company Name</th>
+              <th>Contact Email</th>
+              <th>Phone</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody id="carriers-body">
+            <tr><td colspan="5" style="text-align: center;">Loading logistics partners...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
       <!-- Users Table -->
       <div>
-        <h2 class="heading-2" style="margin-bottom: var(--spacing-sm); font-size: var(--type-heading-2-size); font-weight: var(--type-heading-2-weight);">User Directory</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm); flex-wrap: wrap; gap: var(--spacing-sm);">
+          <div>
+            <h2 class="heading-2" style="margin: 0; font-size: var(--type-heading-2-size); font-weight: var(--type-heading-2-weight);">User Directory</h2>
+            <p style="color: var(--color-ink-muted); font-size: var(--type-body-sm-size); margin: 4px 0 0 0;">Browse registered platform participants.</p>
+          </div>
+          <div class="filter-group" id="user-role-filter">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="customer">Customers</button>
+            <button class="filter-btn" data-filter="vendor">Vendors</button>
+          </div>
+        </div>
+
         <table class="data-table">
           <thead>
             <tr>
@@ -42,11 +198,11 @@
               <th>Name</th>
               <th>Email</th>
               <th>Role</th>
-              <th>Action</th>
+              <!-- <th>Action</th> -->
             </tr>
           </thead>
           <tbody id="users-body">
-            <tr><td colspan="5" style="text-align: center;">Loading users...</td></tr>
+            <tr><td colspan="4" style="text-align: center;">Loading users...</td></tr>
           </tbody>
         </table>
       </div>
@@ -60,45 +216,245 @@
       window.location.href = "login.html";
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const headers = { "Authorization": "Bearer " + localStorage.getItem("adminAuthToken") };
-      
-      // Fetch stats
+    const headers = { 
+      "Authorization": "Bearer " + localStorage.getItem("adminAuthToken"),
+      "Content-Type": "application/json"
+    };
+
+    let allUsersData = [];
+    let currentFilter = "all";
+
+    function loadStats() {
       fetch("http://127.0.0.1:5001/admin/stats", { headers })
         .then(res => res.json())
         .then(data => {
-          document.getElementById('stat-revenue').textContent = '$' + (data.total_revenue || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+          document.getElementById('stat-revenue').textContent = 'GH₵' + (data.total_revenue || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
           document.getElementById('stat-users').textContent = data.total_users || 0;
           document.getElementById('stat-orders').textContent = data.total_orders || 0;
         })
         .catch(err => console.error(err));
+    }
 
-      // Fetch users
-      fetch("http://127.0.0.1:5001/admin/users", { headers })
+    function loadCarriers() {
+      fetch("http://127.0.0.1:5001/admin/shipping-companies", { headers })
         .then(res => res.json())
         .then(data => {
-          const tbody = document.getElementById("users-body");
+          const tbody = document.getElementById("carriers-body");
           tbody.innerHTML = "";
-          const users = data.users || [];
+          const carriers = data.shipping_companies || [];
           
-          users.forEach(u => {
-            let roleBadge = `<span class="badge badge-customer">Customer</span>`;
-            if (u.role === 'vendor') {
-              roleBadge = `<span class="badge badge-vendor">Vendor</span>`;
-            }
-            
+          if (carriers.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--color-ink-muted);">No logistics partners found.</td></tr>`;
+            return;
+          }
+
+          carriers.forEach(c => {
             const tr = document.createElement("tr");
             tr.innerHTML = `
-              <td>${u.id}</td>
-              <td style="font-weight: 500;">${u.name}</td>
-              <td>${u.email}</td>
-              <td>${roleBadge}</td>
-              <td><button class="button-utility" style="padding: 4px 8px; color: var(--color-accent-orange); border-color: var(--color-accent-orange);">Suspend</button></td>
+              <td><strong>${c.shipping_id}</strong></td>
+              <td style="font-weight: 500;">${c.name}</td>
+              <td>${c.email || 'N/A'}</td>
+              <td>${c.contact_phone || 'N/A'}</td>
+              <td><span class="badge badge-shipping">Logistics</span></td>
             `;
             tbody.appendChild(tr);
           });
         })
         .catch(err => console.error(err));
+    }
+
+    function renderUsers() {
+      const tbody = document.getElementById("users-body");
+      tbody.innerHTML = "";
+      
+      const filtered = currentFilter === "all" 
+        ? allUsersData 
+        : allUsersData.filter(u => u.role === currentFilter);
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--color-ink-muted);">No ${currentFilter === 'all' ? 'users' : currentFilter + 's'} found.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(u => {
+        let roleBadge = `<span class="badge badge-customer">Customer</span>`;
+        if (u.role === 'vendor') {
+          roleBadge = `<span class="badge badge-vendor">Vendor</span>`;
+        }
+        
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${u.id}</td>
+          <td style="font-weight: 500;">${u.name}</td>
+          <td>${u.email}</td>
+          <td>${roleBadge}</td>
+          <!-- <td><button class="button-utility" style="padding: 4px 8px; color: var(--color-accent-orange); border-color: var(--color-accent-orange);">Suspend</button></td> -->
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function loadUsers() {
+      fetch("http://127.0.0.1:5001/admin/users", { headers })
+        .then(res => res.json())
+        .then(data => {
+          allUsersData = data.users || [];
+          renderUsers();
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById("users-body").innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--color-accent-orange);">Error loading users.</td></tr>`;
+        });
+    }
+
+    function loadAnalytics() {
+      fetch("http://127.0.0.1:5001/admin/analytics", { headers })
+        .then(res => res.json())
+        .then(data => {
+          // 1. Top Vendors
+          const vendorsBody = document.getElementById("top-vendors-body");
+          const vendors = data.vendor_revenue || [];
+          if (vendors.length === 0) {
+            vendorsBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--color-ink-muted);">No vendor sales data yet.</td></tr>`;
+          } else {
+            vendorsBody.innerHTML = "";
+            vendors.forEach((v, idx) => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                <td>
+                  <strong>${v.vendor_name}</strong>
+                  <div style="font-size: 11px; color: var(--color-ink-muted);">${v.vendor_id}</div>
+                </td>
+                <td style="text-align: center; font-weight: 500;">${v.units_sold}</td>
+                <td style="text-align: right; font-weight: 600; color: var(--color-primary);">GH₵${v.total_revenue.toFixed(2)}</td>
+              `;
+              vendorsBody.appendChild(tr);
+            });
+          }
+
+          // 2. Top Products
+          const productsBody = document.getElementById("top-products-body");
+          const products = data.top_products || [];
+          if (products.length === 0) {
+            productsBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--color-ink-muted);">No product sales data yet.</td></tr>`;
+          } else {
+            productsBody.innerHTML = "";
+            products.forEach(p => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                <td>
+                  <strong>${p.product_name}</strong>
+                  <div style="font-size: 11px; color: var(--color-ink-muted);">${p.product_id}</div>
+                </td>
+                <td style="text-align: center; font-weight: 500;">${p.units_sold}</td>
+                <td style="text-align: right; font-weight: 600; color: var(--color-primary);">GH₵${p.revenue.toFixed(2)}</td>
+              `;
+              productsBody.appendChild(tr);
+            });
+          }
+
+          // 3. Category Breakdown
+          const catBody = document.getElementById("category-perf-body");
+          const categories = data.category_performance || [];
+          if (categories.length === 0) {
+            catBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--color-ink-muted);">No category data yet.</td></tr>`;
+          } else {
+            catBody.innerHTML = "";
+            categories.forEach(c => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                <td><strong>${c.category}</strong></td>
+                <td style="text-align: center; font-weight: 500;">${c.units_sold} units</td>
+                <td style="text-align: right; font-weight: 600; color: var(--color-primary);">GH₵${c.revenue.toFixed(2)}</td>
+              `;
+              catBody.appendChild(tr);
+            });
+          }
+
+          // 4. Highest Spenders
+          const spendersBody = document.getElementById("top-spenders-body");
+          const spenders = data.top_spenders || [];
+          if (spenders.length === 0) {
+            spendersBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--color-ink-muted);">No customer order data yet.</td></tr>`;
+          } else {
+            spendersBody.innerHTML = "";
+            spenders.forEach(s => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                <td>
+                  <strong>${s.customer_name}</strong>
+                  <div style="font-size: 11px; color: var(--color-ink-muted);">${s.email}</div>
+                </td>
+                <td style="text-align: center; font-weight: 500;">${s.total_orders}</td>
+                <td style="text-align: right; font-weight: 600; color: var(--color-accent-green);">GH₵${s.total_spent.toFixed(2)}</td>
+              `;
+              spendersBody.appendChild(tr);
+            });
+          }
+        })
+        .catch(err => {
+          console.error("Failed to load analytics:", err);
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadStats();
+      loadAnalytics();
+      loadCarriers();
+      loadUsers();
+
+      // Role Filter Buttons (All, Customers, Vendors)
+      document.querySelectorAll("#user-role-filter .filter-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll("#user-role-filter .filter-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentFilter = btn.getAttribute("data-filter");
+          renderUsers();
+        });
+      });
+
+      const toggleBtn = document.getElementById("toggle-add-carrier-btn");
+      const addPanel = document.getElementById("add-carrier-panel");
+      toggleBtn.addEventListener("click", () => {
+        const isHidden = addPanel.style.display === "none";
+        addPanel.style.display = isHidden ? "block" : "none";
+        toggleBtn.textContent = isHidden ? "✕ Close Form" : "+ Register Carrier";
+      });
+
+      document.getElementById("create-carrier-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const feedback = document.getElementById("carrier-form-feedback");
+        feedback.style.display = "none";
+
+        const name = document.getElementById("carrier-name").value.trim();
+        const email = document.getElementById("carrier-email").value.trim();
+        const phone = document.getElementById("carrier-phone").value.trim();
+        const password = document.getElementById("carrier-password").value;
+
+        try {
+          const res = await fetch("http://127.0.0.1:5001/admin/shipping-companies", {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ name, email, phone, password })
+          });
+          const result = await res.json();
+          if (res.ok) {
+            feedback.style.display = "block";
+            feedback.style.color = "var(--color-primary)";
+            feedback.textContent = `Carrier "${name}" (${result.shipping_company.shipping_id}) provisioned successfully!`;
+            document.getElementById("create-carrier-form").reset();
+            loadCarriers();
+          } else {
+            feedback.style.display = "block";
+            feedback.style.color = "var(--color-accent-orange)";
+            feedback.textContent = result.error || "Failed to provision carrier.";
+          }
+        } catch (err) {
+          feedback.style.display = "block";
+          feedback.style.color = "var(--color-accent-orange)";
+          feedback.textContent = "Network error connecting to backend.";
+        }
+      });
     });
   </script>
 </body>

@@ -8,6 +8,7 @@ from functools import wraps
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from auth import SECRET_KEY
+import auth
 import jwt
 from service.marketplace import Marketplace
 import database
@@ -285,6 +286,23 @@ def get_vendor_analytics(current_vendor_id):
     analytics = database.get_vendor_product_analytics(current_vendor_id)
     return jsonify({"analytics": analytics}), 200
 
+@app.route("/vendor/orders/<order_id>/items/<product_id>/status", methods=["PUT"])
+@vendor_token_required
+def update_vendor_item_status(current_vendor_id, order_id, product_id):
+    """Vendor marks an individual order item as 'sent to port'."""
+    data = request.get_json() or {}
+    new_status = data.get("item_status", "sent to port")
+    if new_status not in ("pending", "sent to port"):
+        return jsonify({"error": "Invalid item status. Must be 'pending' or 'sent to port'"}), 400
+    # Verify the product belongs to this vendor
+    product = marketplace.findproduct(product_id)
+    if not product or product.vendor_id != current_vendor_id:
+        return jsonify({"error": "Product not found or does not belong to you"}), 403
+    success = database.update_order_item_status(order_id, product_id, new_status)
+    if success:
+        return jsonify({"message": "Item status updated", "item_status": new_status}), 200
+    return jsonify({"error": "Order item not found"}), 404
+
 # --- PROFILE ---
 @app.route("/customer/profile", methods=["GET"])
 @token_required
@@ -325,10 +343,40 @@ def add_customer_address(current_user_id):
 # --- SHIPPING ---
 @app.route("/shipping/login", methods=["POST"])
 def login_shipping():
-    data = request.get_json()
-    payload = {"shipping_id": "SHIP01", "exp": datetime.now(timezone.utc) + timedelta(hours=24)}
+    data = request.get_json() or {}
+    identifier = data.get("email") or data.get("shipping_id") or ""
+    password = data.get("password") or ""
+
+    if not identifier or not password:
+        return jsonify({"error": "Email/ID and password are required"}), 400
+
+    carrier = database.searchshipping(identifier)
+    if not carrier:
+        return jsonify({"error": "Invalid carrier email/ID or password"}), 401
+
+    stored_pw = carrier["password_hash"]
+    valid = False
+    if stored_pw == password:
+        valid = True
+    elif auth.decodere(password, stored_pw):
+        valid = True
+
+    if not valid:
+        return jsonify({"error": "Invalid carrier email/ID or password"}), 401
+
+    payload = {
+        "shipping_id": carrier["shipping_id"],
+        "name": carrier["name"],
+        "exp": datetime.now(timezone.utc) + timedelta(hours=24)
+    }
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
-    return jsonify({"message": "Login successful", "token": token}), 200
+    return jsonify({
+        "message": "Login successful",
+        "token": token,
+        "shipping_id": carrier["shipping_id"],
+        "name": carrier["name"],
+        "email": carrier["email"]
+    }), 200
 
 @app.route("/shipping/deliveries", methods=["GET"])
 @shipping_token_required
@@ -340,10 +388,20 @@ def get_shipping_deliveries(current_shipping_id):
 @shipping_token_required
 def update_shipping_delivery(current_shipping_id, delivery_id):
     new_status = request.get_json().get("status")
-    updated = database.update_delivery_status(delivery_id, new_status)
-    if updated:
-        return jsonify({"message": "Status updated successfully"}), 200
-    return jsonify({"error": "Delivery not found"}), 404
+    try:
+        updated = database.update_delivery_status(delivery_id, new_status)
+        if updated:
+            return jsonify({"message": "Status updated successfully"}), 200
+        return jsonify({"error": "Delivery not found"}), 404
+    except Exception as e:
+        err_msg = str(e)
+        # Extract user-friendly trigger message if present
+        if "Dispatch blocked" in err_msg or "Cannot dispatch" in err_msg:
+            # Clean up raw MariaDB error prefix
+            clean_msg = err_msg.split("Dispatch blocked:")[-1].strip() if "Dispatch blocked:" in err_msg else err_msg
+            return jsonify({"error": f"Dispatch blocked: {clean_msg}"}), 400
+        return jsonify({"error": err_msg}), 400
+
 
 # --- REVIEWS ---
 @app.route("/product-items/<product_id>/reviews", methods=["GET"])
@@ -363,6 +421,12 @@ def add_product_review(current_user_id, product_id):
     return jsonify(review.to_dict()), 201
 
 # --- MISC / ADMIN ---
+@app.route("/shipping-companies", methods=["GET"])
+def get_public_shipping_companies():
+    """Public endpoint — returns list of carriers for checkout page."""
+    carriers = database.get_all_shipping_companies()
+    return jsonify({"shipping_companies": carriers}), 200
+
 @app.route("/admin/login", methods=["POST"])
 def login_admin():
     data = request.get_json()
@@ -383,6 +447,52 @@ def get_admin_stats():
 def get_admin_users():
     users = database.get_admin_users()
     return jsonify({"users": users}), 200
+
+@app.route("/admin/analytics", methods=["GET"])
+@admin_token_required
+def get_admin_analytics():
+    """Retrieve full marketplace performance analytics."""
+    top_products = database.viewtopproducs(5)
+    top_spenders = database.viewhighestspender(5)
+    vendor_revenue = database.highestrevenue_vendors()
+    category_performance = database.top_popular_products_categories()
+    return jsonify({
+        "top_products": top_products,
+        "top_spenders": top_spenders,
+        "vendor_revenue": vendor_revenue,
+        "category_performance": category_performance
+    }), 200
+
+@app.route("/admin/shipping-companies", methods=["GET"])
+@admin_token_required
+def get_admin_shipping_companies():
+    carriers = database.get_all_shipping_companies()
+    return jsonify({"shipping_companies": carriers}), 200
+
+@app.route("/admin/shipping-companies", methods=["POST"])
+@admin_token_required
+def add_admin_shipping_company():
+    data = request.get_json() or {}
+    name = data.get("name")
+    email = data.get("email")
+    phone = data.get("phone") or data.get("contact_phone", "")
+    password = data.get("password")
+
+    if not name or not email or not password:
+        return jsonify({"error": "Company name, email, and password are required"}), 400
+
+    if database.searchshipping(email):
+        return jsonify({"error": "A shipping company with this email already exists"}), 409
+
+    pw_hash = auth.encodere(password)
+    try:
+        new_carrier = database.register_shipping_company(name, email, phone, pw_hash)
+        return jsonify({
+            "message": "Shipping company registered successfully",
+            "shipping_company": new_carrier
+        }), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(port=5001,debug=True)

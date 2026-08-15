@@ -120,6 +120,15 @@
       // Products
       const productsList = document.getElementById("products-list");
       order.items.forEach(item => {
+        const isPending = item.item_status === 'pending';
+        const badgeStyle = isPending
+          ? 'background-color: rgba(221, 91, 0, 0.1); color: var(--color-accent-orange);'
+          : 'background-color: rgba(26, 174, 57, 0.1); color: var(--color-accent-green);';
+        const badgeText = isPending ? 'Pending' : 'Sent to Port';
+        const actionHtml = isPending
+          ? `<button class="button-utility send-to-port-btn" data-order-id="${order.order_id}" data-product-id="${item.product_id}" style="padding: 4px 10px; font-size: 11px; margin-left: var(--spacing-sm);">Send to Port</button>`
+          : `<span style="color: var(--color-accent-green); font-size: 12px; font-weight: 500; margin-left: var(--spacing-sm);">✓</span>`;
+
         productsList.innerHTML += `
           <div class="product-item">
             <img src="${item.image || '../products/assets/placeholder.jpg'}" class="product-img" alt="Product">
@@ -127,9 +136,48 @@
               <div style="font-weight: 500; font-size: 15px;">${item.name}</div>
               <div style="color: var(--color-ink-muted); font-size: 13px;">Qty: ${item.quantity}</div>
             </div>
-            <div style="font-weight: 600;">GH₵${item.item_total.toFixed(2)}</div>
+            <span class="status-pill" style="${badgeStyle} font-size: 10px; padding: 2px 8px;">${badgeText}</span>
+            ${actionHtml}
+            <div style="font-weight: 600; margin-left: auto;">GH₵${item.item_total.toFixed(2)}</div>
           </div>
         `;
+      });
+
+      // Attach send-to-port handlers
+      document.querySelectorAll('.send-to-port-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const orderId = e.target.getAttribute('data-order-id');
+          const productId = e.target.getAttribute('data-product-id');
+          e.target.innerText = 'Sending...';
+          e.target.disabled = true;
+          try {
+            const res = await fetch(`http://127.0.0.1:5001/vendor/orders/${orderId}/items/${productId}/status`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('vendorAuthToken')
+              },
+              body: JSON.stringify({ item_status: 'sent to port' })
+            });
+            const data = await res.json();
+            if (res.ok) {
+              // Refresh the page — update the stored order data first
+              const updatedItem = order.items.find(i => i.product_id === productId);
+              if (updatedItem) updatedItem.item_status = 'sent to port';
+              sessionStorage.setItem('vendor_current_order', JSON.stringify(order));
+              window.location.reload();
+            } else {
+              alert(data.error || 'Failed to update');
+              e.target.innerText = 'Send to Port';
+              e.target.disabled = false;
+            }
+          } catch (err) {
+            console.error(err);
+            alert('Network error');
+            e.target.innerText = 'Send to Port';
+            e.target.disabled = false;
+          }
+        });
       });
 
       // Payment

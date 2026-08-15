@@ -22,18 +22,13 @@
             <input type="text" class="text-input" id="prod-name" placeholder="e.g. Wireless Noise-Cancelling Headphones" required>
           </div>
 
-          <div class="flex-col" style="gap: var(--spacing-xs);">
-            <label class="eyebrow text-muted">Brand</label>
-            <input type="text" class="text-input" id="prod-brand" placeholder="e.g. Sony" required>
-          </div>
+
 
           <div class="flex-col" style="gap: var(--spacing-xs);">
             <label class="eyebrow text-muted">Category</label>
             <select class="text-input" id="prod-category" required>
-              <option value="tech">Tech</option>
               <option value="fashion">Fashion</option>
               <option value="beauty">Beauty</option>
-              <option value="food">Food</option>
             </select>
           </div>
 
@@ -87,7 +82,6 @@
         .then(res => res.json())
         .then(product => {
           document.getElementById("prod-name").value = product.name || '';
-          document.getElementById("prod-brand").value = product.brand || '';
           document.getElementById("prod-category").value = product.type || 'tech';
           document.getElementById("prod-price").value = (product.price).toFixed(2);
           document.getElementById("prod-stock").value = product.stock || 0;
@@ -110,7 +104,6 @@
 
         const productData = {
           name: document.getElementById("prod-name").value,
-          brand: document.getElementById("prod-brand").value,
           type: document.getElementById("prod-category").value,
           price: parseFloat(document.getElementById("prod-price").value),
           stock: parseInt(document.getElementById("prod-stock").value),
