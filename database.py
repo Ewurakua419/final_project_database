@@ -280,8 +280,7 @@ def get_all_orders():
                 item_dict["item_status"] = "sent to port"
             items.append(item_dict)
             
-        tax = round(subtotal * 0.08, 2)
-        grand_total = round(subtotal + tax + shipping_fee, 2)
+        grand_total = round(subtotal + shipping_fee, 2)
         
         orders.append({
             "order_id": order_id,
@@ -292,7 +291,6 @@ def get_all_orders():
             "delivery": delivery_obj,
             "pricing_summary": {
                 "subtotal": subtotal,
-                "tax": tax,
                 "shipping": shipping_fee,
                 "grand_total": grand_total
             },
@@ -822,7 +820,8 @@ def get_deliveries_by_shipping_company(shipping_id):
             a.street_address,
             a.Landmark,
             d.estimated_delivery_date,
-            d.delivery_status
+            d.delivery_status,
+            COALESCE(o.shipping_fee, 0)
         FROM delivery d
         LEFT JOIN orders o ON d.order_id = o.order_id
         LEFT JOIN customer c ON o.customer_id = c.customer_id
@@ -831,7 +830,13 @@ def get_deliveries_by_shipping_company(shipping_id):
     """
     rows = run_query(query, (shipping_id[:6],), fetch='all')
     deliveries = []
+    total_earnings = 0.0
+    completed_earnings = 0.0
     for r in rows:
+        fee = float(r[8])
+        total_earnings += fee
+        if r[7] == 'delivered':
+            completed_earnings += fee
         deliveries.append({
             "id": r[0],
             "customer": r[1] or "Unknown Customer",
@@ -840,9 +845,14 @@ def get_deliveries_by_shipping_company(shipping_id):
             "street": r[4] or "N/A",
             "landmark": r[5] or "N/A",
             "estDate": str(r[6]) if r[6] else "TBD",
-            "status": r[7]
+            "status": r[7],
+            "shipping_fee": fee
         })
-    return deliveries
+    return {
+        "deliveries": deliveries,
+        "total_earnings": round(total_earnings, 2),
+        "completed_earnings": round(completed_earnings, 2)
+    }
 
 def get_admin_stats():
     # Sum subtotal of all orders
@@ -972,7 +982,21 @@ def searchshipping(email_or_id):
     return None
 
 def get_all_shipping_companies():
-    query = "SELECT shipping_id, name, email, contact_phone FROM shipping_company"
+    query = """
+        SELECT 
+            sc.shipping_id, 
+            sc.name, 
+            sc.email, 
+            sc.contact_phone,
+            COUNT(d.delivery_id) AS total_deliveries,
+            COALESCE(SUM(o.shipping_fee), 0) AS total_revenue,
+            COUNT(CASE WHEN d.delivery_status = 'delivered' THEN 1 END) AS completed_deliveries
+        FROM shipping_company sc
+        LEFT JOIN delivery d ON sc.shipping_id = d.shipping_id
+        LEFT JOIN orders o ON d.order_id = o.order_id
+        GROUP BY sc.shipping_id, sc.name, sc.email, sc.contact_phone
+        ORDER BY total_revenue DESC
+    """
     rows = run_query(query, fetch='all')
     carriers = []
     for r in rows:
@@ -980,7 +1004,10 @@ def get_all_shipping_companies():
             "shipping_id": r[0],
             "name": r[1],
             "email": r[2],
-            "contact_phone": r[3]
+            "contact_phone": r[3],
+            "total_deliveries": int(r[4]),
+            "total_revenue": float(r[5]),
+            "completed_deliveries": int(r[6])
         })
     return carriers
 

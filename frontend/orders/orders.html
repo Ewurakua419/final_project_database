@@ -100,6 +100,13 @@
               }
             }
 
+            let paymentLabel = "Direct Payment";
+            if (order.payment_details) {
+              const brand = order.payment_details.brand || "Paid";
+              const last4 = order.payment_details.last_four ? `(•••• ${order.payment_details.last_four})` : '';
+              paymentLabel = `${brand} ${last4}`.trim();
+            }
+
             container.innerHTML += `
               <div class="order-card">
                 <div class="order-card-header">
@@ -110,6 +117,10 @@
                   <div class="order-meta-group">
                     <span class="order-meta-label">Total</span>
                     <span class="order-meta-value">GH₵${total}</span>
+                  </div>
+                  <div class="order-meta-group">
+                    <span class="order-meta-label">Payment</span>
+                    <span class="order-meta-value" style="font-size: 13px;">${paymentLabel}</span>
                   </div>
                   <div class="order-meta-group" style="margin-left: auto; text-align: right;">
                     <span class="order-meta-label">Order # ${order.order_id}</span>

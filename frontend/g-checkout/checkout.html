@@ -125,10 +125,6 @@
           <span>Shipping</span>
           <span id="summary-shipping">GH₵5.00</span>
         </div>
-        <div class="summary-row">
-          <span>Taxes (Estimated)</span>
-          <span id="summary-tax">GH₵0.00</span>
-        </div>
         <div class="summary-row total">
           <span>Total</span>
           <span id="summary-total">GH₵0.00</span>
@@ -177,12 +173,11 @@
             `;
           });
 
-          const tax = subtotal * 0.08;
           const shipping = 5.00;
-          const total = subtotal + tax + shipping;
+          const total = subtotal + shipping;
 
           document.getElementById("summary-subtotal").innerText = "GH₵" + subtotal.toFixed(2);
-          document.getElementById("summary-tax").innerText = "GH₵" + tax.toFixed(2);
+          document.getElementById("summary-shipping").innerText = "GH₵" + shipping.toFixed(2);
           document.getElementById("summary-total").innerText = "GH₵" + total.toFixed(2);
         });
 

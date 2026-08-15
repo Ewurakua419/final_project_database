@@ -28,6 +28,10 @@
         <div class="metric-label">Delivered</div>
         <div class="metric-value" id="metric-delivered">—</div>
       </div>
+      <div class="metric-card">
+        <div class="metric-label">Shipping Earnings</div>
+        <div class="metric-value" id="metric-earnings" style="color: var(--color-accent-green);">GH₵0.00</div>
+      </div>
     </div>
 
     <h2 class="heading-2" style="margin-top: var(--spacing-xxl); margin-bottom: var(--spacing-md); font-size: var(--type-heading-2-size); font-weight: var(--type-heading-2-weight);">Delivery Queue</h2>
@@ -66,9 +70,12 @@
         const activeCount = mockDeliveries.filter(d => d.status !== 'delivered').length;
         const transitCount = mockDeliveries.filter(d => d.status === 'on the way').length;
         const deliveredCount = mockDeliveries.filter(d => d.status === 'delivered').length;
+        const earnings = data.total_earnings || 0;
+
         document.getElementById("metric-active").textContent = activeCount;
         document.getElementById("metric-transit").textContent = transitCount;
         document.getElementById("metric-delivered").textContent = deliveredCount;
+        document.getElementById("metric-earnings").textContent = "GH₵" + earnings.toFixed(2);
 
         const tbody = document.getElementById("delivery-body");
         tbody.innerHTML = "";

@@ -52,8 +52,8 @@
             <span class="value" id="summary-subtotal"></span>
           </div>
           <div class="info-row">
-            <span class="label">Estimated Tax</span>
-            <span class="value" id="summary-tax"></span>
+            <span class="label">Payment Method</span>
+            <span class="value" id="summary-payment"></span>
           </div>
           <div class="info-row">
             <span class="label">Grand Total (Your Share)</span>
@@ -182,7 +182,9 @@
 
       // Payment
       document.getElementById("summary-subtotal").textContent = "GH₵" + order.pricing_summary.subtotal.toFixed(2);
-      document.getElementById("summary-tax").textContent = "GH₵" + order.pricing_summary.tax.toFixed(2);
+      const payBrand = order.payment_details ? (order.payment_details.brand || "Direct Payment") : "Direct Payment";
+      const payLast4 = order.payment_details && order.payment_details.last_four ? ` (•••• ${order.payment_details.last_four})` : "";
+      document.getElementById("summary-payment").textContent = payBrand + payLast4;
       document.getElementById("summary-total").textContent = "GH₵" + order.pricing_summary.grand_total.toFixed(2);
 
       // Customer

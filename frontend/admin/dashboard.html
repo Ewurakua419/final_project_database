@@ -167,8 +167,8 @@
               <th>Shipping ID</th>
               <th>Company Name</th>
               <th>Contact Email</th>
-              <th>Phone</th>
-              <th>Role</th>
+              <th style="text-align: center;">Deliveries</th>
+              <th style="text-align: right;">Shipping Revenue</th>
             </tr>
           </thead>
           <tbody id="carriers-body">
@@ -254,8 +254,8 @@
               <td><strong>${c.shipping_id}</strong></td>
               <td style="font-weight: 500;">${c.name}</td>
               <td>${c.email || 'N/A'}</td>
-              <td>${c.contact_phone || 'N/A'}</td>
-              <td><span class="badge badge-shipping">Logistics</span></td>
+              <td style="text-align: center;">${c.total_deliveries || 0} (${c.completed_deliveries || 0} delivered)</td>
+              <td style="text-align: right; font-weight: 600; color: var(--color-accent-green);">GH₵${(c.total_revenue || 0).toFixed(2)}</td>
             `;
             tbody.appendChild(tr);
           });

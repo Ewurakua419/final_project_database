@@ -23,8 +23,7 @@ class Order:
         self.items = items if items is not None else []
         
     def to_dict(self):
-        tax = round(self.subtotal * 0.08, 2)
-        grand_total = round(self.subtotal + tax + self.shipping_fee, 2)
+        grand_total = round(self.subtotal + self.shipping_fee, 2)
         
         return {
             "order_id": self.order_id,
@@ -33,7 +32,6 @@ class Order:
             "status": "pending",
             "pricing_summary": {
                 "subtotal": self.subtotal,
-                "tax": tax,
                 "shipping": self.shipping_fee,
                 "grand_total": grand_total
             },

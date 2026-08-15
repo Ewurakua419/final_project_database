@@ -390,8 +390,8 @@ def login_shipping():
 @app.route("/shipping/deliveries", methods=["GET"])
 @shipping_token_required
 def get_shipping_deliveries(current_shipping_id):
-    dels = database.get_deliveries_by_shipping_company(current_shipping_id)
-    return jsonify({"deliveries": dels}), 200
+    result = database.get_deliveries_by_shipping_company(current_shipping_id)
+    return jsonify(result), 200
 
 @app.route("/shipping/deliveries/<delivery_id>", methods=["PUT"])
 @shipping_token_required
@@ -408,13 +408,13 @@ def update_shipping_delivery(current_shipping_id, delivery_id):
         if "Dispatch blocked" in err_msg or "Cannot dispatch" in err_msg:
             # Clean up raw MariaDB error prefix
             clean_msg = err_msg.split("Dispatch blocked:")[-1].strip() if "Dispatch blocked:" in err_msg else err_msg
-            return jsonify({"error": f"Dispatch blocked: {clean_msg}"}), 400
-        return jsonify({"error": err_msg}), 400
+            return jsonify({"error": "Dispatch blocked: " + clean_msg}), 400
+        return jsonify({"error": err_msg}), 500
 
 
 # --- REVIEWS ---
-@app.route("/product-items/<product_id>/reviews", methods=["GET"])
-def get_product_reviews(product_id):
+@app.route("/products/<product_id>/reviews", methods=["GET"])
+def get_product_reviews_endpoint(product_id):
     reviews = marketplace.get_product_reviews(product_id)
     return jsonify({"reviews": [r.to_dict() for r in reviews]}), 200
 
@@ -465,11 +465,13 @@ def get_admin_analytics():
     top_spenders = database.viewhighestspender(5)
     vendor_revenue = database.highestrevenue_vendors()
     category_performance = database.top_popular_products_categories()
+    carrier_revenue = database.get_all_shipping_companies()
     return jsonify({
         "top_products": top_products,
         "top_spenders": top_spenders,
         "vendor_revenue": vendor_revenue,
-        "category_performance": category_performance
+        "category_performance": category_performance,
+        "carrier_revenue": carrier_revenue
     }), 200
 
 @app.route("/admin/shipping-companies", methods=["GET"])
