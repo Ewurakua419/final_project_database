@@ -18,6 +18,7 @@
 
   /* --- Surfaces & Canvas --- */
   --color-canvas: #ffffff;           /* White surface for cards/panels */
+  --color-surface: #ffffff;          /* Alias for card/panel surfaces */
   --color-canvas-soft: #f6f5f4;      /* Warm Paper: signature page canvas */
   --color-hairline: #e6e6e6;         /* Subtle hairline borders */
 
@@ -41,6 +42,37 @@
   --font-size-button: 16px;
   --font-size-caption: 14px;
   --font-size-eyebrow: 12px;
+
+  /* DESIGN.md aliases */
+  --type-display-1-size: 64px;
+  --type-display-1-weight: 700;
+  --type-display-1-tracking: -2.125px;
+  --type-display-2-size: 54px;
+  --type-display-2-weight: 700;
+  --type-display-2-tracking: -1.875px;
+  --type-heading-1-size: 40px;
+  --type-heading-1-weight: 700;
+  --type-heading-1-tracking: -1px;
+  --type-heading-2-size: 26px;
+  --type-heading-2-weight: 700;
+  --type-heading-2-tracking: -0.625px;
+  --type-heading-3-size: 22px;
+  --type-heading-3-weight: 700;
+  --type-heading-3-tracking: -0.25px;
+  --type-title-size: 20px;
+  --type-title-weight: 600;
+  --type-title-tracking: -0.125px;
+  --type-body-md-size: 16px;
+  --type-body-md-weight: 400;
+  --type-body-sm-size: 15px;
+  --type-body-sm-weight: 400;
+  --type-button-size: 16px;
+  --type-button-weight: 500;
+  --type-caption-size: 14px;
+  --type-caption-weight: 400;
+  --type-eyebrow-size: 12px;
+  --type-eyebrow-weight: 600;
+  --type-eyebrow-tracking: 0.125px;
 
   /* Tight negative letter-spacing for headlines */
   --tracking-display-1: -2.125px;

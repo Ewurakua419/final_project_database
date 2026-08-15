@@ -122,6 +122,9 @@
             `;
           }
 
+          const stock = product.stock !== undefined ? product.stock : (product.stock_quantity !== undefined ? product.stock_quantity : 10);
+          const isOutOfStock = stock <= 0;
+
           details.innerHTML = `
             <div class="product-info-header">
               <h1 class="product-detail-title">${product.name}</h1>
@@ -132,18 +135,31 @@
                 </div>
                 <div class="product-detail-price">GH₵${price}</div>
               </div>
-              <div class="action-bar">
-                <select id="main-qty-select" class="qty-select-large" aria-label="Quantity">
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                </select>
-                <button id="main-add-to-cart" class="button-primary" style="flex: 1; padding: 12px; font-size: 16px;">
-                  Add to Cart
-                </button>
-              </div>
+              ${isOutOfStock ? `
+                <div style="margin-bottom: var(--spacing-md);">
+                  <span style="background: rgba(221, 91, 0, 0.15); color: #b23b00; padding: 6px 14px; border-radius: var(--rounded-full); font-size: 13px; font-weight: 600; display: inline-block;">
+                    ❌ Currently Out of Stock
+                  </span>
+                </div>
+                <div class="action-bar">
+                  <button id="main-add-to-cart" class="button-secondary" disabled style="flex: 1; padding: 12px; font-size: 16px; opacity: 0.6; cursor: not-allowed; font-weight: 500;">
+                    Out of Stock
+                  </button>
+                </div>
+              ` : `
+                <div class="action-bar">
+                  <select id="main-qty-select" class="qty-select-large" aria-label="Quantity">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                  </select>
+                  <button id="main-add-to-cart" class="button-primary" style="flex: 1; padding: 12px; font-size: 16px;">
+                    Add to Cart
+                  </button>
+                </div>
+              `}
             </div>
             <br>
             <p class="product-description">
@@ -153,29 +169,35 @@
           `;
 
           // Add to cart click
-          document.getElementById("main-add-to-cart").addEventListener("click", (e) => {
-            const btn = e.target;
-            const qty = parseInt(document.getElementById("main-qty-select").value, 10);
-            
-            const originalText = btn.innerText;
-            btn.innerText = "Adding...";
-            
-            addToCart(product.id, qty)
-            .then(data => {
-              btn.innerText = "Added!";
-              btn.style.backgroundColor = "var(--color-accent-green)";
-              btn.style.color = "var(--color-on-primary)";
+          if (!isOutOfStock) {
+            document.getElementById("main-add-to-cart").addEventListener("click", (e) => {
+              const btn = e.target;
+              const qty = parseInt(document.getElementById("main-qty-select").value, 10);
               
-              openCart();
+              const originalText = btn.innerText;
+              btn.innerText = "Adding...";
               
-              setTimeout(() => {
+              addToCart(product.id, qty)
+              .then(data => {
+                btn.innerText = "Added!";
+                btn.style.backgroundColor = "var(--color-accent-green)";
+                btn.style.color = "var(--color-on-primary)";
+                
+                openCart();
+                
+                setTimeout(() => {
+                  btn.innerText = originalText;
+                  btn.style.backgroundColor = "";
+                  btn.style.color = "";
+                }, 1500);
+              })
+              .catch(err => {
+                console.error(err);
+                alert("Failed to add to cart");
                 btn.innerText = originalText;
-                btn.style.backgroundColor = "";
-                btn.style.color = "";
-              }, 1500);
-            })
-            .catch(err => console.error(err));
-          });
+              });
+            });
+          }
           
           document.title = `${product.name} - Notion Styled Store`;
         })

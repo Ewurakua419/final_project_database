@@ -60,15 +60,19 @@
           if (i < fullStars) {
             starsHtml += "★";
           } else if (i === fullStars && hasHalfStar) {
-            starsHtml += "☆"; // Could use a better half-star, but using open star for simplicity
+            starsHtml += "☆";
           } else {
             starsHtml += "☆";
           }
         }
 
+        const stock = product.stock !== undefined ? product.stock : (product.stock_quantity !== undefined ? product.stock_quantity : 10);
+        const isOutOfStock = stock <= 0;
+
         card.innerHTML = `
-          <div class="product-image-container">
+          <div class="product-image-container" style="position: relative;">
             <img src="${product.image}" alt="${product.name}" class="product-image">
+            ${isOutOfStock ? `<span style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.8); color: white; padding: 3px 8px; border-radius: var(--rounded-xs); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Out of Stock</span>` : ''}
           </div>
           <h3 class="product-title">${product.name}</h3>
           <div class="product-rating">
@@ -78,22 +82,23 @@
           <div class="product-price">GH₵${price}</div>
           
           <div class="product-controls">
-            <select class="qty-select" aria-label="Quantity">
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-              <option value="6">6</option>
-              <option value="7">7</option>
-              <option value="8">8</option>
-              <option value="9">9</option>
-              <option value="10">10</option>
-            </select>
-            
-            <button class="button-primary add-to-cart-btn" data-product-id="${product.id}">
-              Add to Cart
-            </button>
+            ${isOutOfStock ? `
+              <button class="button-secondary add-to-cart-btn" disabled style="opacity: 0.6; cursor: not-allowed; width: 100%; justify-content: center; padding: 10px 16px; font-weight: 500;">
+                Out of Stock
+              </button>
+            ` : `
+              <select class="qty-select" aria-label="Quantity">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+              
+              <button class="button-primary add-to-cart-btn" data-product-id="${product.id}">
+                Add to Cart
+              </button>
+            `}
           </div>
         `;
         

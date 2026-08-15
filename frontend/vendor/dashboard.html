@@ -11,162 +11,263 @@
 
   <div id="vendor-nav-container"></div>
   <main class="container" style="padding-top: var(--spacing-xl); padding-bottom: var(--spacing-xxl);">
-    <div class="flex-row" style="justify-content: space-between; margin-bottom: var(--spacing-xl);">
-      <h1 class="display-2">Overview</h1>
-      <a href="add_product.html" class="button-utility" style="background-color: var(--color-primary); color: white; border: none;">+ Add Product</a>
+    <div class="flex-row" style="justify-content: space-between; margin-bottom: var(--spacing-xl); align-items: center;">
+      <div>
+        <h1 class="display-2" style="margin: 0; font-size: var(--type-display-2-size); font-weight: var(--type-display-2-weight); letter-spacing: -1.875px;">Store Overview</h1>
+        <p style="color: var(--color-ink-muted); font-size: var(--type-body-md-size); margin: 4px 0 0 0;">Monitor your sales performance, inventory health, and active deliveries.</p>
+      </div>
+      <a href="add_product.html" class="button-primary">+ Add Product</a>
     </div>
 
-      <div class="metric-grid" id="dashboard-metrics">
-        <div class="metric-card">
-          <span class="metric-label">Total Sales</span>
-          <h2 class="metric-value" id="stat-sales">Loading...</h2>
+    <!-- 3 Key Metric Cards -->
+    <div class="metric-grid" id="dashboard-metrics">
+      <div class="metric-card">
+        <span class="metric-label">Total Product Sales</span>
+        <h2 class="metric-value" id="stat-sales">Loading...</h2>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Active Catalog Products</span>
+        <h2 class="metric-value" id="stat-products">...</h2>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Orders Awaiting Dispatch</span>
+        <h2 class="metric-value" id="stat-orders">...</h2>
+      </div>
+    </div>
+
+    <!-- Inventory & Low-Stock Alerts Section -->
+    <div style="margin-top: var(--spacing-xxl);">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--spacing-md); flex-wrap: wrap; gap: var(--spacing-sm);">
+        <div>
+          <h2 class="heading-2" style="margin: 0; font-size: var(--type-heading-2-size); font-weight: var(--type-heading-2-weight);">Inventory & Stock Health</h2>
+          <p style="color: var(--color-ink-muted); font-size: var(--type-body-sm-size); margin: 4px 0 0 0;">Automated alerts for items running low or out of stock.</p>
         </div>
-        <div class="metric-card">
-          <span class="metric-label">Active Products</span>
-          <h2 class="metric-value" id="stat-products">...</h2>
+        <a href="products.html" class="button-utility" style="text-decoration: none;">View Full Inventory →</a>
+      </div>
+
+      <div id="stock-alerts-container">
+        <div class="feature-card" style="padding: var(--spacing-lg); text-align: center; color: var(--color-ink-muted);">
+          Checking inventory levels...
         </div>
-        <div class="metric-card">
-          <span class="metric-label">Pending Orders</span>
-          <h2 class="metric-value" id="stat-orders">...</h2>
+      </div>
+    </div>
+
+    <!-- Active Orders Awaiting Delivery (Strictly Read-Only Snapshot) -->
+    <div style="margin-top: var(--spacing-xxl);">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--spacing-md); flex-wrap: wrap; gap: var(--spacing-sm);">
+        <div>
+          <h2 class="heading-2" style="margin: 0; font-size: var(--type-heading-2-size); font-weight: var(--type-heading-2-weight);">Active Orders (In Flight)</h2>
+          <p style="color: var(--color-ink-muted); font-size: var(--type-body-sm-size); margin: 4px 0 0 0;">Snapshot of customer orders currently in transit or awaiting dispatch.</p>
         </div>
       </div>
 
-      <h2 class="heading-2" style="margin-top: var(--spacing-xxl); margin-bottom: var(--spacing-md);">Recent Orders</h2>
       <table class="recent-orders-table">
         <thead>
           <tr>
             <th>Order ID</th>
-            <th>Date</th>
+            <th>Placed Date</th>
             <th>Customer</th>
-            <th>Status</th>
-            <th>Total</th>
+            <th>Your Products</th>
+            <th>Your Share</th>
+            <th>Fulfillment Status</th>
           </tr>
         </thead>
-        <tbody id="recent-orders-body">
+        <tbody id="active-orders-body">
           <tr>
-            <td colspan="5" class="loading-state">Loading recent orders...</td>
+            <td colspan="6" class="loading-state" style="text-align: center; padding: 2rem;">Loading active orders...</td>
           </tr>
         </tbody>
       </table>
+    </div>
 
-      <h2 class="heading-2" style="margin-top: var(--spacing-xxl); margin-bottom: var(--spacing-md);">Product Performance</h2>
+    <!-- Product Performance Analytics -->
+    <div style="margin-top: var(--spacing-xxl);">
+      <div style="margin-bottom: var(--spacing-md);">
+        <h2 class="heading-2" style="margin: 0; font-size: var(--type-heading-2-size); font-weight: var(--type-heading-2-weight);">Product Sales Performance</h2>
+        <p style="color: var(--color-ink-muted); font-size: var(--type-body-sm-size); margin: 4px 0 0 0;">Unit sales volume, revenue breakdown, and customer review scores.</p>
+      </div>
       <table class="recent-orders-table">
         <thead>
           <tr>
             <th>Product Name</th>
-            <th>Units Sold</th>
-            <th>Revenue</th>
-            <th>Average Rating</th>
+            <th style="text-align: center;">Units Sold</th>
+            <th style="text-align: right;">Revenue Generated</th>
+            <th style="text-align: right;">Avg. Rating</th>
           </tr>
         </thead>
         <tbody id="product-performance-body">
           <tr>
-            <td colspan="4" class="loading-state" style="text-align: center; padding: 2rem; color: var(--color-ink-muted);">Analytics view coming soon (powered by vw_product_sales & vw_product_ratings)</td>
+            <td colspan="4" class="loading-state" style="text-align: center; padding: 2rem; color: var(--color-ink-muted);">Loading sales analytics...</td>
           </tr>
         </tbody>
       </table>
-    </main>
+    </div>
+  </main>
 
   <script type="module" src="vendor-navbar.js"></script>
   <script>
     if (!localStorage.getItem("vendorAuthToken")) {
       window.location.href = "login.html";
     }
+
+    const authHeaders = {
+      "Authorization": "Bearer " + localStorage.getItem("vendorAuthToken"),
+      "Content-Type": "application/json"
+    };
+
     document.addEventListener("DOMContentLoaded", () => {
-
-      // Fetch stats
-      fetch("http://127.0.0.1:5001/vendor/stats", {
-        headers: {
-          "Authorization": "Bearer " + localStorage.getItem("vendorAuthToken")
-        }
-      })
+      // 1. Fetch Vendor Stats
+      fetch("http://127.0.0.1:5001/vendor/stats", { headers: authHeaders })
         .then(res => res.json())
         .then(data => {
-          document.getElementById("stat-sales").innerText = "GH₵" + data.total_sales.toFixed(2);
-          document.getElementById("stat-products").innerText = data.active_products;
-          document.getElementById("stat-orders").innerText = data.pending_orders;
+          document.getElementById("stat-sales").innerText = "GH₵" + (data.total_sales || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+          document.getElementById("stat-products").innerText = data.active_products || 0;
+          document.getElementById("stat-orders").innerText = data.pending_orders || 0;
         })
-        .catch(err => {
-          console.error("Failed to load stats", err);
-          document.getElementById("stat-sales").innerText = "Error";
-          document.getElementById("stat-products").innerText = "Error";
-          document.getElementById("stat-orders").innerText = "Error";
-        });
+        .catch(err => console.error("Failed to load stats", err));
 
-      // Fetch recent orders
-      const tbody = document.getElementById("recent-orders-body");
-      
-      fetch("http://127.0.0.1:5001/vendor/orders", {
-        headers: {
-          "Authorization": "Bearer " + localStorage.getItem("vendorAuthToken")
-        }
-      })
+      // 2. Fetch Products for Low-Stock & Out-of-Stock Alerts
+      fetch("http://127.0.0.1:5001/vendor/products", { headers: authHeaders })
         .then(res => res.json())
         .then(data => {
-          tbody.innerHTML = "";
-          
-          if(data.orders.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--color-ink-muted); padding: 2rem;">No recent orders.</td></tr>';
+          const container = document.getElementById("stock-alerts-container");
+          const products = data.products || [];
+          const lowStockItems = products.filter(p => (p.stock || p.stock_quantity || 0) <= 5);
+
+          if (lowStockItems.length === 0) {
+            container.innerHTML = `
+              <div class="feature-card" style="padding: var(--spacing-lg); border-color: rgba(26, 174, 57, 0.3); background-color: rgba(26, 174, 57, 0.04); display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: var(--spacing-md);">
+                  <span style="font-size: 24px;">✓</span>
+                  <div>
+                    <strong style="color: var(--color-accent-green); font-size: 15px;">All Inventory Levels are Healthy</strong>
+                    <div style="color: var(--color-ink-muted); font-size: 13px; margin-top: 2px;">No products currently require urgent restocking.</div>
+                  </div>
+                </div>
+                <a href="products.html" class="button-utility" style="text-decoration: none;">Manage Stock</a>
+              </div>
+            `;
             return;
           }
-          
-          // Only show top 5 recent orders
-          const recentOrders = data.orders.slice(0, 5);
-          
-          recentOrders.forEach(order => {
+
+          let itemsHtml = lowStockItems.map(p => {
+            const stock = p.stock || p.stock_quantity || 0;
+            const isOut = stock === 0;
+            const badgeBg = isOut ? 'rgba(221, 91, 0, 0.15)' : 'rgba(255, 149, 0, 0.15)';
+            const badgeColor = isOut ? '#b23b00' : '#a65100';
+            const badgeText = isOut ? '❌ Out of Stock (0 units)' : `⚠️ Low Stock (${stock} left)`;
+
+            return `
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px var(--spacing-md); border-bottom: 1px solid var(--color-hairline); gap: var(--spacing-md);">
+                <div style="display: flex; align-items: center; gap: var(--spacing-md); min-width: 0;">
+                  <img src="${p.image}" alt="${p.name}" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--rounded-xs); border: 1px solid var(--color-hairline); background: var(--color-canvas-soft); flex-shrink: 0;">
+                  <div style="min-width: 0;">
+                    <div style="font-weight: 600; font-size: 14px; color: var(--color-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.name}</div>
+                    <div style="font-size: 12px; color: var(--color-ink-muted); text-transform: capitalize;">${p.category || 'Product'} · GH₵${p.price.toFixed(2)}</div>
+                  </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: var(--spacing-md); flex-shrink: 0;">
+                  <span style="padding: 4px 10px; border-radius: var(--rounded-full); font-size: 12px; font-weight: 600; background-color: ${badgeBg}; color: ${badgeColor};">
+                    ${badgeText}
+                  </span>
+                  <a href="edit_product.html?id=${p.id}" class="button-utility" style="text-decoration: none; padding: 4px 12px; font-size: 13px; font-weight: 500;">
+                    Restock →
+                  </a>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          container.innerHTML = `
+            <div class="feature-card" style="padding: 0; overflow: hidden; border-color: rgba(221, 91, 0, 0.3);">
+              <div style="padding: 12px var(--spacing-md); background: rgba(221, 91, 0, 0.06); border-bottom: 1px solid var(--color-hairline); font-size: 13px; font-weight: 600; color: #b23b00;">
+                ⚠️ Attention Required: ${lowStockItems.length} product${lowStockItems.length > 1 ? 's are' : ' is'} low on stock
+              </div>
+              <div>${itemsHtml}</div>
+            </div>
+          `;
+        })
+        .catch(err => console.error("Failed to load inventory alerts", err));
+
+      // 3. Fetch Active Undelivered Orders (Read-Only)
+      fetch("http://127.0.0.1:5001/vendor/orders", { headers: authHeaders })
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.getElementById("active-orders-body");
+          const allOrders = data.orders || [];
+          const activeOrders = allOrders.filter(o => {
+            const status = (o.delivery ? o.delivery.delivery_status : o.status || '').toLowerCase();
+            return status !== 'delivered';
+          });
+
+          if (activeOrders.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: var(--color-accent-green); padding: 2rem; font-weight: 500;">✓ No active undelivered orders. All current customer orders are fulfilled!</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = "";
+          activeOrders.forEach(order => {
             const date = new Date(order.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-            const customer = order.shipping_address ? `${order.customer_first_name || ''} ${order.customer_last_name || ''}`.trim() || 'Customer' : 'Customer';
-            const statusClass = order.status === 'pending' ? 'status-pending' : 'status-shipped';
-            const statusText = order.status.charAt(0).toUpperCase() + order.status.slice(1);
-            
+            const customer = `${order.customer_first_name || ''} ${order.customer_last_name || ''}`.trim() || 'Customer';
+            const itemsCount = (order.items || []).length;
+            const itemsSummary = (order.items || []).map(i => `${i.quantity}x ${i.name}`).slice(0, 2).join(', ') + (itemsCount > 2 ? ` (+${itemsCount - 2} more)` : '');
+
+            // Delivery Status
+            const rawStatus = (order.delivery ? order.delivery.delivery_status : (order.status || 'sent to port')).toLowerCase();
+            let statusBadge = '<span class="status-pill status-pending">Preparing</span>';
+            if (rawStatus === 'on the way') {
+              statusBadge = '<span class="status-pill status-shipped" style="background: rgba(0, 117, 222, 0.1); color: var(--color-primary);">In Transit (On the Way)</span>';
+            } else if (rawStatus === 'sent to port') {
+              statusBadge = '<span class="status-pill status-pending" style="background: rgba(255, 149, 0, 0.15); color: #a65100;">At Port / Awaiting Dispatch</span>';
+            }
+
             tbody.innerHTML += `
               <tr>
-                <td style="font-family: monospace; font-weight: 500;"><a href="orders.html" style="color: var(--color-primary); text-decoration:none;">${order.order_id}</a></td>
+                <td style="font-family: monospace; font-weight: 600;">
+                  <a href="order_detail.html?id=${order.order_id}" style="color: var(--color-primary); text-decoration: none;">${order.order_id}</a>
+                </td>
                 <td style="color: var(--color-ink-muted);">${date}</td>
-                <td>${customer}</td>
-                <td><span class="status-pill ${statusClass}">${statusText}</span></td>
-                <td style="font-weight: 600;">GH₵${order.pricing_summary.grand_total.toFixed(2)}</td>
+                <td style="font-weight: 500;">${customer}</td>
+                <td style="color: var(--color-ink-secondary); font-size: 13px;">${itemsSummary}</td>
+                <td style="font-weight: 600; color: var(--color-primary);">GH₵${order.pricing_summary.grand_total.toFixed(2)}</td>
+                <td>${statusBadge}</td>
               </tr>
             `;
           });
         })
         .catch(err => {
-          console.error("Failed to load recent orders", err);
-          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--color-accent-orange);">Failed to load orders.</td></tr>';
+          console.error("Failed to load active orders", err);
+          document.getElementById("active-orders-body").innerHTML = '<tr><td colspan="6" style="text-align:center; color: var(--color-accent-orange);">Failed to load active orders.</td></tr>';
         });
 
-      // Fetch product analytics
-      const analyticsBody = document.getElementById("product-performance-body");
-      
-      fetch("http://127.0.0.1:5001/vendor/analytics", {
-        headers: {
-          "Authorization": "Bearer " + localStorage.getItem("vendorAuthToken")
-        }
-      })
+      // 4. Fetch Product Sales Performance Analytics
+      fetch("http://127.0.0.1:5001/vendor/analytics", { headers: authHeaders })
         .then(res => res.json())
         .then(data => {
-          analyticsBody.innerHTML = "";
+          const analyticsBody = document.getElementById("product-performance-body");
+          const analytics = data.analytics || [];
           
-          if(data.analytics.length === 0) {
-            analyticsBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--color-ink-muted); padding: 2rem;">No product data available yet.</td></tr>';
+          if (analytics.length === 0) {
+            analyticsBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--color-ink-muted); padding: 2rem;">No product sales data available yet.</td></tr>';
             return;
           }
-          
-          data.analytics.forEach(item => {
-            const ratingText = item.average_rating > 0 ? item.average_rating.toFixed(1) + " ★" : "No ratings";
+
+          analyticsBody.innerHTML = "";
+          analytics.forEach(item => {
+            const ratingText = item.average_rating > 0 ? `${item.average_rating.toFixed(1)} ★` : 'No reviews';
             analyticsBody.innerHTML += `
               <tr>
                 <td style="font-weight: 500;">${item.product_name}</td>
-                <td>${item.units_sold}</td>
-                <td style="font-weight: 600;">GH₵${item.revenue.toFixed(2)}</td>
-                <td>${ratingText}</td>
+                <td style="text-align: center; font-weight: 600;">${item.units_sold}</td>
+                <td style="text-align: right; font-weight: 600; color: var(--color-accent-green);">GH₵${item.revenue.toFixed(2)}</td>
+                <td style="text-align: right; color: var(--color-accent-orange); font-weight: 500;">${ratingText}</td>
               </tr>
             `;
           });
         })
         .catch(err => {
           console.error("Failed to load analytics", err);
-          analyticsBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--color-accent-orange);">Failed to load analytics.</td></tr>';
+          document.getElementById("product-performance-body").innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--color-accent-orange);">Failed to load analytics.</td></tr>';
         });
     });
   </script>
