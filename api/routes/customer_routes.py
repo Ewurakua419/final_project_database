@@ -61,6 +61,9 @@ def login_customer():
     if not customer:
         return jsonify({"error": "Invalid email or password"}), 401
         
+    if not getattr(customer, "is_active", True):
+        return jsonify({"error": "Your account has been suspended by an administrator."}), 403
+        
     payload = {
         "user_id": customer.unique_id,
         "exp": datetime.now(timezone.utc) + timedelta(hours=24)

@@ -184,10 +184,13 @@
             <h2 class="heading-2" style="margin: 0; font-size: var(--type-heading-2-size); font-weight: var(--type-heading-2-weight);">User Directory</h2>
             <p style="color: var(--color-ink-muted); font-size: var(--type-body-sm-size); margin: 4px 0 0 0;">Browse registered platform participants.</p>
           </div>
-          <div class="filter-group" id="user-role-filter">
-            <button class="filter-btn active" data-filter="all">All</button>
-            <button class="filter-btn" data-filter="customer">Customers</button>
-            <button class="filter-btn" data-filter="vendor">Vendors</button>
+          <div style="display: flex; gap: var(--spacing-sm); align-items: center; flex-wrap: wrap;">
+            <input type="text" id="user-search-input" placeholder="Search by name, email or ID..." class="text-input" style="padding: 6px 12px; width: 220px; font-size: 13px; margin: 0;" oninput="onUserSearch()" />
+            <div class="filter-group" id="user-role-filter" style="margin: 0;">
+              <button class="filter-btn active" data-filter="all">All</button>
+              <button class="filter-btn" data-filter="customer">Customers</button>
+              <button class="filter-btn" data-filter="vendor">Vendors</button>
+            </div>
           </div>
         </div>
 
@@ -198,11 +201,12 @@
               <th>Name</th>
               <th>Email</th>
               <th>Role</th>
-              <!-- <th>Action</th> -->
+              <th>Status</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody id="users-body">
-            <tr><td colspan="4" style="text-align: center;">Loading users...</td></tr>
+            <tr><td colspan="6" style="text-align: center;">Loading users...</td></tr>
           </tbody>
         </table>
       </div>
@@ -263,16 +267,57 @@
         .catch(err => console.error(err));
     }
 
+    let userSearchQuery = "";
+
+    window.onUserSearch = () => {
+      userSearchQuery = document.getElementById("user-search-input").value.toLowerCase();
+      renderUsers();
+    };
+
+    window.toggleUserStatus = async (userId, role) => {
+      const actionText = allUsersData.find(u => u.id === userId)?.is_active ? "suspend" : "reactivate";
+      if (!confirm(`Are you sure you want to ${actionText} this ${role}?`)) return;
+
+      try {
+        const response = await fetch(`http://127.0.0.1:5001/admin/users/${userId}/toggle-status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem("adminAuthToken")
+          },
+          body: JSON.stringify({ role: role })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok) {
+          alert('User status updated successfully!');
+          loadUsers();
+        } else {
+          alert(data.error || 'Error updating status');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Network error.');
+      }
+    };
+
     function renderUsers() {
       const tbody = document.getElementById("users-body");
       tbody.innerHTML = "";
       
-      const filtered = currentFilter === "all" 
+      let filtered = currentFilter === "all" 
         ? allUsersData 
         : allUsersData.filter(u => u.role === currentFilter);
 
+      if (userSearchQuery) {
+        filtered = filtered.filter(u => 
+          u.name.toLowerCase().includes(userSearchQuery) || 
+          u.email.toLowerCase().includes(userSearchQuery) || 
+          u.id.toLowerCase().includes(userSearchQuery)
+        );
+      }
+
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--color-ink-muted);">No ${currentFilter === 'all' ? 'users' : currentFilter + 's'} found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--color-ink-muted);">No users matching criteria.</td></tr>`;
         return;
       }
 
@@ -282,13 +327,21 @@
           roleBadge = `<span class="badge badge-vendor">Vendor</span>`;
         }
         
+        const statusText = u.is_active ? "Active" : "Suspended";
+        const statusBadge = `<span class="badge" style="background: ${u.is_active ? 'rgba(26, 174, 57, 0.08)' : 'rgba(221, 57, 57, 0.08)'}; color: ${u.is_active ? 'var(--color-accent-green)' : 'var(--color-accent-orange)'}; border: 1px solid ${u.is_active ? 'rgba(26, 174, 57, 0.15)' : 'rgba(221, 57, 57, 0.15)'}">${statusText}</span>`;
+        
+        const actionBtnText = u.is_active ? "Suspend" : "Activate";
+        const actionBtnColor = u.is_active ? "var(--color-accent-orange)" : "var(--color-accent-green)";
+        const actionBtn = `<button class="button-utility" style="padding: 4px 8px; color: ${actionBtnColor}; border-color: ${actionBtnColor};" onclick="toggleUserStatus('${u.id}', '${u.role}')">${actionBtnText}</button>`;
+        
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${u.id}</td>
+          <td><strong>${u.id}</strong></td>
           <td style="font-weight: 500;">${u.name}</td>
           <td>${u.email}</td>
           <td>${roleBadge}</td>
-          <!-- <td><button class="button-utility" style="padding: 4px 8px; color: var(--color-accent-orange); border-color: var(--color-accent-orange);">Suspend</button></td> -->
+          <td>${statusBadge}</td>
+          <td>${actionBtn}</td>
         `;
         tbody.appendChild(tr);
       });

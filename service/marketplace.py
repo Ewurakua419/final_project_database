@@ -11,8 +11,6 @@ class Marketplace:
 
     # def finduser(self, name,password):
     def finduser(self, email):
-        # name = name.strip().lower()
-        # rows = database.searchcustomer(name,password)
         email = email.strip().lower()
         rows = database.searchcustomer(email)
         if rows == None:
@@ -32,6 +30,7 @@ class Marketplace:
                 last_name=last_name,
                 phone_number=rows[3],
             )
+            user.is_active = rows[6]
             return user
 
     def finduser_by_id(self, customer_id):
@@ -42,7 +41,7 @@ class Marketplace:
         else:
             first_name = rows[1]
             last_name = rows[2]
-            return Customer(
+            user = Customer(
                 name=f"{first_name} {last_name}".strip(),
                 password=rows[5],
                 email=rows[4],
@@ -52,6 +51,8 @@ class Marketplace:
                 last_name=last_name,
                 phone_number=rows[3],
             )
+            user.is_active = rows[6]
+            return user
 
     ##customer focus
     # customer can register, *
@@ -446,6 +447,7 @@ class Marketplace:
             )
             vendor.email = rows[2]
             vendor.password = rows[4]
+            vendor.is_active = rows[5]
             return vendor
             
     def registerVendor(self, name, password, email, address, phone_number=None):

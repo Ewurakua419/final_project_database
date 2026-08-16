@@ -71,7 +71,7 @@ if (checkoutBtn) {
     e.preventDefault();
     const pathParts = window.location.pathname.split('/');
     const frontendIdx = pathParts.indexOf('frontend');
-    const depth = frontendIdx !== -1 ? (pathParts.length - 1 - frontendIdx - 1) : 0;
+    const depth = frontendIdx !== -1 ? (pathParts.length - 1 - frontendIdx - 1) : (pathParts.length - 2);
     const prefix = depth > 0 ? '../'.repeat(depth) : './';
 
     if (!localStorage.getItem("authToken")) {

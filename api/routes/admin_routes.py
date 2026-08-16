@@ -44,6 +44,36 @@ def get_admin_users():
     return jsonify({"users": users}), 200
 
 
+@admin_bp.route("/admin/users/<user_id>/toggle-status", methods=["PUT"])
+@admin_token_required
+def toggle_user_status(user_id):
+    """Suspend or reactivate a customer/vendor account."""
+    data = request.get_json() or {}
+    role = data.get("role")
+    if role not in ("customer", "vendor"):
+        return jsonify({"error": "Invalid role specified. Allowed: 'customer', 'vendor'"}), 400
+        
+    if role == "customer":
+        row = database.run_query("SELECT is_active FROM customer WHERE customer_id = %s", (user_id[:6],), fetch='one')
+    else:
+        row = database.run_query("SELECT is_active FROM vendor WHERE vendor_id = %s", (user_id[:6],), fetch='one')
+        
+    if not row:
+        return jsonify({"error": "User not found"}), 404
+        
+    new_status = not row[0]
+    
+    if role == "customer":
+        database.run_query("UPDATE customer SET is_active = %s WHERE customer_id = %s", (new_status, user_id[:6]), commit=True)
+    else:
+        database.run_query("UPDATE vendor SET is_active = %s WHERE vendor_id = %s", (new_status, user_id[:6]), commit=True)
+        
+    return jsonify({
+        "message": "User status updated successfully",
+        "is_active": new_status
+    }), 200
+
+
 @admin_bp.route("/admin/analytics", methods=["GET"])
 @admin_token_required
 def get_admin_analytics():

@@ -39,26 +39,26 @@ def run_query(query, params=None, fetch=None, commit=False):
 
 def searchcustomer(email):
     query = """
-        SELECT c.customer_id, c.f_name, c.l_name, c.phone_number, c.email, cc.password_hash 
+        SELECT c.customer_id, c.f_name, c.l_name, c.phone_number, c.email, cc.password_hash, c.is_active
         FROM customer c 
         JOIN customer_credentials cc ON c.customer_id = cc.customer_id 
         WHERE LOWER(c.email) = LOWER(%s)
     """
     row = run_query(query, (email.strip(),), fetch='one')
     if row:
-        return (row[0], row[1], row[2], row[3], row[4], row[5])
+        return (row[0], row[1], row[2], row[3], row[4], row[5], bool(row[6]))
     return None
 
 def searchcustomer_by_id(customer_id):
     query = """
-        SELECT c.customer_id, c.f_name, c.l_name, c.phone_number, c.email, cc.password_hash 
+        SELECT c.customer_id, c.f_name, c.l_name, c.phone_number, c.email, cc.password_hash, c.is_active 
         FROM customer c 
         JOIN customer_credentials cc ON c.customer_id = cc.customer_id 
         WHERE c.customer_id = %s
     """
     row = run_query(query, (customer_id[:6],), fetch='one')
     if row:
-        return (row[0], row[1], row[2], row[3], row[4], row[5])
+        return (row[0], row[1], row[2], row[3], row[4], row[5], bool(row[6]))
     return None
 
 def register(name, userid, cart_ids, balance, password, email, first_name=None, last_name=None, phone_number=None):
@@ -103,14 +103,14 @@ def register(name, userid, cart_ids, balance, password, email, first_name=None, 
 
 def searchvendor(email):
     query = """
-        SELECT v.vendor_id, v.vendor_name, v.email, v.phone_number, vc.password_hash 
+        SELECT v.vendor_id, v.vendor_name, v.email, v.phone_number, vc.password_hash, v.is_active 
         FROM vendor v 
         JOIN vendor_credentials vc ON v.vendor_id = vc.vendor_id 
         WHERE LOWER(v.email) = LOWER(%s)
     """
     row = run_query(query, (email.strip(),), fetch='one')
     if row:
-        return (row[0], row[1], row[2], row[3], row[4])
+        return (row[0], row[1], row[2], row[3], row[4], bool(row[5]))
     return None
 
 def registervendor(name, email, password, vendorid, address, phone_number=None):
@@ -925,12 +925,12 @@ def get_admin_stats():
 
 def get_admin_users():
     users = []
-    cust_rows = run_query("SELECT customer_id, f_name, l_name, email FROM customer", fetch='all')
+    cust_rows = run_query("SELECT customer_id, f_name, l_name, email, is_active FROM customer", fetch='all')
     for r in cust_rows:
-        users.append({"id": r[0], "name": f"{r[1]} {r[2]}".strip(), "email": r[3], "role": "customer"})
-    vend_rows = run_query("SELECT vendor_id, vendor_name, email FROM vendor", fetch='all')
+        users.append({"id": r[0], "name": f"{r[1]} {r[2]}".strip(), "email": r[3], "role": "customer", "is_active": bool(r[4])})
+    vend_rows = run_query("SELECT vendor_id, vendor_name, email, is_active FROM vendor", fetch='all')
     for r in vend_rows:
-        users.append({"id": r[0], "name": r[1], "email": r[2], "role": "vendor"})
+        users.append({"id": r[0], "name": r[1], "email": r[2], "role": "vendor", "is_active": bool(r[3])})
     return users
 
 def update_delivery_status(delivery_id, new_status):

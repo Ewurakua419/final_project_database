@@ -48,6 +48,9 @@ def login_vendor():
     if not vendor:
         return jsonify({"error": "Invalid email or password"}), 401
         
+    if not getattr(vendor, "is_active", True):
+        return jsonify({"error": "Your vendor account has been suspended by an administrator."}), 403
+        
     payload = {
         "vendor_id": vendor.unique_id,
         "exp": datetime.now(timezone.utc) + timedelta(hours=24)

@@ -10,3 +10,4 @@ class Vendor:
         self.address=address#Address class
         self.phone_number=phone_number or ""
         self.products=[]
+        self.is_active = True

@@ -16,6 +16,7 @@ class Customer:
             self.wallet=[]
             self.address=[]
             self.password=str(password)
+            self.is_active = True
 
     def add_address(self,country,  postcode, city, street, house_num):
         self.address.append(Address(country,  postcode, city, street, house_num))

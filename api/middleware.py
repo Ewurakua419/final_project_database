@@ -29,6 +29,12 @@ def token_required(f):
         except (jwt.InvalidTokenError, KeyError):
             return jsonify({"error": "Invalid authentication token"}), 401
             
+        # Check customer account status
+        import database
+        is_active = database.run_query("SELECT is_active FROM customer WHERE customer_id = %s", (current_user_id,), fetch='one')
+        if not is_active or not is_active[0]:
+            return jsonify({"error": "Your account has been suspended by an administrator."}), 403
+            
         return f(current_user_id, *args, **kwargs)
     return decorated
 
@@ -47,6 +53,12 @@ def vendor_token_required(f):
             current_vendor_id = data["vendor_id"][:6]
         except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, KeyError):
             return jsonify({"error": "Unauthorized: Invalid or expired vendor session"}), 401
+            
+        # Check vendor account status
+        import database
+        is_active = database.run_query("SELECT is_active FROM vendor WHERE vendor_id = %s", (current_vendor_id,), fetch='one')
+        if not is_active or not is_active[0]:
+            return jsonify({"error": "Your vendor account has been suspended by an administrator."}), 403
             
         return f(current_vendor_id, *args, **kwargs)
     return decorated
