@@ -332,12 +332,23 @@ BEGIN
     DECLARE v_stock INT;
     DECLARE v_existing_quantity INT DEFAULT 0;
 
+    -- Exit handler to rollback transaction on failure
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Transaction failed: sp_add_to_cart aborted';
+    END;
+
     IF p_quantity <= 0 THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Quantity must be greater than zero';
     END IF;
 
-    SELECT stock_quantity INTO v_stock FROM product WHERE product_id = p_product_id;
+    START TRANSACTION;
+
+    -- Lock the product stock row (Pessimistic Lock)
+    SELECT stock_quantity INTO v_stock FROM product WHERE product_id = p_product_id FOR UPDATE;
     IF v_stock IS NULL THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Product does not exist';
@@ -360,6 +371,8 @@ BEGIN
     INSERT INTO cart_items (cart_id, product_id, quantity, added_date)
     VALUES (v_cart_id, p_product_id, p_quantity, CURRENT_TIMESTAMP)
     ON DUPLICATE KEY UPDATE quantity = quantity + p_quantity;
+
+    COMMIT;
 END //
 
 -- Procedure: sp_place_order
@@ -373,16 +386,30 @@ BEGIN
     DECLARE v_cart_id VARCHAR(36);
     DECLARE v_subtotal DECIMAL(10,2);
 
+    -- Exit handler to rollback transaction on failure
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Transaction failed: sp_place_order aborted';
+    END;
+
     IF p_order_id IS NULL OR p_order_id = '' THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Order ID is required';
     END IF;
 
-    SELECT cart_id INTO v_cart_id FROM cart WHERE customer_id = p_customer_id LIMIT 1;
+    START TRANSACTION;
+
+    -- Lock the customer cart row
+    SELECT cart_id INTO v_cart_id FROM cart WHERE customer_id = p_customer_id LIMIT 1 FOR UPDATE;
     IF v_cart_id IS NULL THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Customer cart does not exist';
     END IF;
+
+    -- Lock the cart items to prevent modifications while checkout is in progress
+    SELECT product_id FROM cart_items WHERE cart_id = v_cart_id FOR UPDATE;
 
     IF NOT EXISTS (SELECT 1 FROM cart_items WHERE cart_id = v_cart_id) THEN
         SIGNAL SQLSTATE '45000'
@@ -403,7 +430,7 @@ BEGIN
     INSERT INTO orders (order_id, customer_id, order_date, subtotal, shipping_fee)
     VALUES (p_order_id, p_customer_id, CURRENT_TIMESTAMP, v_subtotal, 0);
 
-    -- Copy items to order_items
+    -- Copy items to order_items (automatically fires trigger to check stock limits and reduce stock!)
     INSERT INTO order_items (product_id, order_id, quantity, added_date, is_dispatched)
     SELECT product_id, p_order_id, quantity, added_date, FALSE
     FROM cart_items
@@ -411,6 +438,8 @@ BEGIN
     
     -- Clear the cart
     DELETE FROM cart_items WHERE cart_id = v_cart_id;
+
+    COMMIT;
 END //
 
 -- Procedure: sp_update_delivery_status
@@ -421,6 +450,13 @@ CREATE PROCEDURE sp_update_delivery_status(
     IN p_new_status VARCHAR(20)
 )
 BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Transaction failed: sp_update_delivery_status aborted';
+    END;
+
     IF LOWER(p_new_status) NOT IN ('pending', 'in port', 'on the way', 'delivered') THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Invalid delivery status';
@@ -431,9 +467,13 @@ BEGIN
         SET MESSAGE_TEXT = 'Delivery does not exist';
     END IF;
 
+    START TRANSACTION;
+
     UPDATE delivery
     SET delivery_status = LOWER(p_new_status)
     WHERE delivery_id = p_delivery_id;
+
+    COMMIT;
 END //
 
 -- Procedure: sp_update_order_item_status
@@ -445,6 +485,13 @@ CREATE PROCEDURE sp_update_order_item_status(
     IN p_new_status VARCHAR(20)
 )
 BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Transaction failed: sp_update_order_item_status aborted';
+    END;
+
     IF LOWER(p_new_status) NOT IN ('pending', 'sent to port') THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Invalid item status. Allowed: pending, sent to port';
@@ -458,9 +505,13 @@ BEGIN
         SET MESSAGE_TEXT = 'Order item not found';
     END IF;
 
+    START TRANSACTION;
+
     UPDATE order_items
     SET is_dispatched = (LOWER(p_new_status) = 'sent to port')
     WHERE order_id = p_order_id AND product_id = p_product_id;
+
+    COMMIT;
 END //
 
 -- Procedure: sp_delete_customer_address
@@ -471,6 +522,13 @@ CREATE PROCEDURE sp_delete_customer_address(
     IN p_customer_id VARCHAR(36)
 )
 BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Transaction failed: sp_delete_customer_address aborted';
+    END;
+
     IF NOT EXISTS (
         SELECT 1 FROM address 
         WHERE address_id = p_address_id AND customer_id = p_customer_id
@@ -479,12 +537,16 @@ BEGIN
         SET MESSAGE_TEXT = 'Address not found or does not belong to this customer';
     END IF;
 
+    START TRANSACTION;
+
     UPDATE delivery
     SET address_id = NULL
     WHERE address_id = p_address_id;
 
     DELETE FROM address
     WHERE address_id = p_address_id AND customer_id = p_customer_id;
+
+    COMMIT;
 END //
 
 -- Procedure: sp_add_product_review
