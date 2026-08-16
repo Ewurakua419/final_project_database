@@ -25,19 +25,12 @@ The application is run by starting the server and loading the frontend component
 
 ### 1. Database Setup Order
 To recreate the database locally on your device, execute the SQL files in your MariaDB instance in this exact order:
-1. `ddl.sql` (Creates schemas and tables)
-2. `dml.sql` (Inserts mock data)
-3. `phase 6 and 7.sql` (Stored routines, views, and triggers)
-4. `Haris_changes.sql`
-5. `Haris_changes2.sql`
-6. `Haris_changes3.sql`
-7. `final_changes.sql`
-8. `Haris_changes4.sql`
-9. `update_passwords.sql` (Updates all the invalid/mock passwords with valid bcrypt hashes)
+1. `new_ddl.sql` (Creates schemas and tables with UUID/VARCHAR(36) and activation flags support)
+2. `new_dml.sql` (Inserts seeded mock data with pre-hashed bcrypt passwords)
+3. `new_phase 6 and 7.sql` (Unified roles, privileges, views, stored procedures, functions, and triggers)
 
+*(Note: The old files `ddl.sql`, `dml.sql`, and `phase 6 and 7.sql` represent initial stages. The obsolete migration files `Haris_changes*.sql` and `update_passwords.sql` have been removed as they are fully consolidated into the `new_*.sql` files).*
 
-*(Note: `file.sql` is a backup/alternative file and does not need to be run).*
-*(Note: `Haris_changes5.sql` is not yet compatible with the updated database schema and should not be run.)*
 
 ### 2. Initial Stakeholders (Emails & Passwords)
  You can use the following default credentials to access the platform:
