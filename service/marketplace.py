@@ -184,8 +184,8 @@ class Marketplace:
                     "country": addr.get("country") or addr.get("landmark", "Ghana")
                 }
 
-        # Generate 6-char order_id to fit VARCHAR(6) constraint
-        order_id = str(uuid.uuid4())[:6]
+        # Generate order_id
+        order_id = str(uuid.uuid4())
         
         # Instantiate payment subclass and save details
         payment_dict = None
@@ -232,7 +232,7 @@ class Marketplace:
         
         # 3. Create Delivery linked to the address and order
         # Use shipping_id from request if provided, else fall back to first company
-        resolved_shipping_id = shipping_id[:6] if shipping_id else "SHIP01"
+        resolved_shipping_id = shipping_id if shipping_id else "SHIP01"
         delivery_obj = Delivery(
             order_id=new_order.order_id,
             delivery_status="pending",

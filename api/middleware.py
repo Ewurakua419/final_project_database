@@ -23,7 +23,7 @@ def token_required(f):
         token = auth_header.split(" ")[1]
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            current_user_id = data["user_id"][:6]
+            current_user_id = data["user_id"]
         except jwt.ExpiredSignatureError:
             return jsonify({"error": "Session expired. Please log in again."}), 401
         except (jwt.InvalidTokenError, KeyError):
@@ -50,7 +50,7 @@ def vendor_token_required(f):
         token = auth_header.split(" ")[1]
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            current_vendor_id = data["vendor_id"][:6]
+            current_vendor_id = data["vendor_id"]
         except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, KeyError):
             return jsonify({"error": "Unauthorized: Invalid or expired vendor session"}), 401
             
@@ -75,7 +75,7 @@ def shipping_token_required(f):
         token = auth_header.split(" ")[1]
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            current_shipping_id = data["shipping_id"][:6]
+            current_shipping_id = data["shipping_id"]
         except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, KeyError):
             return jsonify({"error": "Unauthorized: Invalid or expired shipping session"}), 401
             

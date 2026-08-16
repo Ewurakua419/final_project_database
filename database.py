@@ -56,14 +56,14 @@ def searchcustomer_by_id(customer_id):
         JOIN customer_credentials cc ON c.customer_id = cc.customer_id 
         WHERE c.customer_id = %s
     """
-    row = run_query(query, (customer_id[:6],), fetch='one')
+    row = run_query(query, (customer_id,), fetch='one')
     if row:
         return (row[0], row[1], row[2], row[3], row[4], row[5], bool(row[6]))
     return None
 
 def register(name, userid, cart_ids, balance, password, email, first_name=None, last_name=None, phone_number=None):
-    userid = userid[:6]
-    cart_id = cart_ids[:6] if cart_ids else "CRT" + userid[:3]
+    userid = userid
+    cart_id = cart_ids if cart_ids else "CRT" + userid[:3]
     f_name = first_name or (name.split(" ")[0] if name else "")
     l_name = last_name or (name.split(" ")[1] if name and len(name.split(" ")) > 1 else "")
     
@@ -114,7 +114,7 @@ def searchvendor(email):
     return None
 
 def registervendor(name, email, password, vendorid, address, phone_number=None):
-    vendorid = vendorid[:6]
+    vendorid = vendorid
     conn = connect()
     cursor = conn.cursor()
     try:
@@ -395,7 +395,7 @@ def add_address(address_dict):
 
 def get_addresses_by_customer(customer_id):
     query = "SELECT address_id, city, Landmark, street_address, customer_id FROM address WHERE customer_id = %s"
-    rows = run_query(query, (customer_id[:6],), fetch='all')
+    rows = run_query(query, (customer_id,), fetch='all')
     addresses = []
     for row in rows:
         addresses.append({
@@ -412,7 +412,7 @@ def get_addresses_by_customer(customer_id):
 def delete_address(address_id, customer_id):
     """Delete an address belonging to a specific customer."""
     query = "DELETE FROM address WHERE address_id = %s AND customer_id = %s"
-    rows_affected = run_query(query, (address_id[:6], customer_id[:6]), commit=True)
+    rows_affected = run_query(query, (address_id, customer_id), commit=True)
     return rows_affected is not None and rows_affected > 0
 
 def add_delivery(delivery_dict):
@@ -437,7 +437,7 @@ def get_delivery_by_order(order_id):
         WHERE order_id = %s 
         LIMIT 1
     """
-    row = run_query(query, (order_id[:6],), fetch='one')
+    row = run_query(query, (order_id,), fetch='one')
     if row:
         return {
             "delivery_id": row[0],
@@ -477,13 +477,13 @@ def update_order(order_id, updates_dict):
             db_status = "on the way"
             
         query = "UPDATE delivery SET delivery_status = %s WHERE order_id = %s"
-        run_query(query, (db_status, order_id[:6]), commit=True)
+        run_query(query, (db_status, order_id), commit=True)
         return True
     return False
 
 def get_reviews_by_product(product_id):
     query = "SELECT review_id, product_id, customer_id, rating, review_date, comment FROM review WHERE product_id = %s"
-    rows = run_query(query, (product_id[:6],), fetch='all')
+    rows = run_query(query, (product_id,), fetch='all')
     reviews = []
     for row in rows:
         reviews.append({
@@ -512,7 +512,7 @@ def findproduct(productid):
         FROM product 
         WHERE product_id = %s
     """
-    row = run_query(query, (productid.strip()[:6],), fetch='one')
+    row = run_query(query, (productid.strip(),), fetch='one')
     if row:
         return (
             row[0],  # product_id
@@ -528,7 +528,7 @@ def findproduct(productid):
 
 def find_fashion_attributes(product_id):
     query = "SELECT Color, Material, Size, Gender_category FROM fashion WHERE product_id = %s"
-    row = run_query(query, (product_id[:6],), fetch='one')
+    row = run_query(query, (product_id,), fetch='one')
     if row:
         return {
             "Color": row[0],
@@ -540,7 +540,7 @@ def find_fashion_attributes(product_id):
 
 def find_beauty_attributes(product_id):
     query = "SELECT skin_type, volume_weight, Is_organic FROM beauty WHERE product_id = %s"
-    row = run_query(query, (product_id[:6],), fetch='one')
+    row = run_query(query, (product_id,), fetch='one')
     if row:
         return {
             "skin_type": row[0],
@@ -604,7 +604,7 @@ def updateproduct(productid, updates_dict):
         params.append(v)
         
     query = f"UPDATE product SET {', '.join(parts)} WHERE product_id = %s"
-    params.append(productid[:6])
+    params.append(productid)
     
     run_query(query, tuple(params), commit=True)
     return True
@@ -620,7 +620,7 @@ def update_fashion(productid, updates_dict):
         params.append(v)
         
     query = f"UPDATE fashion SET {', '.join(parts)} WHERE product_id = %s"
-    params.append(productid[:6])
+    params.append(productid)
     
     run_query(query, tuple(params), commit=True)
     return True
@@ -636,14 +636,14 @@ def update_beauty(productid, updates_dict):
         params.append(v)
         
     query = f"UPDATE beauty SET {', '.join(parts)} WHERE product_id = %s"
-    params.append(productid[:6])
+    params.append(productid)
     
     run_query(query, tuple(params), commit=True)
     return True
 
 def deleteproduct(productid):
     query = "UPDATE product SET is_active = FALSE WHERE product_id = %s"
-    run_query(query, (productid[:6],), commit=True)
+    run_query(query, (productid,), commit=True)
     return True
 
 def viewtopproducs(limit=5):
@@ -741,8 +741,8 @@ def addtocart(product, customer_id, quantity):
     else:
         product_id = product[0]
         
-    customer_id = customer_id[:6]
-    product_id = product_id[:6]
+    customer_id = customer_id
+    product_id = product_id
     
     # Make sure Cart exists for user
     cart_query = "SELECT cart_id FROM cart WHERE customer_id = %s LIMIT 1"
@@ -787,7 +787,7 @@ def getcart(customer_id):
         JOIN product p ON ci.product_id = p.product_id 
         WHERE c.customer_id = %s
     """
-    rows = run_query(query, (customer_id[:6],), fetch='all')
+    rows = run_query(query, (customer_id,), fetch='all')
     items = []
     for row in rows:
         product_obj = Product(
@@ -808,7 +808,7 @@ def removefromcart(product_id, customer_id):
         JOIN cart c ON ci.cart_id = c.cart_id 
         WHERE ci.product_id = %s AND c.customer_id = %s
     """
-    rowcount = run_query(query, (product_id[:6], customer_id[:6]), commit=True)
+    rowcount = run_query(query, (product_id, customer_id), commit=True)
     return rowcount > 0
 
 def checkout(customer_id):
@@ -817,7 +817,7 @@ def checkout(customer_id):
         JOIN cart c ON ci.cart_id = c.cart_id 
         WHERE c.customer_id = %s
     """
-    run_query(query, (customer_id[:6],), commit=True)
+    run_query(query, (customer_id,), commit=True)
     return True
 
 def update_customer(customer_id, updates_dict):
@@ -829,7 +829,7 @@ def update_customer(customer_id, updates_dict):
         parts.append(f"{k} = %s")
         params.append(v)
     query = f"UPDATE customer SET {', '.join(parts)} WHERE customer_id = %s"
-    params.append(customer_id[:6])
+    params.append(customer_id)
     run_query(query, tuple(params), commit=True)
     return True
 
@@ -852,7 +852,7 @@ def get_deliveries_by_shipping_company(shipping_id):
         LEFT JOIN address a ON d.address_id = a.address_id
         WHERE d.shipping_id = %s
     """
-    rows = run_query(query, (shipping_id[:6],), fetch='all')
+    rows = run_query(query, (shipping_id,), fetch='all')
     deliveries = []
     total_earnings = 0.0
     completed_earnings = 0.0
@@ -934,10 +934,10 @@ def get_admin_users():
 
 def update_delivery_status(delivery_id, new_status):
     # Check if delivery exists first (rowcount=0 for same-value updates in MariaDB)
-    exists = run_query("SELECT delivery_id FROM delivery WHERE delivery_id = %s", (delivery_id[:6],), fetch='one')
+    exists = run_query("SELECT delivery_id FROM delivery WHERE delivery_id = %s", (delivery_id,), fetch='one')
     if not exists:
         return False
-    run_query("UPDATE delivery SET delivery_status = %s WHERE delivery_id = %s", (new_status, delivery_id[:6]), commit=True)
+    run_query("UPDATE delivery SET delivery_status = %s WHERE delivery_id = %s", (new_status, delivery_id), commit=True)
     return True
 
 def update_address(address_id, updates_dict):
@@ -949,7 +949,7 @@ def update_address(address_id, updates_dict):
         parts.append(f"{k} = %s")
         params.append(v)
     query = f"UPDATE address SET {', '.join(parts)} WHERE address_id = %s"
-    params.append(address_id[:6])
+    params.append(address_id)
     run_query(query, tuple(params), commit=True)
     return True
 
@@ -967,7 +967,7 @@ def get_vendor_product_analytics(vendor_id):
         WHERE p.vendor_id = %s
         ORDER BY units_sold DESC
     """
-    rows = run_query(query, (vendor_id[:6],), fetch='all')
+    rows = run_query(query, (vendor_id,), fetch='all')
     analytics = []
     for r in rows:
         analytics.append({
@@ -982,12 +982,12 @@ def get_vendor_product_analytics(vendor_id):
 def get_vendor_dashboard_stats(vendor_id):
     # Total sales from vw_vendor_sales
     query_sales = "SELECT total_revenue FROM vw_vendor_sales WHERE vendor_id = %s"
-    sales_row = run_query(query_sales, (vendor_id[:6],), fetch='one')
+    sales_row = run_query(query_sales, (vendor_id,), fetch='one')
     total_sales = float(sales_row[0]) if sales_row else 0.0
     
     # Active products from product table
     query_products = "SELECT COUNT(*) FROM product WHERE vendor_id = %s"
-    prod_row = run_query(query_products, (vendor_id[:6],), fetch='one')
+    prod_row = run_query(query_products, (vendor_id,), fetch='one')
     active_products = int(prod_row[0]) if prod_row else 0
     
     # Pending orders from delivery table (left join since seeded orders might not have delivery records)
@@ -999,7 +999,7 @@ def get_vendor_dashboard_stats(vendor_id):
         JOIN product p ON oi.product_id = p.product_id
         WHERE p.vendor_id = %s AND (d.delivery_status IS NULL OR d.delivery_status != 'delivered')
     """
-    ord_row = run_query(query_orders, (vendor_id[:6],), fetch='one')
+    ord_row = run_query(query_orders, (vendor_id,), fetch='one')
     pending_orders = int(ord_row[0]) if ord_row else 0
     
     return {
@@ -1015,7 +1015,7 @@ def searchshipping(email_or_id):
         JOIN shipping_credentials sc ON s.shipping_id = sc.shipping_id
         WHERE LOWER(s.email) = LOWER(%s) OR s.shipping_id = %s
     """
-    row = run_query(query, (email_or_id.strip(), email_or_id.strip()[:6]), fetch='one')
+    row = run_query(query, (email_or_id.strip(), email_or_id.strip()), fetch='one')
     if row:
         return {
             "shipping_id": row[0],
@@ -1060,7 +1060,7 @@ def register_shipping_company(name, email, phone_number, password_hash, shipping
     if not shipping_id:
         shipping_id = ("SH" + str(uuid.uuid4()).replace("-", "").upper())[:6]
     else:
-        shipping_id = shipping_id[:6]
+        shipping_id = shipping_id
         
     conn = connect()
     cursor = conn.cursor()
@@ -1093,14 +1093,14 @@ def update_order_item_status(order_id, product_id, new_status):
     # Verify the order_item exists
     exists = run_query(
         "SELECT product_id FROM order_items WHERE order_id = %s AND product_id = %s",
-        (order_id[:6], product_id[:6]), fetch='one'
+        (order_id, product_id), fetch='one'
     )
     if not exists:
         return False
     is_disp = 1 if new_status == "sent to port" else 0
     run_query(
         "UPDATE order_items SET is_dispatched = %s WHERE order_id = %s AND product_id = %s",
-        (is_disp, order_id[:6], product_id[:6]), commit=True
+        (is_disp, order_id, product_id), commit=True
     )
     return True
 

@@ -54,9 +54,9 @@ def toggle_user_status(user_id):
         return jsonify({"error": "Invalid role specified. Allowed: 'customer', 'vendor'"}), 400
         
     if role == "customer":
-        row = database.run_query("SELECT is_active FROM customer WHERE customer_id = %s", (user_id[:6],), fetch='one')
+        row = database.run_query("SELECT is_active FROM customer WHERE customer_id = %s", (user_id,), fetch='one')
     else:
-        row = database.run_query("SELECT is_active FROM vendor WHERE vendor_id = %s", (user_id[:6],), fetch='one')
+        row = database.run_query("SELECT is_active FROM vendor WHERE vendor_id = %s", (user_id,), fetch='one')
         
     if not row:
         return jsonify({"error": "User not found"}), 404
@@ -64,9 +64,9 @@ def toggle_user_status(user_id):
     new_status = not row[0]
     
     if role == "customer":
-        database.run_query("UPDATE customer SET is_active = %s WHERE customer_id = %s", (new_status, user_id[:6]), commit=True)
+        database.run_query("UPDATE customer SET is_active = %s WHERE customer_id = %s", (new_status, user_id), commit=True)
     else:
-        database.run_query("UPDATE vendor SET is_active = %s WHERE vendor_id = %s", (new_status, user_id[:6]), commit=True)
+        database.run_query("UPDATE vendor SET is_active = %s WHERE vendor_id = %s", (new_status, user_id), commit=True)
         
     return jsonify({
         "message": "User status updated successfully",

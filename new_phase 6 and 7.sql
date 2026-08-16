@@ -227,6 +227,42 @@ JOIN customer c ON o.customer_id = c.customer_id
 JOIN shipping_company sc ON d.shipping_id = sc.shipping_id;
 
 
+-- 2.10 Vendor Product Performance View
+-- Consolidates products, vendors, sales units, revenue, average ratings, and review counts.
+DROP VIEW IF EXISTS vw_vendor_product_performance;
+CREATE VIEW vw_vendor_product_performance AS
+SELECT
+    p.vendor_id,
+    v.vendor_name,
+    p.product_id,
+    p.product_name,
+    p.price,
+    p.stock_quantity,
+    COALESCE(s.units_sold, 0) AS units_sold,
+    COALESCE(s.total_revenue, 0) AS total_revenue,
+    COALESCE(r.average_rating, 0) AS average_rating,
+    COALESCE(r.number_of_reviews, 0) AS number_of_reviews
+FROM product p
+JOIN vendor v ON p.vendor_id = v.vendor_id
+LEFT JOIN (
+    SELECT
+        oi.product_id,
+        SUM(oi.quantity) AS units_sold,
+        SUM(oi.quantity * prod.price) AS total_revenue
+    FROM order_items oi
+    JOIN product prod ON oi.product_id = prod.product_id
+    GROUP BY oi.product_id
+) s ON p.product_id = s.product_id
+LEFT JOIN (
+    SELECT
+        product_id,
+        ROUND(AVG(rating), 2) AS average_rating,
+        COUNT(review_id) AS number_of_reviews
+    FROM review
+    GROUP BY product_id
+) r ON p.product_id = r.product_id;
+
+
 -- Grant View Permissions to Vendor Role
 GRANT SELECT ON ecommerce.vw_vendor_product_performance TO marketplace_vendor;
 GRANT SELECT ON ecommerce.vw_product_sales TO marketplace_vendor;

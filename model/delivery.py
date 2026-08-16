@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 class Delivery:
     def __init__(self, order_id, delivery_status="on the way", estimated_delivery_date=None, address_id=None, shipping_id=None, delivery_id=None):
-        self.delivery_id = delivery_id or str(uuid.uuid4())[:6]
+        self.delivery_id = delivery_id or str(uuid.uuid4())
         self.order_id = order_id
         
         # Validate status against SQL check constraint: ('delivered', 'in port', 'on the way', 'pending')

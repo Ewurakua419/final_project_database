@@ -2,7 +2,7 @@ import uuid
 
 class Address:
     def __init__(self, city, street_address, customer_id, landmark=None, address_id=None):
-        self.address_id = address_id or str(uuid.uuid4())[:6]
+        self.address_id = address_id or str(uuid.uuid4())
         self.city = city
         self.street_address = street_address
         self.customer_id = customer_id

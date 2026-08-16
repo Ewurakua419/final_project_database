@@ -85,9 +85,14 @@ if (checkoutBtn) {
 
 // Render UI function to avoid duplication
 function renderCartUI(data) {
+  if (!data || data.error || !data.cart) {
+    const errorMsg = data?.error || 'Failed to load cart.';
+    cartItemsContainer.innerHTML = `<div class="loading-state" style="margin: auto; color: #ff6b6b; padding: 1rem; text-align: center;">${errorMsg}</div>`;
+    return;
+  }
   const dynamicCartBadge = document.getElementById("cart-count");
-  if (dynamicCartBadge) dynamicCartBadge.innerText = data.total_items;
-  cartTotalValue.innerText = "GH₵" + (data.total_price).toFixed(2);
+  if (dynamicCartBadge) dynamicCartBadge.innerText = data.total_items || 0;
+  cartTotalValue.innerText = "GH₵" + (data.total_price || 0).toFixed(2);
   
   if (data.cart.length === 0) {
     cartItemsContainer.innerHTML = '<div class="loading-state" style="margin: auto;">Your cart is empty.</div>';
@@ -247,9 +252,20 @@ export const fetchCart = () => {
       "Authorization": "Bearer " + localStorage.getItem("authToken")
     }
   })
-    .then(res => res.json())
+    .then(res => {
+      if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem("authToken");
+        const pathParts = window.location.pathname.split('/');
+        const frontendIdx = pathParts.indexOf('frontend');
+        const depth = frontendIdx !== -1 ? (pathParts.length - 1 - frontendIdx - 1) : (pathParts.length - 2);
+        const prefix = depth > 0 ? '../'.repeat(depth) : './';
+        window.location.href = `${prefix}login.html`;
+        return null;
+      }
+      return res.json();
+    })
     .then(data => {
-      renderCartUI(data);
+      if (data) renderCartUI(data);
     })
     .catch(err => console.error(err));
 };

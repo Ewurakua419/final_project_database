@@ -2,7 +2,7 @@ import uuid
 
 class ShippingCompany:
     def __init__(self, name, contact_phone=None, shipping_id=None):
-        self.shipping_id = shipping_id or str(uuid.uuid4())[:6]
+        self.shipping_id = shipping_id or str(uuid.uuid4())
         self.name = name
         self.contact_phone = contact_phone or ""
 
