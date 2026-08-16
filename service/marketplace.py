@@ -227,9 +227,6 @@ class Marketplace:
             payment_details=payment_dict
         )
         
-        # Add order first to satisfy foreign key constraint in delivery table
-        database.add_order(new_order.to_dict())
-        
         # 3. Create Delivery linked to the address and order
         # Use shipping_id from request if provided, else fall back to first company
         resolved_shipping_id = shipping_id if shipping_id else "SHIP01"
@@ -239,10 +236,9 @@ class Marketplace:
             address_id=address_id,
             shipping_id=resolved_shipping_id
         )
-        database.add_delivery(delivery_obj.to_dict())
         
-        # Clear cart
-        database.checkout(customer_id)
+        # Add order along with delivery details (which also invokes sp_place_order and clears the cart)
+        database.add_order(new_order.to_dict(), delivery_dict=delivery_obj.to_dict())
         
         return new_order
 
