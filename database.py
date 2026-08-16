@@ -165,8 +165,12 @@ def get_all_products():
     return products
 
 def get_all_orders():
-    # 1. Fetch all orders
-    query = "SELECT order_id, customer_id, cart_id, order_date, subtotal, shipping_fee FROM orders"
+    # 1. Fetch all orders (join with cart to retrieve cart_id without redundancy)
+    query = """
+        SELECT o.order_id, o.customer_id, c.cart_id, o.order_date, o.subtotal, o.shipping_fee 
+        FROM orders o
+        JOIN cart c ON o.customer_id = c.customer_id
+    """
     order_rows = run_query(query, fetch='all')
     
     orders = []
@@ -308,18 +312,13 @@ def add_order(order_dict):
     subtotal = order_dict["pricing_summary"]["subtotal"]
     shipping_fee = order_dict["pricing_summary"]["shipping"]
     
-    # Resolve cart_id
-    cart_query = "SELECT cart_id FROM cart WHERE customer_id = %s LIMIT 1"
-    cart_row = run_query(cart_query, (customer_id,), fetch='one')
-    cart_id = cart_row[0] if cart_row else "CRT" + customer_id[:3]
-    
     conn = connect()
     cursor = conn.cursor()
     try:
         # Insert into orders
         cursor.execute(
-            "INSERT INTO orders (order_id, customer_id, cart_id, order_date, subtotal, shipping_fee) VALUES (%s, %s, %s, NOW(), %s, %s)",
-            (order_id, customer_id, cart_id, subtotal, shipping_fee)
+            "INSERT INTO orders (order_id, customer_id, order_date, subtotal, shipping_fee) VALUES (%s, %s, NOW(), %s, %s)",
+            (order_id, customer_id, subtotal, shipping_fee)
         )
         
         # Insert into order_items
