@@ -21,7 +21,7 @@ class Product:
             self.product_id = product_id
 
     def to_dict(self):
-        return {
+        d = {
             "id": self.product_id,
             "name": self.product_name,
             "image": self.image_url,
@@ -33,6 +33,11 @@ class Product:
             "keywords": [],
             "stock": self.stock_quantity
         }
+        if hasattr(self, 'fashion_attributes') and self.fashion_attributes:
+            d['fashion_attributes'] = self.fashion_attributes
+        if hasattr(self, 'beauty_attributes') and self.beauty_attributes:
+            d['beauty_attributes'] = self.beauty_attributes
+        return d
 
 class Fashion(Product):
 

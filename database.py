@@ -147,6 +147,7 @@ def get_all_products():
     query = """
         SELECT product_id, vendor_id, product_name, description, price, stock_quantity, product_type, image_url 
         FROM product
+        WHERE is_active = TRUE
     """
     rows = run_query(query, fetch='all')
     products = []
@@ -189,10 +190,10 @@ def get_all_orders():
         address_id = None
         delivery_obj = None
         if del_row:
-            status = del_row[0]
+            status = "sent to port" if del_row[0] == "in port" else del_row[0]
             address_id = del_row[1]
             delivery_obj = {
-                "delivery_status": del_row[0],
+                "delivery_status": "sent to port" if del_row[0] == "in port" else del_row[0],
                 "estimated_delivery_date": str(del_row[3]) if del_row[3] else "N/A",
                 "shipping_company": del_row[4] or "N/A"
             }
@@ -245,9 +246,9 @@ def get_all_orders():
                 "brand": brand
             }
             
-        # 5. Fetch order items (include item_status for vendor fulfillment workflow)
+        # 5. Fetch order items (include is_dispatched for vendor fulfillment workflow)
         item_query = """
-            SELECT oi.product_id, p.product_name, p.image_url, p.price, oi.quantity, oi.item_status 
+            SELECT oi.product_id, p.product_name, p.image_url, p.price, oi.quantity, oi.is_dispatched 
             FROM order_items oi 
             JOIN product p ON oi.product_id = p.product_id 
             WHERE oi.order_id = %s
@@ -273,9 +274,9 @@ def get_all_orders():
                 "quantity": i_row[4],
                 "item_total": round(float(i_row[3]) * i_row[4], 2)
             }
-            # item_status is only available from order_items (index 5), not from cart_items fallback
+            # map boolean is_dispatched to frontend item_status string
             if len(i_row) > 5:
-                item_dict["item_status"] = i_row[5]
+                item_dict["item_status"] = "sent to port" if i_row[5] else "pending"
             else:
                 item_dict["item_status"] = "sent to port"
             items.append(item_dict)
@@ -462,16 +463,16 @@ def get_all_shipping_companies():
     return companies
     
 def update_order(order_id, updates_dict):
-    # Status updates are synced with delivery status in SQL view, but update_order is used by vendor order updates.
+    # Status updates are synced with delivery status in SQL view, but update_order is used by courier order updates.
     if "status" in updates_dict:
         status_val = updates_dict["status"]
-        # Match check constraint value: 'delivered', 'sent to port', 'on the way'
+        # Match check constraint value: 'delivered', 'in port', 'on the way', 'pending'
         status_lower = status_val.lower()
         if status_lower == "shipped":
             db_status = "on the way"
         elif status_lower == "pending":
-            db_status = "sent to port"
-        elif status_lower in ["delivered", "sent to port", "on the way"]:
+            db_status = "pending"
+        elif status_lower in ["delivered", "in port", "on the way", "pending"]:
             db_status = status_lower
         else:
             db_status = "on the way"
@@ -524,6 +525,29 @@ def findproduct(productid):
             row[6],  # description
             row[7],  # stock_quantity
         )
+    return None
+
+def find_fashion_attributes(product_id):
+    query = "SELECT Color, Material, Size, Gender_category FROM fashion WHERE product_id = %s"
+    row = run_query(query, (product_id[:6],), fetch='one')
+    if row:
+        return {
+            "Color": row[0],
+            "Material": row[1],
+            "Size": row[2],
+            "Gender_category": row[3]
+        }
+    return None
+
+def find_beauty_attributes(product_id):
+    query = "SELECT skin_type, volume_weight, Is_organic FROM beauty WHERE product_id = %s"
+    row = run_query(query, (product_id[:6],), fetch='one')
+    if row:
+        return {
+            "skin_type": row[0],
+            "volume_weight": row[1],
+            "Is_organic": bool(row[2])
+        }
     return None
 
 def addproduct(product_dict):
@@ -619,7 +643,7 @@ def update_beauty(productid, updates_dict):
     return True
 
 def deleteproduct(productid):
-    query = "DELETE FROM product WHERE product_id = %s"
+    query = "UPDATE product SET is_active = FALSE WHERE product_id = %s"
     run_query(query, (productid[:6],), commit=True)
     return True
 
@@ -821,7 +845,8 @@ def get_deliveries_by_shipping_company(shipping_id):
             a.Landmark,
             d.estimated_delivery_date,
             d.delivery_status,
-            COALESCE(o.shipping_fee, 0)
+            COALESCE(o.shipping_fee, 0),
+            d.order_id
         FROM delivery d
         LEFT JOIN orders o ON d.order_id = o.order_id
         LEFT JOIN customer c ON o.customer_id = c.customer_id
@@ -837,6 +862,26 @@ def get_deliveries_by_shipping_company(shipping_id):
         total_earnings += fee
         if r[7] == 'delivered':
             completed_earnings += fee
+            
+        # Fetch items for this delivery package
+        items_query = """
+            SELECT oi.product_id, p.product_name, v.vendor_name, oi.quantity, oi.is_dispatched
+            FROM order_items oi
+            JOIN product p ON oi.product_id = p.product_id
+            JOIN vendor v ON p.vendor_id = v.vendor_id
+            WHERE oi.order_id = %s
+        """
+        item_rows = run_query(items_query, (r[9],), fetch='all')
+        items = []
+        for ir in item_rows:
+            items.append({
+                "product_id": ir[0],
+                "product_name": ir[1],
+                "vendor_name": ir[2],
+                "quantity": ir[3],
+                "is_dispatched": bool(ir[4])
+            })
+            
         deliveries.append({
             "id": r[0],
             "customer": r[1] or "Unknown Customer",
@@ -845,8 +890,9 @@ def get_deliveries_by_shipping_company(shipping_id):
             "street": r[4] or "N/A",
             "landmark": r[5] or "N/A",
             "estDate": str(r[6]) if r[6] else "TBD",
-            "status": r[7],
-            "shipping_fee": fee
+            "status": "sent to port" if r[7] == "in port" else r[7],
+            "shipping_fee": fee,
+            "items": items
         })
     return {
         "deliveries": deliveries,
@@ -1044,7 +1090,7 @@ def register_shipping_company(name, email, phone_number, password_hash, shipping
     }
 
 def update_order_item_status(order_id, product_id, new_status):
-    """Update the item_status for a specific item in an order (vendor fulfillment)."""
+    """Update the is_dispatched flag for a specific item in an order (vendor fulfillment)."""
     # Verify the order_item exists
     exists = run_query(
         "SELECT product_id FROM order_items WHERE order_id = %s AND product_id = %s",
@@ -1052,9 +1098,10 @@ def update_order_item_status(order_id, product_id, new_status):
     )
     if not exists:
         return False
+    is_disp = 1 if new_status == "sent to port" else 0
     run_query(
-        "UPDATE order_items SET item_status = %s WHERE order_id = %s AND product_id = %s",
-        (new_status, order_id[:6], product_id[:6]), commit=True
+        "UPDATE order_items SET is_dispatched = %s WHERE order_id = %s AND product_id = %s",
+        (is_disp, order_id[:6], product_id[:6]), commit=True
     )
     return True
 

@@ -7,6 +7,24 @@
 
 USE ecommerce;
 
+
+-- ===Trigger on product insert== 
+
+DELIMITER //
+
+CREATE TRIGGER trg_check_initial_stock_before_insert
+BEFORE INSERT ON Product
+FOR EACH ROW
+BEGIN
+    IF NEW.stock_quantity < 1 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Initial stock quantity must be at least 1 unit';
+    END IF;
+END //
+
+DELIMITER ;
+
+
 -- ==============================================================================
 -- SECTION 1: DATABASE VIEWS
 -- ==============================================================================

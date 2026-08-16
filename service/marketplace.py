@@ -234,7 +234,7 @@ class Marketplace:
         resolved_shipping_id = shipping_id[:6] if shipping_id else "SHIP01"
         delivery_obj = Delivery(
             order_id=new_order.order_id,
-            delivery_status="sent to port",
+            delivery_status="pending",
             address_id=address_id,
             shipping_id=resolved_shipping_id
         )
@@ -364,8 +364,8 @@ class Marketplace:
                 elif status_lower == "shipped":
                     db_status = "on the way"
                 elif status_lower == "pending":
-                    # For a newly placed/pending order, default delivery status is sent to port
-                    db_status = "sent to port"
+                    # For a newly placed/pending order, default delivery status is pending
+                    db_status = "pending"
                 
                 delivery["delivery_status"] = db_status
         return success
@@ -509,6 +509,10 @@ class Marketplace:
                 rating=rating,
                 stock_quantity=p_dict.get("stock_quantity", 0)
             )
+            if p.product_type == "fashion":
+                p.fashion_attributes = database.find_fashion_attributes(p.product_id)
+            elif p.product_type == "beauty":
+                p.beauty_attributes = database.find_beauty_attributes(p.product_id)
             products.append(p)
         return products
 
@@ -531,6 +535,10 @@ class Marketplace:
                 rating=rating,
                 stock_quantity=rows[7] if len(rows) > 7 else 0
             )
+            if product.product_type == "fashion":
+                product.fashion_attributes = database.find_fashion_attributes(product.product_id)
+            elif product.product_type == "beauty":
+                product.beauty_attributes = database.find_beauty_attributes(product.product_id)
             return product
 
     def add_product(self, vendor_id, product_data):

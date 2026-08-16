@@ -96,20 +96,75 @@
           }
 
           const isDelivered = del.status === "delivered";
-          const actionContent = isDelivered 
-            ? `<span style="color: var(--color-accent-green); font-weight: 500; font-size: 13px;">✓ Complete</span>`
-            : `
-              <div class="update-action">
-                <select id="status-${del.id}" class="text-input" style="padding: 4px 8px; border-radius: var(--rounded-xs); font-size: var(--type-caption-size); appearance: auto;">
+          const isPending = del.status === "pending";
+          
+          let actionContent = "";
+          if (isDelivered) {
+            actionContent = `
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="color: var(--color-accent-green); font-weight: 500; font-size: 13px; margin-right: var(--spacing-sm);">✓ Complete</span>
+                <button class="button-utility" style="padding: 4px 8px;" onclick="toggleDetails('${del.id}')">Items</button>
+              </div>
+            `;
+          } else if (isPending) {
+            actionContent = `
+              <div class="update-action" style="display: flex; align-items: center; gap: 8px;">
+                <select id="status-${del.id}" class="text-input" disabled style="padding: 4px 8px; border-radius: var(--rounded-xs); font-size: var(--type-caption-size); appearance: auto; opacity: 0.6;">
+                  <option value="pending" selected>Pending Dispatch</option>
+                </select>
+                <button class="button-utility" style="padding: 4px 8px;" onclick="toggleDetails('${del.id}')">Items</button>
+              </div>
+            `;
+          } else {
+            actionContent = `
+              <div class="update-action" style="display: flex; align-items: center; gap: 8px;">
+                <select id="status-${del.id}" class="text-input" data-original="${del.status}" onchange="onStatusChange('${del.id}')" style="padding: 4px 8px; border-radius: var(--rounded-xs); font-size: var(--type-caption-size); appearance: auto;">
+                  <option value="sent to port" ${del.status === 'sent to port' ? 'selected' : ''}>At Port</option>
                   <option value="on the way" ${del.status === 'on the way' ? 'selected' : ''}>On the Way</option>
                   <option value="delivered">Delivered</option>
                 </select>
-                <button class="button-utility" style="padding: 4px 8px;" onclick="updateStatus('${del.id}')">Update</button>
+                <button id="btn-${del.id}" class="button-utility" style="padding: 4px 8px; display: none;" onclick="updateStatus('${del.id}')">Update</button>
+                <button class="button-utility" style="padding: 4px 8px;" onclick="toggleDetails('${del.id}')">Items</button>
               </div>
             `;
+          }
 
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
+          // Accordion panel HTML content
+          let itemsHtml = `
+            <div style="padding: 10px 14px; background: var(--color-canvas-soft); border: 1px solid var(--color-hairline); border-radius: var(--rounded-md); margin-top: 4px;">
+              <div style="font-weight: 600; margin-bottom: 6px; font-size: 13px; color: var(--color-ink-secondary);">Package Items & Vendor Dispatch Checklist:</div>
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <thead>
+                  <tr style="border-bottom: 1px solid var(--color-hairline); text-align: left; color: var(--color-ink-muted);">
+                    <th style="padding: 4px 8px;">Product</th>
+                    <th style="padding: 4px 8px; width: 60px;">Qty</th>
+                    <th style="padding: 4px 8px;">Vendor</th>
+                    <th style="padding: 4px 8px; width: 180px;">Dispatch Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+          
+          if (del.items && del.items.length > 0) {
+            del.items.forEach(item => {
+              const dispText = item.is_dispatched ? "✓ Sent to Port" : "⚠ Pending Vendor";
+              const dispStyle = item.is_dispatched ? "color: var(--color-accent-green); font-weight: 600;" : "color: var(--color-accent-orange); font-weight: 600;";
+              itemsHtml += `
+                <tr style="border-bottom: 1px solid var(--color-hairline-soft);">
+                  <td style="padding: 6px 8px;">${item.product_name}</td>
+                  <td style="padding: 6px 8px;">${item.quantity}</td>
+                  <td style="padding: 6px 8px; color: var(--color-ink-secondary);">${item.vendor_name}</td>
+                  <td style="padding: 6px 8px; ${dispStyle}">${dispText}</td>
+                </tr>
+              `;
+            });
+          } else {
+            itemsHtml += `<tr><td colspan="4" style="padding: 8px; color: var(--color-ink-muted); text-align: center;">No item details available.</td></tr>`;
+          }
+          itemsHtml += `</tbody></table></div>`;
+
+          const trMain = document.createElement("tr");
+          trMain.innerHTML = `
             <td><strong>${del.id}</strong></td>
             <td>
               <div style="font-weight: 500;">${del.customer}</div>
@@ -124,11 +179,42 @@
             <td><span class="status-pill ${statusClass}">${statusText}</span></td>
             <td>${actionContent}</td>
           `;
-          tbody.appendChild(tr);
+          
+          const trDetail = document.createElement("tr");
+          trDetail.id = `details-${del.id}`;
+          trDetail.style.display = "none";
+          trDetail.innerHTML = `
+            <td colspan="6" style="padding: 0 12px 12px 12px; border-top: none;">
+              ${itemsHtml}
+            </td>
+          `;
+          
+          tbody.appendChild(trMain);
+          tbody.appendChild(trDetail);
         });
       })
       .catch(err => console.error("Error fetching deliveries:", err));
     });
+
+    window.toggleDetails = (deliveryId) => {
+      const row = document.getElementById(`details-${deliveryId}`);
+      if (row.style.display === "none") {
+        row.style.display = "table-row";
+      } else {
+        row.style.display = "none";
+      }
+    };
+
+    window.onStatusChange = (deliveryId) => {
+      const select = document.getElementById(`status-${deliveryId}`);
+      const btn = document.getElementById(`btn-${deliveryId}`);
+      const original = select.getAttribute('data-original');
+      if (select.value !== original) {
+        btn.style.display = "inline-block";
+      } else {
+        btn.style.display = "none";
+      }
+    };
 
     window.updateStatus = async (deliveryId) => {
       const newStatus = document.getElementById('status-' + deliveryId).value;

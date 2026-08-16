@@ -18,13 +18,20 @@ vendor_bp = Blueprint("vendor_bp", __name__)
 def register_vendor():
     """Register a new vendor store."""
     data = request.get_json() or {}
+    email = data.get("email")
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
     vendor = marketplace.registerVendor(
         data.get("vendor_name"),
         data.get("password"),
-        data.get("email"),
+        email,
         data.get("address", ""),
         phone_number=data.get("phone_number")
     )
+    if not vendor:
+        return jsonify({"error": "A vendor with this email already exists"}), 400
+
     payload = {
         "vendor_id": vendor.unique_id,
         "exp": datetime.now(timezone.utc) + timedelta(hours=24)
@@ -68,6 +75,13 @@ def get_vendor_products(current_vendor_id):
 def add_vendor_product(current_vendor_id):
     """Create a new product listing."""
     data = request.get_json() or {}
+    stock = data.get("stock")
+    if stock is not None:
+        try:
+            if int(stock) < 1:
+                return jsonify({"error": "Initial stock must be at least 1 unit"}), 400
+        except ValueError:
+            return jsonify({"error": "Stock must be an integer"}), 400
     new_product = marketplace.add_product(current_vendor_id, data)
     return jsonify({"message": "Product created successfully", "product": new_product.to_dict()}), 201
 
@@ -77,6 +91,13 @@ def add_vendor_product(current_vendor_id):
 def update_vendor_product(current_vendor_id, product_id):
     """Update product details, price, description, or stock inventory."""
     updates = request.get_json() or {}
+    stock = updates.get("stock")
+    if stock is not None:
+        try:
+            if int(stock) < 0:
+                return jsonify({"error": "Stock quantity cannot be negative"}), 400
+        except ValueError:
+            return jsonify({"error": "Stock must be an integer"}), 400
     updated = marketplace.update_product(current_vendor_id, product_id, updates)
     return jsonify({"message": "Product updated successfully", "product": updated.to_dict()}), 200
 

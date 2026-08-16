@@ -6,10 +6,10 @@ class Delivery:
         self.delivery_id = delivery_id or str(uuid.uuid4())[:6]
         self.order_id = order_id
         
-        # Validate status against SQL check constraint: ('delivered', 'sent to port', 'on the way')
-        valid_statuses = {"delivered", "sent to port", "on the way"}
+        # Validate status against SQL check constraint: ('delivered', 'in port', 'on the way', 'pending')
+        valid_statuses = {"delivered", "in port", "on the way", "pending"}
         status_lower = delivery_status.lower()
-        self.delivery_status = status_lower if status_lower in valid_statuses else "on the way"
+        self.delivery_status = status_lower if status_lower in valid_statuses else "pending"
         
         # Set default estimated delivery date to 5 days from now
         if estimated_delivery_date is None:

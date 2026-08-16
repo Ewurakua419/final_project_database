@@ -58,7 +58,7 @@
                 <h3 class="product-title">${product.name}</h3>
                 <div class="product-meta">
                   <span>Category: ${product.type || 'General'}</span>
-                  <span>Stock: 50 units</span>
+                  <span>Stock: ${product.stock !== undefined ? product.stock : 0} units</span>
                 </div>
               </div>
               <div class="product-price">GH₵${price}</div>
