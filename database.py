@@ -307,8 +307,8 @@ def get_all_orders():
     return orders
 
 def add_order(order_dict):
-    order_id = order_dict["order_id"][:6]
-    customer_id = order_dict["user_id"][:6]
+    order_id = order_dict["order_id"]
+    customer_id = order_dict["user_id"]
     subtotal = order_dict["pricing_summary"]["subtotal"]
     shipping_fee = order_dict["pricing_summary"]["shipping"]
     
@@ -323,7 +323,7 @@ def add_order(order_dict):
         
         # Insert into order_items
         for item in order_dict.get("items", []):
-            prod_id = item["product_id"][:6]
+            prod_id = item["product_id"]
             qty = item["quantity"]
             cursor.execute(
                 "INSERT INTO order_items (product_id, order_id, quantity, added_date) VALUES (%s, %s, %s, CURRENT_DATE)",
@@ -333,7 +333,7 @@ def add_order(order_dict):
         # Log payment details if provided
         pay_details = order_dict.get("payment_details")
         if pay_details:
-            pay_id = str(uuid.uuid4())[:6]
+            pay_id = str(uuid.uuid4())
             pay_type = "card"
             brand = pay_details.get("brand", "Card").lower()
             if brand in ["mtn", "telecel", "at", "momo"]:
@@ -383,11 +383,11 @@ def add_order(order_dict):
         conn.close()
 
 def add_address(address_dict):
-    address_id = address_dict["address_id"][:6]
+    address_id = address_dict["address_id"]
     city = address_dict["city"]
     landmark = address_dict.get("landmark") or address_dict.get("country", "")
     street_address = address_dict.get("street_address") or address_dict.get("street", "")
-    customer_id = address_dict["customer_id"][:6]
+    customer_id = address_dict["customer_id"]
     
     query = "INSERT INTO address (address_id, city, Landmark, street_address, customer_id) VALUES (%s, %s, %s, %s, %s)"
     run_query(query, (address_id, city, landmark, street_address, customer_id), commit=True)
@@ -416,12 +416,12 @@ def delete_address(address_id, customer_id):
     return rows_affected is not None and rows_affected > 0
 
 def add_delivery(delivery_dict):
-    delivery_id = delivery_dict["delivery_id"][:6]
-    order_id = delivery_dict["order_id"][:6]
+    delivery_id = delivery_dict["delivery_id"]
+    order_id = delivery_dict["order_id"]
     status = delivery_dict["delivery_status"]
     est_date = delivery_dict["estimated_delivery_date"]
-    address_id = delivery_dict["address_id"][:6] if delivery_dict.get("address_id") else None
-    shipping_id = delivery_dict["shipping_id"][:6] if delivery_dict.get("shipping_id") else None
+    address_id = delivery_dict["address_id"] if delivery_dict.get("address_id") else None
+    shipping_id = delivery_dict["shipping_id"] if delivery_dict.get("shipping_id") else None
     
     query = """
         INSERT INTO delivery (delivery_id, order_id, delivery_status, estimated_delivery_date, address_id, shipping_id) 
@@ -497,9 +497,9 @@ def get_reviews_by_product(product_id):
     return reviews
 
 def add_review(review_dict):
-    review_id = review_dict["review_id"][:6]
-    product_id = review_dict["product_id"][:6]
-    customer_id = review_dict["customer_id"][:6]
+    review_id = review_dict["review_id"]
+    product_id = review_dict["product_id"]
+    customer_id = review_dict["customer_id"]
     rating = review_dict["rating"]
     comment = review_dict["comment"]
     
@@ -550,8 +550,8 @@ def find_beauty_attributes(product_id):
     return None
 
 def addproduct(product_dict):
-    product_id = product_dict["product_id"][:6]
-    vendor_id = product_dict["vendor_id"][:6]
+    product_id = product_dict["product_id"]
+    vendor_id = product_dict["vendor_id"]
     product_name = product_dict["product_name"]
     description = product_dict["description"]
     price = product_dict["price"]
@@ -566,7 +566,7 @@ def addproduct(product_dict):
     run_query(query, (product_id, vendor_id, product_name, description, price, stock_quantity, product_type, image_url), commit=True)
 
 def add_fashion(fashion_dict):
-    product_id = fashion_dict["product_id"][:6]
+    product_id = fashion_dict["product_id"]
     color = fashion_dict["color"]
     material = fashion_dict["material"]
     size = fashion_dict["size"]
@@ -582,7 +582,7 @@ def add_fashion(fashion_dict):
     run_query(query, (product_id, color, material, size, gender_category), commit=True)
 
 def add_beauty(beauty_dict):
-    product_id = beauty_dict["product_id"][:6]
+    product_id = beauty_dict["product_id"]
     skin_type = beauty_dict["skin_type"]
     volume_weight = beauty_dict["volume_weight"]
     is_organic = beauty_dict["Is_organic"]
@@ -1058,7 +1058,7 @@ def get_all_shipping_companies():
 
 def register_shipping_company(name, email, phone_number, password_hash, shipping_id=None):
     if not shipping_id:
-        shipping_id = ("SH" + str(uuid.uuid4()).replace("-", "").upper())[:6]
+        shipping_id = ("SH" + str(uuid.uuid4()).replace("-", "").upper())
     else:
         shipping_id = shipping_id
         
