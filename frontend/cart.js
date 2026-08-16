@@ -179,9 +179,19 @@ cartItemsContainer.addEventListener("click", (e) => {
       },
       body: JSON.stringify({ quantity: newQty })
     })
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) {
+        return res.json().then(errData => {
+          throw new Error(errData.error || "Failed to update quantity");
+        });
+      }
+      return res.json();
+    })
     .then(() => fetchCart())
-    .catch(err => console.error(err));
+    .catch(err => {
+      alert(err.message);
+      fetchCart();
+    });
   }
 });
 
@@ -206,7 +216,14 @@ export const addToCart = (prod_id, quantity) => {
       "Authorization": "Bearer " + localStorage.getItem("authToken")
     },
     body: JSON.stringify({ product_id: prod_id, quantity: quantity })
-  }).then(res => res.json());
+  }).then(res => {
+    if (!res.ok) {
+      return res.json().then(errData => {
+        throw new Error(errData.error || "Failed to add to cart");
+      });
+    }
+    return res.json();
+  });
 };
 
 export const fetchCart = () => {

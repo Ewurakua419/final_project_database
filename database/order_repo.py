@@ -352,3 +352,14 @@ def checkout(customer_id):
     """
     run_query(query, (customer_id,), commit=True)
     return True
+
+def update_cart_qty(product_id, customer_id, quantity):
+    """Directly updates a cart item quantity, triggering BEFORE UPDATE database stock checks."""
+    query = """
+        UPDATE cart_items ci
+        JOIN cart c ON ci.cart_id = c.cart_id
+        SET ci.quantity = %s
+        WHERE ci.product_id = %s AND c.customer_id = %s
+    """
+    run_query(query, (quantity, product_id, customer_id), commit=True)
+    return True

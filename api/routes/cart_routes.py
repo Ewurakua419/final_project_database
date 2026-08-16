@@ -50,13 +50,22 @@ def remove_cart_item(current_user_id, product_id):
 @cart_bp.route("/cart/<product_id>/quantity", methods=["PUT"])
 @token_required
 def update_cart_item_qty(current_user_id, product_id):
-    """Update item quantity in cart."""
+    """Update item quantity in cart with real-time stock checks."""
     data = request.get_json() or {}
     qty = int(data.get("quantity", 0))
-    marketplace.remove_from_cart(product_id, current_user_id)
-    if qty > 0:
-        marketplace.add_to_cart(product_id, current_user_id, qty)
-    return jsonify({"message": "Cart updated successfully"}), 200
+    
+    import database
+    try:
+        if qty <= 0:
+            marketplace.remove_from_cart(product_id, current_user_id)
+        else:
+            database.update_cart_qty(product_id, current_user_id, qty)
+        return jsonify({"message": "Cart updated successfully"}), 200
+    except Exception as e:
+        err_msg = str(e)
+        if "Insufficient stock" in err_msg or "insufficient stock" in err_msg.lower():
+            err_msg = "Insufficient stock available"
+        return jsonify({"error": err_msg}), 400
 
 
 @cart_bp.route("/checkout", methods=["POST"])
@@ -64,16 +73,24 @@ def update_cart_item_qty(current_user_id, product_id):
 def process_checkout(current_user_id):
     """Process customer order checkout, create delivery record and record payment."""
     data = request.get_json() or {}
-    order = marketplace.checkout(
-        current_user_id,
-        shipping_address=data.get("shipping_address"),
-        payment_details=data.get("payment_details"),
-        shipping_fee=float(data.get("shipping_fee", 5.00)),
-        shipping_id=data.get("shipping_id")
-    )
-    if order is None:
-        return jsonify({"error": "Cart is empty or order could not be placed"}), 400
-    return jsonify(order.to_dict()), 201
+    try:
+        order = marketplace.checkout(
+            current_user_id,
+            shipping_address=data.get("shipping_address"),
+            payment_details=data.get("payment_details"),
+            shipping_fee=float(data.get("shipping_fee", 5.00)),
+            shipping_id=data.get("shipping_id")
+        )
+        if order is None:
+            return jsonify({"error": "Cart is empty or order could not be placed"}), 400
+        return jsonify(order.to_dict()), 201
+    except Exception as e:
+        err_msg = str(e)
+        if "Insufficient stock" in err_msg or "insufficient stock" in err_msg.lower():
+            err_msg = "Insufficient stock available for one of the items in your cart."
+        elif "Cannot place an order with an empty cart" in err_msg:
+            err_msg = "Cannot place an order with an empty cart"
+        return jsonify({"error": err_msg}), 400
 
 
 @cart_bp.route("/orders", methods=["GET"])

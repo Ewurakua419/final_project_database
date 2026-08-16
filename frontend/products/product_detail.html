@@ -193,7 +193,7 @@
               })
               .catch(err => {
                 console.error(err);
-                alert("Failed to add to cart");
+                alert(err.message || "Failed to add to cart");
                 btn.innerText = originalText;
               });
             });

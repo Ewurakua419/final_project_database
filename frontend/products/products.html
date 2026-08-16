@@ -131,6 +131,7 @@
           })
           .catch(err => {
             console.error(err);
+            alert(err.message || "Failed to add to cart");
             e.target.innerText = "Error!";
             e.target.style.backgroundColor = "var(--color-accent-orange)";
             setTimeout(() => {

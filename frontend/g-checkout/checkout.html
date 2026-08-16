@@ -287,7 +287,11 @@
           })
         })
         .then(res => {
-          if (!res.ok) throw new Error("Checkout failed");
+          if (!res.ok) {
+            return res.json().then(errData => {
+              throw new Error(errData.error || "Checkout failed");
+            });
+          }
           return res.json();
         })
         .then(orderData => {
@@ -297,6 +301,7 @@
         })
         .catch(err => {
           console.error(err);
+          alert(err.message || "Checkout failed");
           btn.innerText = "Error: Please try again";
           btn.style.backgroundColor = "var(--color-accent-orange)";
           setTimeout(() => {
