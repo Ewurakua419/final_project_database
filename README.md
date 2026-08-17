@@ -11,47 +11,6 @@
 - **Backend API**: Python (Flask)
 - **Frontend**: HTML, CSS, JavaScript (served via browser/Live Server)
 
----
-
-## Directory Structure
-
-```text
-Project/
-│
-├── Documentation/
-│   ├── DESIGN.md
-│   └── README_CHANGES.md
-│
-├── Database/
-│   ├── create_database.sql
-│   ├── create_tables.sql
-│   ├── insert_data.sql
-│   ├── queries.sql
-│   ├── views.sql
-│   ├── procedures.sql
-│   └── triggers.sql
-│
-├── Application/
-│   ├── source code/
-│   │   ├── api/
-│   │   ├── database/
-│   │   ├── model/
-│   │   ├── service/
-│   │   ├── frontend/
-│   │   └── auth.py
-│   └── configuration files/
-│       ├── .env
-│       └── .gitignore
-│
-├── Screenshots/
-│
-├── Video/
-│   └── project_demo.mp4
-│
-└── README.md
-```
-
----
 
 ## Getting Started
 
