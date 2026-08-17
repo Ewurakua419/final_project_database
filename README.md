@@ -1,84 +1,100 @@
-<h3></h3>
-E-commerce platform 
+# E-commerce Platform
 
+### Project Members
+- Gabriel Kwesi Takyi Akurang
+- Ewurakua Amoah
+- Haris Tiyumtaba Issah
+- Emmanuel Kwesi Bentsil Odoom
 
-Gabriel Kwesi Takyi Akurang
-Ewurakua Amoah
-Haris Tiyumtaba Issah
-Emmanuel Kwesi Bentsil Odoom
+### Tech Stack
+- **Database**: MariaDB / MySQL
+- **Backend API**: Python (Flask)
+- **Frontend**: HTML, CSS, JavaScript (served via browser/Live Server)
 
-Maria DB, MySQL Workbench, VS Code, Python
+---
 
-Maria DB
+## Directory Structure
 
-Python programming language with the Flask framework
-
-The application is web based hence installation won't be necessary. All that is required is the web URL. 
-
-The database is already created and exists on a server. All one has to do to interact with it is to enter the web URL of the platform and to engage with the frontend interface.
-
-The Database is populated when users provide query information on the frontend. Users with no clearance have no direct access to the database.
-
-The application is run by starting the server and loading the frontend components. After this, an event loop that consists of the server consistently logging actions is spun. This makes the web service accessible via a localhost
-
-## Getting Started (For Group Members)
-
-### 1. Database Setup Order
-To recreate the database locally on your device, execute the SQL files in your MariaDB instance in this exact order:
-1. `new_ddl.sql` (Creates schemas and tables with UUID/VARCHAR(36) and activation flags support)
-2. `new_dml.sql` (Inserts seeded mock data with pre-hashed bcrypt passwords)
-3. `new_phase 6 and 7.sql` (Unified roles, privileges, views, stored procedures, functions, and triggers)
-
-*(Note: The old files `ddl.sql`, `dml.sql`, and `phase 6 and 7.sql` represent initial stages. The obsolete migration files `Haris_changes*.sql` and `update_passwords.sql` have been removed as they are fully consolidated into the `new_*.sql` files).*
-
-
-### 2. Initial Stakeholders (Emails & Passwords)
- You can use the following default credentials to access the platform:
-
-**Vendors** (Password for all vendors is **`vendor123`**):
-- `info@vndr01.com`
-- `info@vndr02.com`
-- `info@vndr03.com`
-- `info@vndr04.com`
-- `info@vndr05.com`
-
-**Admin**:
-- Email / Username: **`admin`**
-- Password: **`admin`**
-
-**Customers**:
-- `kofi.mensah1@email.com`
-- `ama.asante2@email.com`
-- `john.doe3@email.com`
-- `kwame.osei4@email.com`
-- `esi.boakye5@email.com`
-
-**Shipping Companies**:
-- `speedy@shipping.gh`
-- `ecotransit@shipping.gh`
-- `dropx@shipping.gh`
-- `aramex@shipping.gh`
-- `dhl@shipping.gh`
-
-*(Password for all Customers & Shipping Companies is **`password123`**)*
-
-### 3. Modifying `database.py`
-To connect the application to your local database, you need to open `database.py` and modify the `user` property inside the `connect()` function (around line 10) to match your MariaDB username.
-```python
-def connect():
-    return mariadb.connect(
-        host="localhost",
-        user="root", # Change 'harisissah' to your own MariaDB username (e.g. 'root')
-        password=os.getenv("MARIA_DB_PASS"),
-        database="ecommerce",
-        port=3306
-    )
+```text
+Project/
+│
+├── Documentation/
+│   ├── DESIGN.md
+│   └── README_CHANGES.md
+│
+├── Database/
+│   ├── create_database.sql
+│   ├── create_tables.sql
+│   ├── insert_data.sql
+│   ├── queries.sql
+│   ├── views.sql
+│   ├── procedures.sql
+│   └── triggers.sql
+│
+├── Application/
+│   ├── source code/
+│   │   ├── api/
+│   │   ├── database/
+│   │   ├── model/
+│   │   ├── service/
+│   │   ├── frontend/
+│   │   └── auth.py
+│   └── configuration files/
+│       ├── .env
+│       └── .gitignore
+│
+├── Screenshots/
+│
+├── Video/
+│   └── project_demo.mp4
+│
+└── README.md
 ```
 
-### 4. Setting up the `.env` File
-Create a new file named `.env` in the root folder of the project (next to `database.py`) and add the following lines. Make sure to replace the `MARIA_DB_PASS` value with your actual MariaDB password. Also, you can change the secret key to whatever you want:
+---
+
+## Getting Started
+
+### 1. Database Setup Order
+To recreate the database locally, execute the SQL files inside the `Database/` directory in this exact order:
+1. `create_database.sql` (Creates and selects the database schema)
+2. `create_tables.sql` (Creates all tables, constraints, roles, and privileges)
+3. `insert_data.sql` (Inserts mock seed data with pre-hashed passwords)
+4. `views.sql` (Creates all reporting and analytics views)
+5. `procedures.sql` (Creates custom stored functions and procedures)
+6. `triggers.sql` (Registers database event triggers)
+
+*Note: For testing, sample database queries can be found in `queries.sql`.*
+
+### 2. Initial Stakeholders (Emails & Passwords)
+Use the following credentials to access the platform:
+
+**Vendors** (Password: **`vendor123`**):
+- `info@vndr01.com` to `info@vndr05.com`
+
+**Admin**:
+- Username: **`admin`**
+- Password: **`admin`**
+
+**Customers & Shipping Companies** (Password: **`password123`**):
+- Customers: `kofi.mensah1@email.com`, `ama.asante2@email.com`, etc.
+- Shipping: `speedy@shipping.gh`, `dhl@shipping.gh`, etc.
+
+### 3. Setting up the `.env` File
+Ensure your `.env` file is located inside `Application/configuration files/` with the following configuration:
 
 ```env
 MARIA_DB_PASS='your_database_password_here'
 SECRET_KEY='any_secret_key_of_choice'
+MARIA_DB_USER='your_username_here' # e.g. root or harisissah
 ```
+
+### 4. Running the Backend Server
+To run the Flask application, navigate into the source directory and run `app.py`:
+
+```bash
+cd "Application/source code"
+python api/app.py
+```
+
+This starts the development server on `http://127.0.0.1:5001`. The frontend static pages can then be launched (e.g. using Live Server or direct browser loading).

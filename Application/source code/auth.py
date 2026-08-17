@@ -5,7 +5,9 @@ import bcrypt
 from typing import Union
 
 import jwt
-dotenv.load_dotenv()
+# Load .env from Application/configuration files/.env
+dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'configuration files', '.env')
+dotenv.load_dotenv(dotenv_path=dotenv_path)
 SECRET_KEY=os.getenv("SECRET_KEY")
 def encodere(password:str):
     # converting password to array of bytes

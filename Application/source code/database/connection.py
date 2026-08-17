@@ -2,7 +2,9 @@ import os
 import mariadb
 import dotenv
 
-dotenv.load_dotenv()
+# Load .env from Application/configuration files/.env
+dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'configuration files', '.env')
+dotenv.load_dotenv(dotenv_path=dotenv_path)
 
 # Initialize a global connection pool
 try:

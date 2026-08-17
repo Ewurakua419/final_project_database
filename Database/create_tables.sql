@@ -1,10 +1,9 @@
--- new_ddl.sql
--- Unified Database Schema Definition
+-- create_tables.sql
+-- Unified Database Table Schemas & Privileges
 
-CREATE DATABASE IF NOT EXISTS ecommerce;
 USE ecommerce;
 
--- 1. Customer table (supporting suspension status and full UUIDs)
+-- 1. Customer table
 CREATE TABLE customer (
     customer_id VARCHAR(36) PRIMARY KEY,
     f_name VARCHAR(20),
@@ -22,7 +21,7 @@ CREATE TABLE customer_credentials (
     FOREIGN KEY (customer_id) REFERENCES customer(customer_id) ON DELETE CASCADE
 );
 
--- 3. Vendor table (supporting suspension status and full UUIDs)
+-- 3. Vendor table
 CREATE TABLE vendor (
     vendor_id VARCHAR(36) PRIMARY KEY,
     vendor_name VARCHAR(50) NOT NULL,
@@ -39,7 +38,7 @@ CREATE TABLE vendor_credentials (
     FOREIGN KEY (vendor_id) REFERENCES vendor(vendor_id) ON DELETE CASCADE
 );
 
--- 5. Product table (supporting soft delete, stock checks, and image URLs)
+-- 5. Product table
 CREATE TABLE product (
     product_id VARCHAR(36) PRIMARY KEY,
     vendor_id VARCHAR(36) NOT NULL,
@@ -69,7 +68,7 @@ CREATE TABLE review (
     CONSTRAINT chk_review_rating CHECK (rating BETWEEN 1 AND 5)
 );
 
--- 7. Cart table (enforcing strict 1-to-1 relationship with customer)
+-- 7. Cart table
 CREATE TABLE cart (
     cart_id VARCHAR(36) PRIMARY KEY,
     customer_id VARCHAR(36) NOT NULL,
@@ -77,7 +76,7 @@ CREATE TABLE cart (
     CONSTRAINT uq_cart_customer UNIQUE (customer_id)
 );
 
--- 8. Cart Items (supporting primary key constraint and check stock checks)
+-- 8. Cart Items
 CREATE TABLE cart_items (
     product_id VARCHAR(36) NOT NULL,
     cart_id VARCHAR(36) NOT NULL,
@@ -89,7 +88,7 @@ CREATE TABLE cart_items (
     CONSTRAINT chk_cart_quantity CHECK (quantity > 0)
 );
 
--- 9. Orders table (decoupled from cart_id redundancy)
+-- 9. Orders table
 CREATE TABLE orders (
     order_id VARCHAR(36) PRIMARY KEY,
     customer_id VARCHAR(36) NOT NULL,
@@ -141,7 +140,7 @@ CREATE TABLE shipping_credentials (
     FOREIGN KEY (shipping_id) REFERENCES shipping_company(shipping_id) ON DELETE CASCADE
 );
 
--- 13. Delivery shipment routing (defaulting status to pending)
+-- 13. Delivery shipment routing
 CREATE TABLE delivery (
     delivery_id VARCHAR(36) PRIMARY KEY,
     order_id VARCHAR(36) NOT NULL,
@@ -173,7 +172,7 @@ CREATE TABLE mobile_money (
     FOREIGN KEY (payment_id) REFERENCES payment(payment_id) ON DELETE CASCADE
 );
 
--- 16. Card details (supporting CVV and proper token sizes)
+-- 16. Card details
 CREATE TABLE card (
     payment_id VARCHAR(36) PRIMARY KEY,
     token_id VARCHAR(36) NOT NULL,
@@ -203,7 +202,7 @@ CREATE TABLE beauty (
     FOREIGN KEY (product_id) REFERENCES product(product_id) ON DELETE CASCADE
 );
 
--- 19. Order Items (supporting boolean vendor is_dispatched states)
+-- 19. Order Items
 CREATE TABLE order_items (
     product_id VARCHAR(36) NOT NULL,
     order_id VARCHAR(36) NOT NULL,
@@ -215,3 +214,43 @@ CREATE TABLE order_items (
     FOREIGN KEY (product_id) REFERENCES product(product_id),
     CONSTRAINT chk_orderitems_quantity CHECK (quantity > 0)
 );
+
+
+
+CREATE ROLE IF NOT EXISTS marketplace_admin;
+CREATE ROLE IF NOT EXISTS marketplace_vendor;
+CREATE ROLE IF NOT EXISTS marketplace_customer;
+CREATE ROLE IF NOT EXISTS marketplace_shipping_company;
+
+-- Admin Privileges
+GRANT SELECT, INSERT, UPDATE, DELETE ON ecommerce.* TO marketplace_admin;
+
+-- Vendor Privileges
+GRANT SELECT ON Product TO marketplace_vendor;
+GRANT SELECT ON Fashion TO marketplace_vendor;
+GRANT SELECT ON Beauty TO marketplace_vendor;
+GRANT INSERT, UPDATE ON Product TO marketplace_vendor;
+GRANT INSERT, UPDATE ON Fashion TO marketplace_vendor;
+GRANT INSERT, UPDATE ON Beauty TO marketplace_vendor;
+GRANT SELECT ON Order_Items TO marketplace_vendor;
+GRANT SELECT ON Orders TO marketplace_vendor;
+
+-- Customer Privileges
+GRANT SELECT, INSERT, UPDATE ON Cart_Items TO marketplace_customer;
+GRANT SELECT, INSERT, UPDATE ON Cart TO marketplace_customer;
+GRANT SELECT, INSERT ON Orders TO marketplace_customer;
+GRANT SELECT, INSERT ON Order_Items TO marketplace_customer;
+GRANT SELECT, INSERT ON Review TO marketplace_customer;
+GRANT SELECT, INSERT, UPDATE ON Address TO marketplace_customer;
+
+-- Shipping Company Privileges
+-- Address View
+DROP VIEW IF EXISTS Shipping_Delivery_Address;
+CREATE VIEW Shipping_Delivery_Address AS
+SELECT address_id, city, Landmark, street_address
+FROM Address;
+
+GRANT SELECT ON Shipping_Delivery_Address TO marketplace_shipping_company;
+GRANT SELECT, UPDATE ON Delivery TO marketplace_shipping_company;
+
+
