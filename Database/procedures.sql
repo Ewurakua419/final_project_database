@@ -1,5 +1,4 @@
--- procedures.sql
--- Database Custom Stored Procedures and User-Defined Functions
+
 
 USE ecommerce;
 
