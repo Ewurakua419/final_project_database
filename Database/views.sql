@@ -1,5 +1,4 @@
--- views.sql
--- Reporting & Analytics Views
+
 
 USE ecommerce;
 
