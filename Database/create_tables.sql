@@ -1,5 +1,3 @@
--- create_tables.sql
--- Unified Database Table Schemas & Privileges
 
 USE ecommerce;
 
