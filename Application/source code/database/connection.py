@@ -9,10 +9,10 @@ dotenv.load_dotenv(dotenv_path=dotenv_path)
 # Initialize a global connection pool
 try:
     db_pool = mariadb.ConnectionPool(
-        host=os.getenv("MARIA_DB_HOST", "localhost"),
-        user=os.getenv("MARIA_DB_USER", "harisissah"),
+        host=os.getenv("MARIA_DB_HOST"),
+        user=os.getenv("MARIA_DB_USER"),
         password=os.getenv("MARIA_DB_PASS"),
-        database=os.getenv("MARIA_DB_DB", "ecommerce"),
+        database=os.getenv("MARIA_DB_DB"),
         port=int(os.getenv("MARIA_DB_PORT", 3306)),
         pool_name="ecommerce_pool",
         pool_size=10

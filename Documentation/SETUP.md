@@ -59,7 +59,7 @@ To set up the database schema, roles, and populate seed data:
    - Add the following configurations, ensuring you replace the placeholder values with your MariaDB database settings:
      ```env
      MARIA_DB_PASS='your_database_password_here'
-     SECRET_KEY='choose_any_jwt_secret_key'
+     SECRET_KEY='choose_any_secret_key'
      MARIA_DB_USER='your_username' # E.g., 'root' or 'harisissah'
      MARIA_DB_HOST='localhost'
      MARIA_DB_PORT=3306
