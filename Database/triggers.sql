@@ -1,5 +1,4 @@
--- triggers.sql
--- Automated Triggers for E-commerce Business Rules
+
 
 USE ecommerce;
 
