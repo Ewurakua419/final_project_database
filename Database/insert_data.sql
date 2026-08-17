@@ -1,5 +1,4 @@
--- new_dml.sql
--- Seed Data for the E-commerce Database
+
 
 USE ecommerce;
 
