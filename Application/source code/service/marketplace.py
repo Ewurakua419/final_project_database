@@ -1,6 +1,3 @@
-# service/marketplace.py
-# Backward-compatible Facade mapping to modular domain-specific services
-
 import database
 from service.customer_service import CustomerService
 from service.vendor_service import VendorService

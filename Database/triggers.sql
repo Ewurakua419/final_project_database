@@ -4,7 +4,7 @@ USE ecommerce;
 
 DELIMITER //
 
--- Trigger: trg_check_initial_stock_before_insert
+-- trg_check_initial_stock_before_insert
 -- Enforces that a product must have at least 1 unit of stock when it is initially created.
 DROP TRIGGER IF EXISTS trg_check_initial_stock_before_insert //
 CREATE TRIGGER trg_check_initial_stock_before_insert
@@ -17,7 +17,7 @@ BEGIN
     END IF;
 END //
 
--- Trigger: trg_reduce_stock_after_order_item
+-- trg_reduce_stock_after_order_item
 -- Deducts stock from Product table automatically after an order item is created.
 DROP TRIGGER IF EXISTS trg_reduce_stock_after_order_item //
 CREATE TRIGGER trg_reduce_stock_after_order_item
@@ -29,7 +29,7 @@ BEGIN
     WHERE product_id = NEW.product_id;
 END //
 
--- Trigger: trg_check_stock
+-- trg_check_stock
 -- Prevents users from adding quantities to cart that exceed available stock.
 DROP TRIGGER IF EXISTS trg_check_stock //
 CREATE TRIGGER trg_check_stock
@@ -55,7 +55,7 @@ BEGIN
     END IF;
 END //
 
--- Trigger: trg_check_stock_onupdate
+-- trg_check_stock_onupdate
 -- Checks stock limit before updating cart item quantity.
 DROP TRIGGER IF EXISTS trg_check_stock_onupdate //
 CREATE TRIGGER trg_check_stock_onupdate
@@ -81,7 +81,7 @@ BEGIN
     END IF;
 END //
 
--- Trigger: trg_set_review_date
+-- trg_set_review_date
 -- Set review date to current timestamp automatically.
 DROP TRIGGER IF EXISTS trg_set_review_date //
 CREATE TRIGGER trg_set_review_date
@@ -91,7 +91,7 @@ BEGIN
     SET NEW.review_date = CURRENT_DATE;
 END //
 
--- Trigger: trg_auto_update_delivery_status_to_port
+-- trg_auto_update_delivery_status_to_port
 -- Automatically transitions delivery status from 'pending' to 'in port' once all vendors dispatch items.
 DROP TRIGGER IF EXISTS trg_auto_update_delivery_status_to_port //
 CREATE TRIGGER trg_auto_update_delivery_status_to_port
@@ -113,7 +113,7 @@ BEGIN
     END IF;
 END //
 
--- Trigger: trg_evict_cart_items_on_soft_delete
+-- trg_evict_cart_items_on_soft_delete
 -- Automatically evicts items from shopping carts when a product is soft-deleted.
 DROP TRIGGER IF EXISTS trg_evict_cart_items_on_soft_delete //
 CREATE TRIGGER trg_evict_cart_items_on_soft_delete
@@ -125,7 +125,7 @@ BEGIN
     END IF;
 END //
 
--- Trigger: trg_on_vendor_status_change
+-- trg_on_vendor_status_change
 -- Soft-deactivates all vendor products when the vendor is suspended, and reactivates them when the vendor is reactivated.
 DROP TRIGGER IF EXISTS trg_on_vendor_status_change //
 CREATE TRIGGER trg_on_vendor_status_change

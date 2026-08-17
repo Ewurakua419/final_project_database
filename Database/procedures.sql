@@ -104,7 +104,7 @@ BEGIN
 END //
 
 -- Procedure: sp_place_order
--- Places an order, copies cart items to order items, and clears the cart (decoupled from redundant cart_id inside orders table).
+-- Places an order, copies cart items to order items, and clears the cart.
 DROP PROCEDURE IF EXISTS sp_place_order //
 CREATE PROCEDURE sp_place_order(
     IN p_order_id VARCHAR(36),
@@ -154,11 +154,11 @@ BEGIN
     JOIN product p ON ci.product_id = p.product_id
     WHERE ci.cart_id = v_cart_id;
 
-    -- Create order (without cart_id column)
+    -- Create order
     INSERT INTO orders (order_id, customer_id, order_date, subtotal, shipping_fee)
     VALUES (p_order_id, p_customer_id, CURRENT_TIMESTAMP, v_subtotal, 0);
 
-    -- Copy items to order_items (automatically fires trigger to check stock limits and reduce stock!)
+    -- Copy items to order_items
     INSERT INTO order_items (product_id, order_id, quantity, added_date, is_dispatched)
     SELECT product_id, p_order_id, quantity, added_date, FALSE
     FROM cart_items

@@ -1,21 +1,24 @@
 # E-commerce Platform
 
-### Project Members
+## Project Members
+
 - Gabriel Kwesi Takyi Akurang
 - Ewurakua Amoah
 - Haris Tiyumtaba Issah
 - Emmanuel Kwesi Bentsil Odoom
 
-### Tech Stack
+## Tech Stack
+
 - **Database**: MariaDB / MySQL
 - **Backend API**: Python (Flask)
 - **Frontend**: HTML, CSS, JavaScript (served via browser/Live Server)
 
-
 ## Getting Started
 
 ### 1. Database Setup Order
+
 To recreate the database locally, execute the SQL files inside the `Database/` directory in this exact order:
+
 1. `create_database.sql` (Creates and selects the database schema)
 2. `create_tables.sql` (Creates all tables, constraints, roles, and privileges)
 3. `insert_data.sql` (Inserts mock seed data with pre-hashed passwords)
@@ -23,23 +26,28 @@ To recreate the database locally, execute the SQL files inside the `Database/` d
 5. `procedures.sql` (Creates custom stored functions and procedures)
 6. `triggers.sql` (Registers database event triggers)
 
-*Note: For testing, sample database queries can be found in `queries.sql`.*
+_Note: For testing, sample database queries can be found in `queries.sql`._
 
 ### 2. Initial Stakeholders (Emails & Passwords)
+
 Use the following credentials to access the platform:
 
 **Vendors** (Password: **`vendor123`**):
+
 - `info@vndr01.com` to `info@vndr05.com`
 
 **Admin**:
+
 - Username: **`admin`**
 - Password: **`admin`**
 
 **Customers & Shipping Companies** (Password: **`password123`**):
+
 - Customers: `kofi.mensah1@email.com`, `ama.asante2@email.com`, etc.
 - Shipping: `speedy@shipping.gh`, `dhl@shipping.gh`, etc.
 
 ### 3. Setting up the `.env` File
+
 Ensure your `.env` file is located inside `Application/configuration files/` with the following configuration:
 
 ```env
@@ -49,6 +57,7 @@ MARIA_DB_USER='your_username_here' # e.g. root or harisissah
 ```
 
 ### 4. Running the Backend Server
+
 To run the Flask application, navigate into the source directory and run `app.py`:
 
 ```bash

@@ -215,10 +215,10 @@ CREATE TABLE order_items (
 
 
 
-CREATE ROLE IF NOT EXISTS marketplace_admin;
-CREATE ROLE IF NOT EXISTS marketplace_vendor;
-CREATE ROLE IF NOT EXISTS marketplace_customer;
-CREATE ROLE IF NOT EXISTS marketplace_shipping_company;
+CREATE ROLE marketplace_admin;
+CREATE ROLE marketplace_vendor;
+CREATE ROLE marketplace_customer;
+CREATE ROLE marketplace_shipping_company;
 
 -- Admin Privileges
 GRANT SELECT, INSERT, UPDATE, DELETE ON ecommerce.* TO marketplace_admin;

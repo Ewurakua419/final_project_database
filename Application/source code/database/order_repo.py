@@ -152,10 +152,8 @@ def add_order(order_dict, delivery_dict=None):
     conn = connect()
     cursor = conn.cursor()
     try:
-        # 1. 调用已有的 stored procedure 扣减库存、创建订单、保存订单项并清空购物车
         cursor.execute("CALL sp_place_order(%s, %s)", (order_id, customer_id))
         
-        # 2. 保存支付信息
         pay_details = order_dict.get("payment_details")
         if pay_details:
             pay_id = str(uuid.uuid4())
@@ -198,7 +196,6 @@ def add_order(order_dict, delivery_dict=None):
                     (pay_id, pay_details.get("brand", "Ecobank"), account, "Bank Transfer")
                 )
                 
-        # 3. 关联配送信息（在同个事务内写入）
         if delivery_dict:
             delivery_id = delivery_dict["delivery_id"]
             status = delivery_dict["delivery_status"]

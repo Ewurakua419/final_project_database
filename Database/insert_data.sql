@@ -91,7 +91,7 @@ INSERT INTO vendor (vendor_id, vendor_name, email, phone_number, is_active) VALU
 ('VNDR09', 'Gold Coast Fabrics', 'info@vndr09.com', '+233209876509', TRUE),
 ('VNDR10', 'Akwaaba Fashion Hub', 'info@vndr10.com', '+233209876510', TRUE);
 
--- Vendor credentials (pre-hashed with bcrypt - password is 'vendor123')
+-- Vendor credentials
 INSERT INTO vendor_credentials (vendor_id, password_hash) VALUES
 ('VNDR01', '$2b$12$FOlLPYxyeH1gdQ0dxeN7W.fLeXCTYAnLhFTGxkxcQ3Xbdk2MZar.y'),
 ('VNDR02', '$2b$12$FOlLPYxyeH1gdQ0dxeN7W.fLeXCTYAnLhFTGxkxcQ3Xbdk2MZar.y'),
@@ -104,7 +104,7 @@ INSERT INTO vendor_credentials (vendor_id, password_hash) VALUES
 ('VNDR09', '$2b$12$FOlLPYxyeH1gdQ0dxeN7W.fLeXCTYAnLhFTGxkxcQ3Xbdk2MZar.y'),
 ('VNDR10', '$2b$12$FOlLPYxyeH1gdQ0dxeN7W.fLeXCTYAnLhFTGxkxcQ3Xbdk2MZar.y');
 
--- Seeding products (with image URLs and is_active active state)
+-- Seeding products
 INSERT INTO product (product_id, vendor_id, product_name, description, price, stock_quantity, product_type, image_url, is_active) VALUES
 ('PROD01', 'VNDR02', 'Sweet Tooth Scented Bar', 'Sweet-scented solid bar product in pink packaging.', 112.50, 45, 'beauty', 'https://i.pinimg.com/1200x/a7/ff/d9/a7ffd957dc9b2933d0c294c5344b1775.jpg', TRUE),
 ('PROD02', 'VNDR04', 'Signature Fragrance Perfume', 'Boxed fragrance perfume in a glass bottle.', 545.22, 12, 'beauty', 'https://i.pinimg.com/736x/a5/37/b9/a537b90cdd4e4f9e51ac8feae6551f45.jpg', TRUE),
@@ -254,7 +254,7 @@ INSERT INTO address (address_id, city, Landmark, street_address, customer_id) VA
 ('ADR034', 'Takoradi', 'Behind Station', '14 Harbor Road', 'CUST34'),
 ('ADR035', 'Tamale', 'Close to School', '7 Gbewaa Palace Lane', 'CUST35');
 
--- Orders (Decoupled from cart_id redundancy)
+-- Orders
 INSERT INTO orders (order_id, customer_id, order_date, subtotal, shipping_fee) VALUES
 ('ORD01', 'CUST00', '2026-08-02', 300.00, 30.00),
 ('ORD02', 'CUST02', '2026-08-02', 300.00, 30.00),
@@ -394,7 +394,7 @@ INSERT INTO review (review_id, product_id, customer_id, rating, review_date, com
 ('REV27', 'PROD23', 'CUST27', 5, '2026-08-05', 'Highly functional product'),('REV28', 'PROD25', 'CUST28', 5, '2026-08-05', 'Highly functional product'),
 ('REV29', 'PROD27', 'CUST29', 5, '2026-08-05', 'Highly functional product'),('REV30', 'PROD29', 'CUST30', 5, '2026-08-05', 'Highly functional product');
 
--- Seeding Order Items (all marked is_dispatched = TRUE for seeded delivered/in transit orders)
+-- Order Items
 INSERT INTO order_items (product_id, order_id, quantity, added_date, is_dispatched) VALUES
 ('PROD01', 'ORD01', 1, '2026-08-01', TRUE),('PROD02', 'ORD01', 2, '2026-08-01', TRUE),
 ('PROD03', 'ORD02', 1, '2026-08-01', TRUE),('PROD04', 'ORD02', 2, '2026-08-01', TRUE),
