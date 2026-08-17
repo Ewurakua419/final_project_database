@@ -1,5 +1,4 @@
--- queries.sql
--- Key Sample Queries for E-commerce Platform
+
 
 USE ecommerce;
 
