@@ -72,7 +72,7 @@
               const badgeStyle = isPending
                 ? 'background-color: rgba(221, 91, 0, 0.1); color: var(--color-accent-orange);'
                 : 'background-color: rgba(26, 174, 57, 0.1); color: var(--color-accent-green);';
-              const badgeText = isPending ? 'Pending' : 'Sent to Port';
+              const badgeText = isPending ? 'Pending' : 'In Port';
               const actionBtn = isPending
                 ? `<button class="button-utility send-to-port-btn" data-order-id="${order.order_id}" data-product-id="${item.product_id}" style="padding: 3px 10px; font-size: 11px; white-space: nowrap;">Send to Port</button>`
                 : `<span style="color: var(--color-accent-green); font-size: 12px; font-weight: 500;">✓ Done</span>`;
@@ -87,13 +87,13 @@
             });
 
             const fulfillmentNotice = pendingCount > 0
-              ? `<div style="padding: 8px 12px; margin-top: var(--spacing-sm); background: rgba(221, 91, 0, 0.06); border-radius: var(--rounded-md); font-size: 12px; color: var(--color-accent-orange);">⚠ ${pendingCount} item(s) still pending — courier dispatch is blocked until all items are sent to port.</div>`
-              : `<div style="padding: 8px 12px; margin-top: var(--spacing-sm); background: rgba(26, 174, 57, 0.06); border-radius: var(--rounded-md); font-size: 12px; color: var(--color-accent-green);">✓ All items sent to port — courier can dispatch.</div>`;
+              ? `<div style="padding: 8px 12px; margin-top: var(--spacing-sm); background: rgba(221, 91, 0, 0.06); border-radius: var(--rounded-md); font-size: 12px; color: var(--color-accent-orange);">⚠ ${pendingCount} item(s) still pending — courier dispatch is blocked until all items are in port.</div>`
+              : `<div style="padding: 8px 12px; margin-top: var(--spacing-sm); background: rgba(26, 174, 57, 0.06); border-radius: var(--rounded-md); font-size: 12px; color: var(--color-accent-green);">✓ All items in port — courier can dispatch.</div>`;
 
-            let deliveryStatusLabel = 'Sent to Port';
+            let deliveryStatusLabel = 'In Port';
             if (order.status === 'on the way') deliveryStatusLabel = 'In Transit';
             else if (order.status === 'delivered') deliveryStatusLabel = 'Delivered';
-            else if (order.status === 'sent to port') deliveryStatusLabel = 'At Port';
+            else if (order.status === 'in port') deliveryStatusLabel = 'In Port';
 
             container.innerHTML += `
               <div class="feature-card" style="margin-bottom: var(--spacing-xl);">
@@ -145,7 +145,7 @@
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + localStorage.getItem('vendorAuthToken')
                   },
-                  body: JSON.stringify({ item_status: 'sent to port' })
+                  body: JSON.stringify({ item_status: 'in port' })
                 });
                 const data = await res.json();
                 if (res.ok) {

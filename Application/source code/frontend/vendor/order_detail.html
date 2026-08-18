@@ -124,7 +124,7 @@
         const badgeStyle = isPending
           ? 'background-color: rgba(221, 91, 0, 0.1); color: var(--color-accent-orange);'
           : 'background-color: rgba(26, 174, 57, 0.1); color: var(--color-accent-green);';
-        const badgeText = isPending ? 'Pending' : 'Sent to Port';
+        const badgeText = isPending ? 'Pending' : 'In Port';
         const actionHtml = isPending
           ? `<button class="button-utility send-to-port-btn" data-order-id="${order.order_id}" data-product-id="${item.product_id}" style="padding: 4px 10px; font-size: 11px; margin-left: var(--spacing-sm);">Send to Port</button>`
           : `<span style="color: var(--color-accent-green); font-size: 12px; font-weight: 500; margin-left: var(--spacing-sm);">✓</span>`;
@@ -157,13 +157,13 @@
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + localStorage.getItem('vendorAuthToken')
               },
-              body: JSON.stringify({ item_status: 'sent to port' })
+              body: JSON.stringify({ item_status: 'in port' })
             });
             const data = await res.json();
             if (res.ok) {
               // Refresh the page — update the stored order data first
               const updatedItem = order.items.find(i => i.product_id === productId);
-              if (updatedItem) updatedItem.item_status = 'sent to port';
+              if (updatedItem) updatedItem.item_status = 'in port';
               sessionStorage.setItem('vendor_current_order', JSON.stringify(order));
               window.location.reload();
             } else {

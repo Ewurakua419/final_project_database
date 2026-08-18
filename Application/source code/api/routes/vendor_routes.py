@@ -143,11 +143,11 @@ def update_vendor_order_status(current_vendor_id, order_id):
 @vendor_bp.route("/vendor/orders/<order_id>/items/<product_id>/status", methods=["PUT"])
 @vendor_token_required
 def update_vendor_item_status(current_vendor_id, order_id, product_id):
-    """Vendor marks an individual order item as 'sent to port'."""
+    """Vendor marks an individual order item as 'in port'."""
     data = request.get_json() or {}
-    new_status = data.get("item_status", "sent to port")
-    if new_status not in ("pending", "sent to port"):
-        return jsonify({"error": "Invalid item status. Allowed: 'pending', 'sent to port'"}), 400
+    new_status = data.get("item_status", "in port")
+    if new_status not in ("pending", "in port"):
+        return jsonify({"error": "Invalid item status. Allowed: 'pending', 'in port'"}), 400
         
     product = marketplace.findproduct(product_id)
     if not product or product.vendor_id != current_vendor_id:

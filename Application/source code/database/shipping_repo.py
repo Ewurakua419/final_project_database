@@ -148,6 +148,9 @@ def get_deliveries_by_shipping_company(shipping_id):
 
 def update_delivery_status(delivery_id, new_status):
     """Utilizes the database stored procedure sp_update_delivery_status directly."""
+    if new_status == "sent to port":
+        new_status = "in port"
+        
     conn = connect()
     cursor = conn.cursor()
     try:

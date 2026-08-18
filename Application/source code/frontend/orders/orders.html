@@ -60,7 +60,7 @@
             const hasPendingItems = (order.items || []).some(i => i.item_status === 'pending');
 
             order.items.forEach(item => {
-              const itemReady = item.item_status === 'sent to port';
+              const itemReady = item.item_status === 'in port';
               const itemChip = itemReady
                 ? `<span style="font-size: 11px; color: var(--color-accent-green); background: rgba(26, 174, 57, 0.08); padding: 2px 8px; border-radius: var(--rounded-full); width: fit-content; font-weight: 500;">✓ Ready at Port</span>`
                 : `<span style="font-size: 11px; color: var(--color-accent-orange); background: rgba(221, 91, 0, 0.08); padding: 2px 8px; border-radius: var(--rounded-full); width: fit-content; font-weight: 500;">⏳ Preparing by Vendor</span>`;
@@ -80,7 +80,7 @@
               `;
             });
 
-            const rawDelStatus = order.delivery ? order.delivery.delivery_status : (order.status || 'sent to port');
+            const rawDelStatus = order.delivery ? order.delivery.delivery_status : (order.status || 'in port');
             let customerStatusText = 'Preparing by Vendor';
             let customerStatusColor = 'var(--color-accent-orange)';
 
@@ -90,12 +90,12 @@
             } else if (rawDelStatus === 'on the way') {
               customerStatusText = 'In Transit (On the Way)';
               customerStatusColor = 'var(--color-primary)';
-            } else if (rawDelStatus === 'sent to port') {
+            } else if (rawDelStatus === 'in port') {
               if (hasPendingItems) {
                 customerStatusText = 'Preparing at Vendor';
                 customerStatusColor = 'var(--color-accent-orange)';
               } else {
-                customerStatusText = 'At Port (Awaiting Dispatch)';
+                customerStatusText = 'In Port (Awaiting Dispatch)';
                 customerStatusColor = 'var(--color-primary)';
               }
             }

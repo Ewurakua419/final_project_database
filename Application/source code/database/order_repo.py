@@ -31,10 +31,10 @@ def get_all_orders():
         address_id = None
         delivery_obj = None
         if del_row:
-            status = "sent to port" if del_row[0] == "in port" else del_row[0]
+            status = del_row[0]
             address_id = del_row[1]
             delivery_obj = {
-                "delivery_status": "sent to port" if del_row[0] == "in port" else del_row[0],
+                "delivery_status": del_row[0],
                 "estimated_delivery_date": str(del_row[3]) if del_row[3] else "N/A",
                 "shipping_company": del_row[4] or "N/A"
             }
@@ -116,9 +116,9 @@ def get_all_orders():
                 "item_total": round(float(i_row[3]) * i_row[4], 2)
             }
             if len(i_row) > 5:
-                item_dict["item_status"] = "sent to port" if i_row[5] else "pending"
+                item_dict["item_status"] = "in port" if i_row[5] else "pending"
             else:
-                item_dict["item_status"] = "sent to port"
+                item_dict["item_status"] = "in port"
             items.append(item_dict)
             
         grand_total = round(subtotal + shipping_fee, 2)

@@ -147,7 +147,7 @@
           
           if (del.items && del.items.length > 0) {
             del.items.forEach(item => {
-              const dispText = item.is_dispatched ? "✓ Sent to Port" : "⚠ Pending Vendor";
+              const dispText = item.is_dispatched ? "✓ In Port" : "⚠ Pending Vendor";
               const dispStyle = item.is_dispatched ? "color: var(--color-accent-green); font-weight: 600;" : "color: var(--color-accent-orange); font-weight: 600;";
               itemsHtml += `
                 <tr style="border-bottom: 1px solid var(--color-hairline-soft);">

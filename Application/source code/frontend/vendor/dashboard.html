@@ -213,12 +213,12 @@
             const itemsSummary = (order.items || []).map(i => `${i.quantity}x ${i.name}`).slice(0, 2).join(', ') + (itemsCount > 2 ? ` (+${itemsCount - 2} more)` : '');
 
             // Delivery Status
-            const rawStatus = (order.delivery ? order.delivery.delivery_status : (order.status || 'sent to port')).toLowerCase();
+            const rawStatus = (order.delivery ? order.delivery.delivery_status : (order.status || 'in port')).toLowerCase();
             let statusBadge = '<span class="status-pill status-pending">Preparing</span>';
             if (rawStatus === 'on the way') {
               statusBadge = '<span class="status-pill status-shipped" style="background: rgba(0, 117, 222, 0.1); color: var(--color-primary);">In Transit (On the Way)</span>';
-            } else if (rawStatus === 'sent to port') {
-              statusBadge = '<span class="status-pill status-pending" style="background: rgba(255, 149, 0, 0.15); color: #a65100;">At Port / Awaiting Dispatch</span>';
+            } else if (rawStatus === 'in port') {
+              statusBadge = '<span class="status-pill status-pending" style="background: rgba(255, 149, 0, 0.15); color: #a65100;">In Port / Awaiting Dispatch</span>';
             }
 
             tbody.innerHTML += `
