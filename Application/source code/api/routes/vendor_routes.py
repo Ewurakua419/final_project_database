@@ -101,8 +101,13 @@ def update_vendor_product(current_vendor_id, product_id):
                 return jsonify({"error": "Stock quantity cannot be negative"}), 400
         except ValueError:
             return jsonify({"error": "Stock must be an integer"}), 400
-    updated = marketplace.update_product(current_vendor_id, product_id, updates)
-    return jsonify({"message": "Product updated successfully", "product": updated.to_dict()}), 200
+    try:
+        updated = marketplace.update_product(current_vendor_id, product_id, updates)
+        if not updated:
+            return jsonify({"error": "Product not found"}), 404
+        return jsonify({"message": "Product updated successfully", "product": updated.to_dict()}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 
 @vendor_bp.route("/vendor/products/<product_id>", methods=["DELETE"])

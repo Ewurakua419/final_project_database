@@ -150,11 +150,8 @@ class Marketplace:
         return self.vendors.add_product(vendor_id, product_data)
 
     def update_product(self, vendor_id, product_id, updates):
-        try:
-            self.vendors.update_product(vendor_id, product_id, updates)
-            return self.catalog.findproduct(product_id)
-        except MarketplaceException:
-            return None
+        self.vendors.update_product(vendor_id, product_id, updates)
+        return self.catalog.findproduct(product_id)
 
     def deleteproduct(self, productid, vendor_id):
         return self.vendors.delete_product(productid, vendor_id)

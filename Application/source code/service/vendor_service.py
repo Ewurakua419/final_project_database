@@ -2,7 +2,7 @@ import database
 import auth
 from model.vendor import Vendor
 from model.product import Product
-from service.exceptions import UserNotFoundError, InvalidCredentialsError, AccountSuspendedError, ProductNotFoundError
+from service.exceptions import UserNotFoundError, InvalidCredentialsError, AccountSuspendedError, ProductNotFoundError, MarketplaceException
 
 class VendorService:
     def findvendor(self, email):
@@ -148,7 +148,10 @@ class VendorService:
         if "price" in updates: db_updates["price"] = updates["price"]
         elif "priceCents" in updates: db_updates["price"] = updates["priceCents"]
         if "image" in updates: db_updates["image_url"] = updates["image"]
-        if "type" in updates: db_updates["product_type"] = updates["type"]
+        if "type" in updates:
+            if updates["type"] != rows[5]:
+                raise MarketplaceException("Product category/type cannot be changed after creation.")
+            db_updates["product_type"] = updates["type"]
         if "description" in updates: db_updates["description"] = updates["description"]
         if "stock" in updates: db_updates["stock_quantity"] = updates["stock"]
 
