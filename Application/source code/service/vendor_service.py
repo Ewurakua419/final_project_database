@@ -86,6 +86,7 @@ class VendorService:
                         if customer:
                             order_copy["customer_first_name"] = customer.first_name
                             order_copy["customer_last_name"] = customer.last_name
+                            order_copy["customer_name"] = f"{customer.first_name} {customer.last_name}".strip()
                             order_copy["customer_email"] = customer.email
                             order_copy["customer_phone"] = customer.phone_number
                     except Exception:
