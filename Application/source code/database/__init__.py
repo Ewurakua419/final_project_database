@@ -41,7 +41,8 @@ from database.order_repo import (
     addtocart,
     getcart,
     removefromcart,
-    checkout
+    checkout,
+    update_cart_qty
 )
 
 from database.shipping_repo import (
