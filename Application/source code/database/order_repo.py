@@ -152,7 +152,7 @@ def add_order(order_dict, delivery_dict=None):
     conn = connect()
     cursor = conn.cursor()
     try:
-        cursor.execute("CALL sp_place_order(%s, %s)", (order_id, customer_id))
+        cursor.execute("CALL sp_place_order(%s, %s, %s)", (order_id, customer_id, shipping_fee))
         
         pay_details = order_dict.get("payment_details")
         if pay_details:

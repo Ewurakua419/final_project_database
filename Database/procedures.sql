@@ -108,7 +108,8 @@ END //
 DROP PROCEDURE IF EXISTS sp_place_order //
 CREATE PROCEDURE sp_place_order(
     IN p_order_id VARCHAR(36),
-    IN p_customer_id VARCHAR(36)
+    IN p_customer_id VARCHAR(36),
+    IN p_shipping_fee DECIMAL(10,2)
 )
 BEGIN
     DECLARE v_cart_id VARCHAR(36);
@@ -156,7 +157,7 @@ BEGIN
 
     -- Create order
     INSERT INTO orders (order_id, customer_id, order_date, subtotal, shipping_fee)
-    VALUES (p_order_id, p_customer_id, CURRENT_TIMESTAMP, v_subtotal, 0);
+    VALUES (p_order_id, p_customer_id, CURRENT_TIMESTAMP, v_subtotal, p_shipping_fee);
 
     -- Copy items to order_items
     INSERT INTO order_items (product_id, order_id, quantity, added_date, is_dispatched)
