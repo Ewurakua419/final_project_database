@@ -41,7 +41,7 @@ SELECT
     p.price AS item_price,
     oi.quantity AS item_quantity,
     (oi.quantity * p.price) AS item_total,
-    CASE WHEN oi.is_dispatched THEN 'sent to port' ELSE 'pending' END AS item_status,
+    CASE WHEN oi.is_dispatched THEN 'in port' ELSE 'pending' END AS item_status,
     p.vendor_id,
     v.vendor_name,
     
@@ -99,7 +99,7 @@ SELECT
     p.price AS unit_price,
     oi.quantity,
     (oi.quantity * p.price) AS total_price,
-    CASE WHEN oi.is_dispatched THEN 'sent to port' ELSE 'pending' END AS item_status,
+    CASE WHEN oi.is_dispatched THEN 'in port' ELSE 'pending' END AS item_status,
     d.delivery_status AS courier_delivery_status
 FROM order_items oi
 JOIN product p ON oi.product_id = p.product_id

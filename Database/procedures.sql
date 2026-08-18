@@ -220,9 +220,9 @@ BEGIN
         SET MESSAGE_TEXT = 'Transaction failed: sp_update_order_item_status aborted';
     END;
 
-    IF LOWER(p_new_status) NOT IN ('pending', 'sent to port') THEN
+    IF LOWER(p_new_status) NOT IN ('pending', 'in port') THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Invalid item status. Allowed: pending, sent to port';
+        SET MESSAGE_TEXT = 'Invalid item status. Allowed: pending, in port';
     END IF;
 
     IF NOT EXISTS (
@@ -236,7 +236,7 @@ BEGIN
     START TRANSACTION;
 
     UPDATE order_items
-    SET is_dispatched = (LOWER(p_new_status) = 'sent to port')
+    SET is_dispatched = (LOWER(p_new_status) = 'in port')
     WHERE order_id = p_order_id AND product_id = p_product_id;
 
     COMMIT;

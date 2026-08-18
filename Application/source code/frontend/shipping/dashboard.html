@@ -90,9 +90,9 @@
           } else if (del.status === "delivered") {
             statusClass = "status-delivered";
             statusText = "Delivered";
-          } else if (del.status === "sent to port") {
+          } else if (del.status === "in port") {
             statusClass = "status-pending";
-            statusText = "At Port";
+            statusText = "In Port";
           }
 
           const isDelivered = del.status === "delivered";
@@ -119,7 +119,7 @@
             actionContent = `
               <div class="update-action" style="display: flex; align-items: center; gap: 8px;">
                 <select id="status-${del.id}" class="text-input" data-original="${del.status}" onchange="onStatusChange('${del.id}')" style="padding: 4px 8px; border-radius: var(--rounded-xs); font-size: var(--type-caption-size); appearance: auto;">
-                  <option value="sent to port" ${del.status === 'sent to port' ? 'selected' : ''}>At Port</option>
+                  <option value="in port" ${del.status === 'in port' ? 'selected' : ''}>In Port</option>
                   <option value="on the way" ${del.status === 'on the way' ? 'selected' : ''}>On the Way</option>
                   <option value="delivered">Delivered</option>
                 </select>
