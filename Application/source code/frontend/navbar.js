@@ -25,7 +25,7 @@ function initNavbar() {
         ${profileLink}
         ${authBtn}
         <a href="${prefix}orders/orders.html" class="cart-link">
-          Returns & Orders
+          Orders
         </a>
         <a href="#" id="open-cart-btn" class="cart-link" style="margin-left: 12px; font-weight: bold;">
           🛒 Cart <span id="cart-count">0</span>
